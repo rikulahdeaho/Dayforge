@@ -1,6 +1,6 @@
 import { SymbolView } from 'expo-symbols';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useColorScheme } from '@/components/useColorScheme';
@@ -47,9 +47,29 @@ const habits = [
   },
 ];
 
+type PlatformIconName = {
+  ios: string;
+  android: string;
+  web: string;
+};
+
+function resolveSymbolName(icon: PlatformIconName) {
+  return (
+    Platform.select({
+      ios: icon.ios,
+      android: icon.android,
+      default: icon.web,
+    }) ?? icon.web
+  );
+}
+
 export default function TodayScreen() {
   const colorScheme = useColorScheme();
   const palette = Colors[colorScheme] as DayforgePalette;
+
+  const handleCreateNewHabit = () => {
+    Alert.alert('Create New Habit', 'Handler toimii. Tallennusta ei ole vielä käytössä.');
+  };
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: palette.background }]}>
@@ -61,7 +81,7 @@ export default function TodayScreen() {
           </View>
           <View style={[styles.avatar, { backgroundColor: palette.cardStrong, borderColor: palette.border }]}>
             <SymbolView
-              name={{ ios: 'person.fill', android: 'person', web: 'person' }}
+              name={resolveSymbolName({ ios: 'person.fill', android: 'person', web: 'person' })}
               size={26}
               tintColor={palette.text}
             />
@@ -72,7 +92,7 @@ export default function TodayScreen() {
           <View style={styles.heroTop}>
             <View style={styles.streakPill}>
               <SymbolView
-                name={{ ios: 'flame.fill', android: 'local_fire_department', web: 'local_fire_department' }}
+                name={resolveSymbolName({ ios: 'flame.fill', android: 'local_fire_department', web: 'local_fire_department' })}
                 size={14}
                 tintColor="#ffffff"
               />
@@ -109,7 +129,7 @@ export default function TodayScreen() {
           <SurfaceCard key={habit.id} palette={palette} style={styles.habitCard}>
             <View style={styles.habitTop}>
               <View style={[styles.habitIcon, { backgroundColor: palette.cardStrong }]}>
-                <SymbolView name={habit.icon as any} size={26} tintColor={palette.accent} />
+                <SymbolView name={resolveSymbolName(habit.icon)} size={26} tintColor={palette.accent} />
               </View>
               <View style={styles.habitCopy}>
                 <Text style={[styles.habitTitle, { color: palette.text }]}>{habit.title}</Text>
@@ -125,11 +145,11 @@ export default function TodayScreen() {
                   },
                 ]}>
                 <SymbolView
-                  name={
+                  name={resolveSymbolName(
                     habit.complete
                       ? { ios: 'checkmark', android: 'done', web: 'done' }
                       : { ios: 'plus', android: 'add', web: 'add' }
-                  }
+                  )}
                   size={20}
                   tintColor={habit.complete ? '#ffffff' : palette.mutedText}
                 />
@@ -161,9 +181,14 @@ export default function TodayScreen() {
           label="Create New Habit"
           palette={palette}
           icon={
-            <SymbolView name={{ ios: 'plus', android: 'add', web: 'add' }} size={20} tintColor={palette.mutedText} />
+            <SymbolView
+              name={resolveSymbolName({ ios: 'plus', android: 'add', web: 'add' })}
+              size={20}
+              tintColor={palette.mutedText}
+            />
           }
           style={styles.addHabit}
+          onPress={handleCreateNewHabit}
         />
       </ScrollView>
     </SafeAreaView>
@@ -337,3 +362,4 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 });
+

@@ -92,20 +92,24 @@ export function GlowButton({
   palette,
   style,
   textStyle,
+  onPress,
 }: {
   label: string;
   palette: DayforgePalette;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
+  onPress?: () => void;
 }) {
   return (
-    <LinearGradient
-      colors={[palette.accentStrong, palette.accent, '#9f4dff']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={[styles.glowButton, { shadowColor: palette.accentStrong }, style]}>
-      <Text style={[styles.glowButtonText, { color: '#fff' }, textStyle]}>{label}</Text>
-    </LinearGradient>
+    <Pressable onPress={onPress}>
+      <LinearGradient
+        colors={[palette.accentStrong, palette.accent, '#9f4dff']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.glowButton, { shadowColor: palette.accentStrong }, style]}>
+        <Text style={[styles.glowButtonText, { color: '#fff' }, textStyle]}>{label}</Text>
+      </LinearGradient>
+    </Pressable>
   );
 }
 
@@ -114,14 +118,17 @@ export function DashedAction({
   icon,
   palette,
   style,
+  onPress,
 }: {
   label: string;
   icon?: ReactNode;
   palette: DayforgePalette;
   style?: StyleProp<ViewStyle>;
+  onPress?: () => void;
 }) {
   return (
     <Pressable
+      onPress={onPress}
       style={[
         styles.dashed,
         {

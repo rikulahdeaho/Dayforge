@@ -1,6 +1,6 @@
 import { SymbolView } from 'expo-symbols';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useColorScheme } from '@/components/useColorScheme';
@@ -30,9 +30,37 @@ const tasks = [
   { id: '3', label: 'Finalize portfolio case study', done: false },
 ];
 
+type PlatformIconName = {
+  ios: string;
+  android: string;
+  web: string;
+};
+
+function resolveSymbolName(icon: PlatformIconName) {
+  return (
+    Platform.select({
+      ios: icon.ios,
+      android: icon.android,
+      default: icon.web,
+    }) ?? icon.web
+  );
+}
+
 export default function PlanScreen() {
   const colorScheme = useColorScheme();
   const palette = Colors[colorScheme] as DayforgePalette;
+
+  const handleAddTask = () => {
+    Alert.alert('Add task', 'Handler toimii. Tallennusta ei ole vielä käytössä.');
+  };
+
+  const handleStartJournaling = () => {
+    Alert.alert('Start Journaling', 'Handler toimii. Tallennusta ei ole vielä käytössä.');
+  };
+
+  const handleUpdateProgress = () => {
+    Alert.alert('Update progress', 'Handler toimii. Tallennusta ei ole vielä käytössä.');
+  };
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: palette.background }]}>
@@ -44,7 +72,7 @@ export default function PlanScreen() {
           </View>
           <View style={[styles.bellWrap, { backgroundColor: palette.cardStrong, borderColor: palette.border }]}>
             <SymbolView
-              name={{ ios: 'bell.fill', android: 'notifications', web: 'notifications' }}
+              name={resolveSymbolName({ ios: 'bell.fill', android: 'notifications', web: 'notifications' })}
               size={22}
               tintColor={palette.accent}
             />
@@ -72,9 +100,9 @@ export default function PlanScreen() {
             <Text style={styles.focusValue}>1 / 3</Text>
           </View>
           <View style={styles.ctaWrap}>
-            <View style={styles.whiteButton}>
+            <Pressable style={styles.whiteButton} onPress={handleUpdateProgress}>
               <Text style={[styles.whiteButtonText, { color: palette.accentStrong }]}>Update progress</Text>
-            </View>
+            </Pressable>
           </View>
         </GradientCard>
 
@@ -124,7 +152,7 @@ export default function PlanScreen() {
                 ]}>
                 {task.done ? (
                   <SymbolView
-                    name={{ ios: 'checkmark', android: 'done', web: 'done' }}
+                    name={resolveSymbolName({ ios: 'checkmark', android: 'done', web: 'done' })}
                     size={15}
                     tintColor="#ffffff"
                   />
@@ -149,21 +177,32 @@ export default function PlanScreen() {
           palette={palette}
           icon={
             <SymbolView
-              name={{ ios: 'plus', android: 'add', web: 'add' }}
+              name={resolveSymbolName({ ios: 'plus', android: 'add', web: 'add' })}
               size={20}
               tintColor={palette.mutedText}
             />
           }
           style={styles.addTask}
+          onPress={handleAddTask}
         />
 
         <SurfaceCard palette={palette} style={styles.reflectionCard}>
           <View style={styles.reflectionBadge}>
-            <SymbolView name={{ ios: 'brain.head.profile', android: 'psychology', web: 'psychology' }} size={18} tintColor="#fff" />
+            <SymbolView
+              name={resolveSymbolName({ ios: 'brain.head.profile', android: 'psychology', web: 'psychology' })}
+              size={18}
+              tintColor="#fff"
+            />
           </View>
           <Text style={[styles.reflectionTitle, { color: palette.text }]}>Daily Reflection</Text>
           <Text style={[styles.reflectionBody, { color: palette.mutedText }]}>Take a moment for yourself. How are you feeling today?</Text>
-          <GlowButton label="Start Journaling" palette={palette} style={styles.reflectButton} textStyle={styles.reflectButtonText} />
+          <GlowButton
+            label="Start Journaling"
+            palette={palette}
+            style={styles.reflectButton}
+            textStyle={styles.reflectButtonText}
+            onPress={handleStartJournaling}
+          />
         </SurfaceCard>
       </ScrollView>
     </SafeAreaView>

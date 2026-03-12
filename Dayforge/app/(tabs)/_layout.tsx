@@ -1,24 +1,35 @@
 import React from 'react';
 import { SymbolView } from 'expo-symbols';
 import { Tabs } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 
-type IconName = {
-  ios: any;
-  android: any;
-  web: any;
+type PlatformIconName = {
+  ios: string;
+  android: string;
+  web: string;
 };
 
-function TabIcon({ color, name, size = 22 }: { color: string; name: IconName; size?: number }) {
-  return <SymbolView name={name as any} tintColor={color} size={size} />;
+function getIconName(icon: PlatformIconName): string {
+  return (
+    Platform.select({
+      ios: icon.ios,
+      android: icon.android,
+      web: icon.web,
+      default: icon.web,
+    }) || icon.web
+  );
+}
+
+function TabIcon({ color, name, size = 22 }: { color: string; name: PlatformIconName; size?: number }) {
+  return <SymbolView name={getIconName(name) as any} tintColor={color} size={size} />;
 }
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme];
+  const palette = Colors[colorScheme ?? 'dark'];
 
   return (
     <Tabs
@@ -34,7 +45,7 @@ export default function TabLayout() {
         },
       }}>
       <Tabs.Screen
-        name="today"
+        name="index"
         options={{
           title: 'Today',
           tabBarIcon: ({ color }) => (
@@ -58,23 +69,9 @@ export default function TabLayout() {
         name="habits"
         options={{
           title: 'Habits',
-          tabBarLabel: '',
-          tabBarIcon: ({ focused }) => (
-            <View
-              style={[
-                styles.centerOrb,
-                {
-                  borderColor: focused ? palette.accentSoft : palette.border,
-                  shadowColor: palette.accentStrong,
-                  backgroundColor: focused ? palette.accentStrong : palette.cardStrong,
-                },
-              ]}>
-              <TabIcon
-                color={focused ? '#ffffff' : palette.tabIconDefault}
-                size={24}
-                name={{ ios: 'plus', android: 'add', web: 'add' }}
-              />
-            </View>
+          tabBarLabel: 'Habits',
+          tabBarIcon: ({ color }) => (
+            <TabIcon color={color} name={{ ios: 'plus', android: 'add', web: 'add' }} />
           ),
         }}
       />
@@ -111,18 +108,5 @@ const styles = StyleSheet.create({
     fontFamily: 'SpaceMono',
     fontSize: 11,
     marginTop: 2,
-  },
-  centerOrb: {
-    width: 62,
-    height: 62,
-    borderRadius: 31,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: -18,
-    shadowOpacity: 0.45,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 9 },
-    elevation: 9,
   },
 });

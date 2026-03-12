@@ -1,5 +1,5 @@
 import { SymbolView } from 'expo-symbols';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useColorScheme } from '@/components/useColorScheme';
@@ -19,9 +19,29 @@ const history = [
   { id: '3', mood: '😐', date: 'Oct 20', preview: 'A productive but very busy F...' },
 ];
 
+type PlatformIconName = {
+  ios: string;
+  android: string;
+  web: string;
+};
+
+function resolveSymbolName(icon: PlatformIconName) {
+  return (
+    Platform.select({
+      ios: icon.ios,
+      android: icon.android,
+      default: icon.web,
+    }) ?? icon.web
+  );
+}
+
 export default function ReflectionScreen() {
   const colorScheme = useColorScheme();
   const palette = Colors[colorScheme] as DayforgePalette;
+
+  const handleSaveReflection = () => {
+    Alert.alert('Save Reflection', 'Handler toimii. Tallennusta ei ole vielä käytössä.');
+  };
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: palette.background }]}>
@@ -33,7 +53,7 @@ export default function ReflectionScreen() {
           </View>
           <View style={[styles.settings, { backgroundColor: palette.cardStrong }]}> 
             <SymbolView
-              name={{ ios: 'gearshape.fill', android: 'settings', web: 'settings' }}
+              name={resolveSymbolName({ ios: 'gearshape.fill', android: 'settings', web: 'settings' })}
               size={20}
               tintColor={palette.accent}
             />
@@ -104,7 +124,13 @@ export default function ReflectionScreen() {
           />
         </SurfaceCard>
 
-        <GlowButton label="Save Reflection" palette={palette} style={styles.saveButton} textStyle={styles.saveButtonText} />
+        <GlowButton
+          label="Save Reflection"
+          palette={palette}
+          style={styles.saveButton}
+          textStyle={styles.saveButtonText}
+          onPress={handleSaveReflection}
+        />
 
         <SectionTitle title="History" action="View All" palette={palette} />
         {history.map((entry) => (
@@ -117,7 +143,7 @@ export default function ReflectionScreen() {
               <Text style={[styles.historyPreview, { color: palette.text }]}>{entry.preview}</Text>
             </View>
             <SymbolView
-              name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
+              name={resolveSymbolName({ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' })}
               size={20}
               tintColor={palette.mutedText}
             />

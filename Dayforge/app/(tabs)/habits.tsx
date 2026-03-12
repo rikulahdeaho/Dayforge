@@ -1,5 +1,5 @@
 import { SymbolView } from 'expo-symbols';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useColorScheme } from '@/components/useColorScheme';
@@ -13,9 +13,33 @@ const items = [
   { id: '4', title: 'Workout', subtitle: '30 mins', streak: '4/7 days', progress: 0.57, icon: { ios: 'figure.run', android: 'fitness_center', web: 'fitness_center' } },
 ];
 
+type PlatformIconName = {
+  ios: string;
+  android: string;
+  web: string;
+};
+
+function resolveSymbolName(icon: PlatformIconName) {
+  return (
+    Platform.select({
+      ios: icon.ios,
+      android: icon.android,
+      default: icon.web,
+    }) ?? icon.web
+  ) as any;
+}
+
 export default function HabitsScreen() {
   const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme] as DayforgePalette;
+  const palette = Colors[colorScheme ?? 'dark'] as DayforgePalette;
+
+  const handleCreateNewHabit = () => {
+    Alert.alert('Create New Habit', 'Handler toimii. Tallennusta ei ole vielä käytössä.');
+  };
+
+  const handleAddCustomHabit = () => {
+    Alert.alert('Add Custom Habit', 'Handler toimii. Tallennusta ei ole vielä käytössä.');
+  };
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: palette.background }]}>
@@ -35,7 +59,7 @@ export default function HabitsScreen() {
           <SurfaceCard key={item.id} palette={palette} style={styles.itemCard}>
             <View style={styles.itemTop}>
               <View style={[styles.itemIcon, { backgroundColor: palette.cardStrong }]}>
-                <SymbolView name={item.icon as any} size={22} tintColor={palette.accent} />
+                <SymbolView name={resolveSymbolName(item.icon)} size={22} tintColor={palette.accent} />
               </View>
               <View style={styles.itemCopy}>
                 <Text style={[styles.itemTitle, { color: palette.text }]}>{item.title}</Text>
@@ -44,7 +68,11 @@ export default function HabitsScreen() {
                 </Text>
               </View>
               <View style={[styles.itemBadge, { borderColor: palette.accent, backgroundColor: palette.cardStrong }]}>
-                <SymbolView name={{ ios: 'checkmark', android: 'done', web: 'done' }} size={16} tintColor={palette.accent} />
+                <SymbolView
+                  name={resolveSymbolName({ ios: 'checkmark', android: 'done', web: 'done' })}
+                  size={16}
+                  tintColor={palette.accent}
+                />
               </View>
             </View>
             <ProgressTrack value={item.progress} palette={palette} tint={palette.accent} style={styles.itemProgress} />
@@ -54,11 +82,23 @@ export default function HabitsScreen() {
         <DashedAction
           label="Create New Habit"
           palette={palette}
-          icon={<SymbolView name={{ ios: 'plus', android: 'add', web: 'add' }} size={20} tintColor={palette.mutedText} />}
+          icon={
+            <SymbolView
+              name={resolveSymbolName({ ios: 'plus', android: 'add', web: 'add' })}
+              size={20}
+              tintColor={palette.mutedText}
+            />
+          }
           style={styles.dashed}
+          onPress={handleCreateNewHabit}
         />
 
-        <GlowButton label="Add Custom Habit" palette={palette} textStyle={styles.ctaText} />
+        <GlowButton
+          label="Add Custom Habit"
+          palette={palette}
+          textStyle={styles.ctaText}
+          onPress={handleAddCustomHabit}
+        />
       </ScrollView>
     </SafeAreaView>
   );
