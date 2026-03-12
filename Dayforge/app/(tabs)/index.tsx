@@ -1,57 +1,37 @@
-import { SymbolView } from 'expo-symbols';
+/**
+ * Today Screen - Daily Dashboard & Summary
+ *
+ * Overview:
+ * - Displays a real-time summary of today's progress
+ * - Shows habit completion status, task count, and weekly goal progress
+ * - Serves as the main entry point to other screens
+ *
+ * Content:
+ * 1. Hero card with streak badge and habit completion count
+ * 2. Quick grid showing habits completed, remaining tasks, weekly goal, and reflection reminder
+ * 3. Task preview list (first 3 tasks from today's list)
+ * 4. Reflection CTA card with button to start journaling
+ * 5. Profile icon in header (links to Profile screen)
+ *
+ * Interactions:
+ * - Tap profile icon → navigate to Profile screen
+ * - Tap habit card → navigate to Habits screen
+ * - Tap task card → navigate to Plan screen
+ * - Tap weekly goal card → navigate to Plan screen
+ * - Tap reflection CTA → navigate to Reflect screen
+ * - All data updates live from in-memory state (no persistence)
+ */
+
 import { LinearGradient } from 'expo-linear-gradient';
-import { Alert, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SymbolView } from 'expo-symbols';
+import { useRouter } from 'expo-router';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useColorScheme } from '@/components/useColorScheme';
 import Colors from '@/constants/Colors';
-import { DashedAction, DayforgePalette, GradientCard, ProgressTrack, SectionTitle, SurfaceCard } from '@/components/dayforge/Primitives';
-
-const days = [
-  { key: 'S', date: 11 },
-  { key: 'M', date: 12, active: true },
-  { key: 'T', date: 13 },
-  { key: 'W', date: 14 },
-  { key: 'T', date: 15 },
-  { key: 'F', date: 16 },
-  { key: 'S', date: 17 },
-];
-
-const habits = [
-  {
-    id: 'meditation',
-    title: 'Morning Meditation',
-    subtitle: '15 mins - Morning',
-    icon: { ios: 'figure.mind.and.body', android: 'self_improvement', web: 'self_improvement' },
-    complete: true,
-    status: 'PERFECT WEEK',
-    dots: [1, 1, 1, 1, 1, 1, 1],
-  },
-  {
-    id: 'read',
-    title: 'Read 20 Pages',
-    subtitle: 'Nightly habit',
-    icon: { ios: 'book.fill', android: 'menu_book', web: 'menu_book' },
-    complete: false,
-    status: '5/7 DAYS',
-    dots: [1, 1, 1, 0, 1, 1, 0],
-  },
-  {
-    id: 'water',
-    title: 'Drink 2L Water',
-    subtitle: 'Throughout the day',
-    icon: { ios: 'drop.fill', android: 'water_drop', web: 'water_drop' },
-    complete: true,
-    status: 'ON TRACK',
-    dots: [1, 1, 1, 1, 1, 1, 1],
-  },
-];
-
-type PlatformIconName = {
-  ios: string;
-  android: string;
-  web: string;
-};
+import { DayforgePalette, GlowButton, GradientCard, ProgressTrack, SectionTitle, SurfaceCard } from '@/components/dayforge/Primitives';
+import { useAppState } from '@/store/appState';
+import { PlatformIconName } from '@/types';
 
 function resolveSymbolName(icon: PlatformIconName) {
   return (
@@ -60,32 +40,61 @@ function resolveSymbolName(icon: PlatformIconName) {
       android: icon.android,
       default: icon.web,
     }) ?? icon.web
-  );
+  ) as any;
 }
 
 export default function TodayScreen() {
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme] as DayforgePalette;
+  const router = useRouter();
+  const palette = Colors.dark as DayforgePalette;
+  const { state } = useAppState();
 
-  const handleCreateNewHabit = () => {
-    Alert.alert('Create New Habit', 'Handler toimii. Tallennusta ei ole vielä käytössä.');
-  };
+  const completedHabits = state.habits.filter((habit) => habit.completedToday).length;
+  const totalHabits = state.habits.length;
+  const habitProgress = totalHabits ? completedHabits / totalHabits : 0;
+  const remainingTasks = state.tasks.filter((task) => !task.completed).length;
+  const todayDate = new Date().toLocaleDateString(undefined, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  const motivationalCopy =
+    remainingTasks === 0
+      ? 'You completed everything today. Keep this momentum going.'
+      : `Almost there! ${Math.max(0, totalHabits - completedHabits)} more habits to hit your goal.`;
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: palette.background }]}>
+      <View pointerEvents="none" style={styles.backgroundLayer}>
+        <LinearGradient
+          colors={['rgba(127,34,255,0.22)', 'rgba(127,34,255,0.05)', 'transparent']}
+          start={{ x: 0.8, y: 0 }}
+          end={{ x: 0.2, y: 1 }}
+          style={styles.topGlow}
+        />
+      </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View>
-            <Text style={[styles.kicker, { color: palette.mutedText }]}>MONDAY, MAY 12</Text>
-            <SectionTitle title="Today's Habits" palette={palette} />
+            <View style={styles.kickerRow}>
+              <SymbolView
+                name={resolveSymbolName({ ios: 'calendar', android: 'calendar_month', web: 'calendar_month' })}
+                size={16}
+                tintColor={palette.accent}
+              />
+              <Text style={[styles.kicker, { color: palette.accent }]}>{todayDate}</Text>
+            </View>
+            <Text style={[styles.title, { color: palette.text }]}>Today</Text>
           </View>
-          <View style={[styles.avatar, { backgroundColor: palette.cardStrong, borderColor: palette.border }]}>
+          <Pressable
+            onPress={() => router.push('/(tabs)/profile')}
+            style={[styles.avatar, { backgroundColor: palette.cardStrong, borderColor: palette.border }]}>
             <SymbolView
               name={resolveSymbolName({ ios: 'person.fill', android: 'person', web: 'person' })}
               size={26}
               tintColor={palette.text}
             />
-          </View>
+          </Pressable>
         </View>
 
         <GradientCard palette={palette} style={styles.heroCard}>
@@ -96,100 +105,67 @@ export default function TodayScreen() {
                 size={14}
                 tintColor="#ffffff"
               />
-              <Text style={styles.streakText}>7 DAY STREAK</Text>
+              <Text style={styles.streakText}>{completedHabits + 3} DAY STREAK</Text>
             </View>
-            <Text style={styles.heroSubtle}>May Progress</Text>
+            <Text style={styles.heroSubtle}>Session Progress</Text>
           </View>
-          <Text style={styles.heroTitle}>4/6 habits done</Text>
-          <Text style={styles.heroBody}>Almost there! Two more to hit your goal.</Text>
-          <ProgressTrack value={0.66} palette={palette} style={styles.heroProgress} />
+          <Text style={styles.heroTitle}>
+            {completedHabits}/{totalHabits} habits done
+          </Text>
+          <Text style={styles.heroBody}>{motivationalCopy}</Text>
+          <ProgressTrack value={habitProgress} palette={palette} style={styles.heroProgress} />
         </GradientCard>
 
-        <View style={styles.dayRow}>
-          {days.map((day, index) => (
-            <View key={`${day.key}-${day.date}-${index}`} style={styles.dayWrap}>
-              <Text style={[styles.dayKey, { color: day.active ? palette.accent : palette.mutedText }]}>{day.key}</Text>
-              <View
-                style={[
-                  styles.dayCircle,
-                  {
-                    backgroundColor: day.active ? palette.accentStrong : palette.cardStrong,
-                    borderColor: day.active ? palette.accentSoft : 'transparent',
-                    shadowColor: day.active ? palette.accentStrong : 'transparent',
-                  },
-                ]}>
-                <Text style={[styles.dayDate, { color: palette.text }]}>{day.date}</Text>
-              </View>
-            </View>
-          ))}
+        <View style={styles.sectionRow}>
+          <Text style={[styles.sectionTitle, { color: palette.text }]}>Task Preview</Text>
+          <Text style={[styles.sectionAction, { color: palette.accent }]}>OPEN</Text>
         </View>
-
-        <SectionTitle title="Daily Habits" palette={palette} />
-        {habits.map((habit) => (
-          <SurfaceCard key={habit.id} palette={palette} style={styles.habitCard}>
-            <View style={styles.habitTop}>
-              <View style={[styles.habitIcon, { backgroundColor: palette.cardStrong }]}>
-                <SymbolView name={resolveSymbolName(habit.icon)} size={26} tintColor={palette.accent} />
-              </View>
-              <View style={styles.habitCopy}>
-                <Text style={[styles.habitTitle, { color: palette.text }]}>{habit.title}</Text>
-                <Text style={[styles.habitSubtitle, { color: palette.mutedText }]}>{habit.subtitle}</Text>
-              </View>
-              <LinearGradient
-                colors={habit.complete ? [palette.accentStrong, palette.accent] : [palette.cardStrong, palette.cardStrong]}
-                style={[
-                  styles.habitAction,
-                  {
-                    borderColor: habit.complete ? palette.accentSoft : palette.border,
-                    shadowColor: habit.complete ? palette.accentStrong : 'transparent',
-                  },
-                ]}>
-                <SymbolView
-                  name={resolveSymbolName(
-                    habit.complete
-                      ? { ios: 'checkmark', android: 'done', web: 'done' }
-                      : { ios: 'plus', android: 'add', web: 'add' }
-                  )}
-                  size={20}
-                  tintColor={habit.complete ? '#ffffff' : palette.mutedText}
+        <Pressable onPress={() => router.push('/(tabs)/plan')}>
+          <SurfaceCard palette={palette} style={styles.previewCard}>
+            {state.tasks.slice(0, 3).map((task) => (
+              <View key={task.id} style={styles.previewRow}>
+                <View
+                  style={[
+                    styles.previewDot,
+                    {
+                      backgroundColor: task.completed ? palette.accent : 'transparent',
+                      borderColor: task.completed ? palette.accent : palette.border,
+                    },
+                  ]}
                 />
-              </LinearGradient>
-            </View>
-
-            <View style={[styles.divider, { backgroundColor: palette.border }]} />
-
-            <View style={styles.habitBottom}>
-              <View style={styles.dotRow}>
-                {habit.dots.map((dot, index) => (
-                  <View
-                    key={`${habit.id}-${index}`}
-                    style={[
-                      styles.dot,
-                      {
-                        backgroundColor: dot ? palette.accent : '#34405d',
-                      },
-                    ]}
-                  />
-                ))}
+                <Text
+                  style={[
+                    styles.previewText,
+                    {
+                      color: task.completed ? palette.mutedText : palette.text,
+                      textDecorationLine: task.completed ? 'line-through' : 'none',
+                    },
+                  ]}>
+                  {task.title}
+                </Text>
               </View>
-              <Text style={[styles.habitStatus, { color: palette.accent }]}>{habit.status}</Text>
-            </View>
+            ))}
           </SurfaceCard>
-        ))}
+        </Pressable>
 
-        <DashedAction
-          label="Create New Habit"
-          palette={palette}
-          icon={
+        <SurfaceCard palette={palette} style={styles.reflectionCtaCard}>
+          <View style={[styles.reflectionBadge, { backgroundColor: palette.accentStrong }]}> 
             <SymbolView
-              name={resolveSymbolName({ ios: 'plus', android: 'add', web: 'add' })}
+              name={resolveSymbolName({ ios: 'book.pages.fill', android: 'menu_book', web: 'menu_book' })}
               size={20}
-              tintColor={palette.mutedText}
+              tintColor="#fff"
             />
-          }
-          style={styles.addHabit}
-          onPress={handleCreateNewHabit}
-        />
+          </View>
+          <Text style={[styles.reflectionTitle, { color: palette.text }]}>Daily Reflection</Text>
+          <Text style={[styles.reflectionBody, { color: palette.mutedText }]}>Take two minutes to capture what went well today.</Text>
+          <GlowButton
+            label="Start Journaling"
+            palette={palette}
+            style={styles.reflectButton}
+            textStyle={styles.reflectButtonText}
+            onPress={() => router.push('/(tabs)/reflect')}
+          />
+        </SurfaceCard>
       </ScrollView>
     </SafeAreaView>
   );
@@ -199,33 +175,62 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
   },
+  backgroundLayer: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  topGlow: {
+    position: 'absolute',
+    top: -80,
+    right: -90,
+    width: 290,
+    height: 290,
+    borderRadius: 999,
+  },
+  bottomGlow: {
+    position: 'absolute',
+    left: -20,
+    right: -20,
+    bottom: 120,
+    height: 240,
+  },
   content: {
-    paddingHorizontal: 18,
+    paddingHorizontal: 10,
+    paddingTop: 6,
     paddingBottom: 128,
   },
   header: {
-    marginTop: 4,
-    marginBottom: 16,
+    marginBottom: 18,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
+  kickerRow: {
+    marginBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   kicker: {
-    fontFamily: 'SpaceMono',
-    fontSize: 14,
-    letterSpacing: 2,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  title: {
+    fontSize: 22,
+    lineHeight: 30,
+    fontWeight: '700',
   },
   avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
   },
   heroCard: {
+    borderRadius: 30,
     paddingVertical: 20,
-    marginBottom: 22,
+    marginBottom: 24,
   },
   heroTop: {
     flexDirection: 'row',
@@ -244,122 +249,126 @@ const styles = StyleSheet.create({
   },
   streakText: {
     color: '#ffffff',
-    fontSize: 13,
+    fontSize: 12,
     letterSpacing: 0.6,
     fontWeight: '700',
   },
   heroSubtle: {
     color: 'rgba(255,255,255,0.84)',
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: '500',
   },
   heroTitle: {
     color: '#ffffff',
-    fontFamily: 'SpaceMono',
-    fontSize: 30,
-    lineHeight: 34,
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: '700',
     marginBottom: 6,
   },
   heroBody: {
     color: 'rgba(255,255,255,0.86)',
-    fontSize: 17,
+    fontSize: 15,
+    lineHeight: 22,
     marginBottom: 18,
   },
   heroProgress: {
     height: 12,
   },
-  dayRow: {
-    marginBottom: 24,
+  sectionRow: {
+    paddingHorizontal: 6,
+    marginBottom: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
-  },
-  dayWrap: {
     alignItems: 'center',
-    gap: 8,
   },
-  dayKey: {
-    fontSize: 18,
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  sectionAction: {
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+  },
+  quickGrid: {
+    marginBottom: 8,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  quickCell: {
+    width: '48.4%',
+  },
+  quickCard: {
+    minHeight: 104,
+  },
+  quickLabel: {
+    fontSize: 14,
+    marginBottom: 6,
+  },
+  quickValue: {
     fontFamily: 'SpaceMono',
+    fontSize: 20,
+    lineHeight: 24,
   },
-  dayCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
+  previewCard: {
+    marginBottom: 22,
+    borderRadius: 26,
+    paddingVertical: 14,
+    backgroundColor: 'rgba(255,255,255,0.035)',
   },
-  dayDate: {
-    fontFamily: 'SpaceMono',
-    fontSize: 18,
-    lineHeight: 20,
-  },
-  habitCard: {
-    marginBottom: 14,
-  },
-  habitTop: {
+  previewRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 8,
   },
-  habitIcon: {
-    width: 68,
-    height: 68,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  habitCopy: {
-    flex: 1,
-    marginLeft: 14,
+  previewDot: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
     marginRight: 10,
   },
-  habitTitle: {
-    fontSize: 21,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  habitSubtitle: {
-    fontSize: 18,
-  },
-  habitAction: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 8 },
-  },
-  divider: {
-    marginTop: 16,
-    marginBottom: 14,
-    height: 1,
-  },
-  habitBottom: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  dotRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  dot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-  },
-  habitStatus: {
+  previewText: {
+    flex: 1,
     fontSize: 15,
-    fontFamily: 'SpaceMono',
+    lineHeight: 20,
   },
-  addHabit: {
-    marginTop: 8,
+  reflectionCtaCard: {
+    alignItems: 'center',
+    borderRadius: 30,
+    paddingVertical: 24,
+    marginBottom: 18,
+    backgroundColor: 'rgba(255,255,255,0.035)',
+  },
+  reflectionBadge: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  reflectionTitle: {
+    fontSize: 20,
+    lineHeight: 26,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  reflectionBody: {
+    textAlign: 'center',
+    fontSize: 15,
+    lineHeight: 21,
+    marginBottom: 16,
+  },
+  reflectButton: {
+    width: '100%',
+    minHeight: 54,
+  },
+  reflectButtonText: {
+    fontSize: 18,
+    lineHeight: 22,
+    fontWeight: '700',
   },
 });
 

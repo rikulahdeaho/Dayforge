@@ -49,19 +49,16 @@ export default function TabLayout() {
         options={{
           title: 'Today',
           tabBarIcon: ({ color }) => (
-            <TabIcon color={color} name={{ ios: 'sun.max.fill', android: 'wb_sunny', web: 'wb_sunny' }} />
+            <TabIcon color={color} name={{ ios: 'house.fill', android: 'home', web: 'home' }} />
           ),
         }}
       />
       <Tabs.Screen
-        name="plan"
+        name="task"
         options={{
-          title: 'Plan',
+          title: 'Tasks',
           tabBarIcon: ({ color }) => (
-            <TabIcon
-              color={color}
-              name={{ ios: 'calendar', android: 'calendar_month', web: 'calendar_month' }}
-            />
+            <TabIcon color={color} name={{ ios: 'checkmark.square.fill', android: 'checklist', web: 'checklist' }} />
           ),
         }}
       />
@@ -71,7 +68,7 @@ export default function TabLayout() {
           title: 'Habits',
           tabBarLabel: 'Habits',
           tabBarIcon: ({ color }) => (
-            <TabIcon color={color} name={{ ios: 'plus', android: 'add', web: 'add' }} />
+            <TabIcon color={color} name={{ ios: 'arrow.triangle.2.circlepath', android: 'repeat', web: 'repeat' }} />
           ),
         }}
       />
@@ -80,7 +77,7 @@ export default function TabLayout() {
         options={{
           title: 'Reflect',
           tabBarIcon: ({ color }) => (
-            <TabIcon color={color} name={{ ios: 'sparkles', android: 'auto_awesome', web: 'auto_awesome' }} />
+            <TabIcon color={color} name={{ ios: 'book.closed.fill', android: 'menu_book', web: 'menu_book' }} />
           ),
         }}
       />
@@ -89,7 +86,7 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color }) => (
-            <TabIcon color={color} name={{ ios: 'person.fill', android: 'person', web: 'person' }} />
+            <TabIcon color={color} name={{ ios: 'person.crop.circle.fill', android: 'account_circle', web: 'account_circle' }} />
           ),
         }}
       />
