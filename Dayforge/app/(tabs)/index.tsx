@@ -40,7 +40,7 @@ import Colors from '@/constants/Colors';
 import { DateHeader } from '@/components/dayforge/DateHeader';
 import { TopGradientBackground } from '@/components/dayforge/TopGradientBackground';
 import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
-import { DayforgePalette, GlowButton, GradientCard, ProgressTrack, SectionTitle, SurfaceCard } from '@/components/dayforge/Primitives';
+import { DayforgePalette, GradientCard, ProgressTrack, SurfaceCard } from '@/components/dayforge/Primitives';
 import { useAppState } from '@/store/appState';
 import type { Task } from '@/types';
 
