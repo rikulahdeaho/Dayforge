@@ -38,7 +38,7 @@ import Animated, { Easing, useAnimatedStyle, useSharedValue, withSequence, withT
 import { DateHeader } from '@/components/dayforge/DateHeader';
 import { TopGradientBackground } from '@/components/dayforge/TopGradientBackground';
 import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
-import { DayforgePalette, DashedAction, ProgressTrack, SectionTitle, SurfaceCard } from '@/components/dayforge/Primitives';
+import { DayforgePalette, DashedAction, ProgressTrack } from '@/components/dayforge/Primitives';
 import { WeekdayPicker } from '@/components/dayforge/WeekdayPicker';
 import Colors from '@/constants/Colors';
 import { useAppState } from '@/store/appState';
