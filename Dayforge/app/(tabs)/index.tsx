@@ -42,6 +42,7 @@ import { TopGradientBackground } from '@/components/dayforge/TopGradientBackgrou
 import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
 import { DayforgePalette, GlowButton, GradientCard, ProgressTrack, SectionTitle, SurfaceCard } from '@/components/dayforge/Primitives';
 import { useAppState } from '@/store/appState';
+import type { Task } from '@/types';
 
 export default function TodayScreen() {
   const router = useRouter();
@@ -305,7 +306,7 @@ function TaskPreviewItem({
   palette,
   onToggle,
 }: {
-  task: any;
+  task: Task;
   palette: DayforgePalette;
   onToggle: () => void;
 }) {
