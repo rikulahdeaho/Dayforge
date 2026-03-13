@@ -34,7 +34,6 @@
  * - Session-only state: all reflections reset on app reload to demo defaults
  */
 
-import { LinearGradient } from 'expo-linear-gradient';
 import { SymbolView } from 'expo-symbols';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
