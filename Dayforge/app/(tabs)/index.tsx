@@ -22,7 +22,6 @@
  * - All data updates live from in-memory state (no persistence)
  */
 
-import { LinearGradient } from 'expo-linear-gradient';
 import { SymbolView } from 'expo-symbols';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
