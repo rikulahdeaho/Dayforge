@@ -43,6 +43,7 @@ import {
 import { WeekdayPicker } from '@/components/dayforge/WeekdayPicker';
 import Colors from '@/constants/Colors';
 import { useAppState } from '@/store/appState';
+import { useRouter } from 'expo-router';
 
 function AnimatedCompleteCheck({ completed, tintColor }: { completed: boolean; tintColor: string }) {
   const scale = useSharedValue(completed ? 1 : 0.8);
