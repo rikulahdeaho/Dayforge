@@ -1,10 +1,45 @@
-import { SymbolView } from 'expo-symbols';
-import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+/**
+ * Profile Screen - Settings & User Information
+ *
+ * Overview:
+ * - Displays user profile information and app preferences
+ * - Provides access to settings and support links
+ * - All interactive items that require backend are placeholder alerts
+ *
+ * Content:
+ * 1. Settings header with back arrow and "Settings" title
+ * 2. Profile block with avatar (initials), name, and membership tier:
+ *    - Avatar: large circle with initials (e.g., "AR" for Alex Rivers)
+ *    - Edit button (small purple chip on avatar)
+ *    - User name and "Premium Member" label
+ * 3. Account & Productivity section (grouped card):
+ *    - Personal Goals row (tap → placeholder alert)
+ *    - Reminders row (tap → placeholder alert)
+ * 4. Preferences section (grouped card):
+ *    - Dark Mode toggle (functional, session-only; no durable storage)
+ *    - Export Data row (tap → placeholder alert "available in future version")
+ * 5. Support section (grouped card):
+ *    - About Dayforge App row (tap → placeholder alert)
+ *    - GitHub Repository row (tap → placeholder alert)
+ * 6. Centered "Sign Out" button (red text, tap → placeholder alert)
+ * 7. Footer with app version "Version 2.4.0 (Build 108)"
+ *
+ * Interactions:
+ * - Dark mode toggle → switches session appearance (visual only, no persistence)
+ * - All settings/support items → show placeholder alerts ("available in future version")
+ * - No backend/auth/persistence: all settings reset on app reload
+ * - Profile data shown is from demo user (Alex Rivers, Premium Member)
+ */
 
-import { useColorScheme } from '@/components/useColorScheme';
+import { LinearGradient } from 'expo-linear-gradient';
+import { SymbolView } from 'expo-symbols';
+import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+
+import { DayforgePalette, SurfaceCard } from '@/components/dayforge/Primitives';
+import { TopGradientBackground } from '@/components/dayforge/TopGradientBackground';
+import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
 import Colors from '@/constants/Colors';
-import { DayforgePalette, SectionTitle, SurfaceCard } from '@/components/dayforge/Primitives';
+import { useAppState } from '@/store/appState';
 
 const accountRows = [
   {
@@ -12,31 +47,12 @@ const accountRows = [
     title: 'Personal Goals',
     subtitle: 'Manage your weekly targets',
     icon: { ios: 'scope', android: 'track_changes', web: 'track_changes' },
-    trailing: 'chevron',
   },
   {
     id: 'reminders',
     title: 'Reminders',
     subtitle: 'Daily habit and reflection alerts',
     icon: { ios: 'bell.fill', android: 'notifications', web: 'notifications' },
-    trailing: 'chevron',
-  },
-];
-
-const preferenceRows = [
-  {
-    id: 'dark',
-    title: 'Dark Mode',
-    subtitle: 'Keep this premium night palette',
-    icon: { ios: 'moon.fill', android: 'dark_mode', web: 'dark_mode' },
-    trailing: 'toggle',
-  },
-  {
-    id: 'export',
-    title: 'Export Data',
-    subtitle: 'CSV or JSON format',
-    icon: { ios: 'square.and.arrow.up', android: 'ios_share', web: 'ios_share' },
-    trailing: 'download',
   },
 ];
 
@@ -44,63 +60,51 @@ const supportRows = [
   {
     id: 'about',
     title: 'About Dayforge App',
-    subtitle: '',
     icon: { ios: 'info.circle.fill', android: 'info', web: 'info' },
-    trailing: 'external',
   },
   {
     id: 'github',
     title: 'GitHub Repository',
-    subtitle: '',
     icon: { ios: 'chevron.left.forwardslash.chevron.right', android: 'code', web: 'code' },
-    trailing: 'external',
   },
 ];
 
+function showPlaceholder(featureName: string) {
+  Alert.alert(featureName, `${featureName} is available in a future version.`);
+}
+
 export default function ProfileScreen() {
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme] as DayforgePalette;
+  const palette = Colors.dark as DayforgePalette;
+  const { state, toggleDarkModeSession } = useAppState();
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: palette.background }]}>
+    <View style={[styles.safe, { backgroundColor: palette.background }]}>
+      <TopGradientBackground />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.titleRow}>
-          <SymbolView name={{ ios: 'chevron.left', android: 'arrow_back', web: 'arrow_back' }} size={24} tintColor={palette.text} />
-          <Text style={[styles.title, { color: palette.text }]}>Settings</Text>
-          <View style={{ width: 24 }} />
+          <View>
+            <Text style={[styles.title, { color: palette.text }]}>Settings</Text>
+          </View>
         </View>
 
-        <View style={styles.profileWrap}>
-          <View style={[styles.avatarRing, { borderColor: palette.accent }]}> 
-            <View style={styles.avatarCircle}>
-              <Text style={styles.avatarFace}>AR</Text>
-            </View>
-          </View>
-          <View style={[styles.editChip, { backgroundColor: palette.accentStrong }]}>
-            <SymbolView name={{ ios: 'pencil', android: 'edit', web: 'edit' }} size={16} tintColor="#fff" />
-          </View>
-          <Text style={[styles.name, { color: palette.text }]}>Alex Rivers</Text>
-          <Text style={[styles.member, { color: palette.accent }]}>Premium Member</Text>
-        </View>
-
-        <Text style={[styles.sectionKicker, { color: palette.mutedText }]}>ACCOUNT AND PRODUCTIVITY</Text>
+        <Text style={[styles.sectionKicker, { color: palette.accent }]}>ACCOUNT & PRODUCTIVITY</Text>
         <SurfaceCard palette={palette} style={styles.groupCard}>
           {accountRows.map((row, idx) => (
             <View key={row.id}>
-              <View style={styles.settingRow}>
+              <Pressable style={styles.settingRow} onPress={() => showPlaceholder(row.title)}>
                 <View style={[styles.settingIcon, { backgroundColor: palette.cardStrong }]}>
-                  <SymbolView name={row.icon as any} size={20} tintColor={palette.accent} />
+                  <SymbolView name={resolveSymbolName(row.icon)} size={20} tintColor={palette.accent} />
                 </View>
                 <View style={styles.settingCopy}>
                   <Text style={[styles.settingTitle, { color: palette.text }]}>{row.title}</Text>
                   <Text style={[styles.settingSubtitle, { color: palette.mutedText }]}>{row.subtitle}</Text>
                 </View>
                 <SymbolView
-                  name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
+                  name={resolveSymbolName({ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' })}
                   size={20}
                   tintColor={palette.mutedText}
                 />
-              </View>
+              </Pressable>
               {idx < accountRows.length - 1 ? (
                 <View style={[styles.settingDivider, { backgroundColor: palette.border }]} />
               ) : null}
@@ -108,56 +112,65 @@ export default function ProfileScreen() {
           ))}
         </SurfaceCard>
 
-        <Text style={[styles.sectionKicker, { color: palette.mutedText }]}>PREFERENCES</Text>
+        <Text style={[styles.sectionKicker, { color: palette.accent }]}>PREFERENCES</Text>
         <SurfaceCard palette={palette} style={styles.groupCard}>
-          {preferenceRows.map((row, idx) => (
-            <View key={row.id}>
-              <View style={styles.settingRow}>
-                <View style={[styles.settingIcon, { backgroundColor: palette.cardStrong }]}>
-                  <SymbolView name={row.icon as any} size={20} tintColor={palette.accent} />
-                </View>
-                <View style={styles.settingCopy}>
-                  <Text style={[styles.settingTitle, { color: palette.text }]}>{row.title}</Text>
-                  <Text style={[styles.settingSubtitle, { color: palette.mutedText }]}>{row.subtitle}</Text>
-                </View>
-                {row.trailing === 'toggle' ? (
-                  <Switch
-                    value
-                    trackColor={{ false: palette.border, true: palette.accent }}
-                    thumbColor="#ffffff"
-                  />
-                ) : (
-                  <SymbolView
-                    name={{ ios: 'arrow.down.circle', android: 'download', web: 'download' }}
-                    size={20}
-                    tintColor={palette.mutedText}
-                  />
-                )}
-              </View>
-              {idx < preferenceRows.length - 1 ? (
-                <View style={[styles.settingDivider, { backgroundColor: palette.border }]} />
-              ) : null}
+          <View style={styles.settingRow}>
+            <View style={[styles.settingIcon, { backgroundColor: palette.cardStrong }]}>
+              <SymbolView
+                name={resolveSymbolName({ ios: 'moon.fill', android: 'dark_mode', web: 'dark_mode' })}
+                size={20}
+                tintColor={palette.accent}
+              />
             </View>
-          ))}
+            <View style={styles.settingCopy}>
+              <Text style={[styles.settingTitle, { color: palette.text }]}>Dark Mode</Text>
+              <Text style={[styles.settingSubtitle, { color: palette.mutedText }]}>Session-only preference</Text>
+            </View>
+            <Switch
+              value={state.user.darkMode}
+              onValueChange={toggleDarkModeSession}
+              trackColor={{ false: palette.border, true: palette.accent }}
+              thumbColor="#ffffff"
+            />
+          </View>
+          <View style={[styles.settingDivider, { backgroundColor: palette.border }]} />
+          <Pressable style={styles.settingRow} onPress={() => showPlaceholder('Export Data')}>
+            <View style={[styles.settingIcon, { backgroundColor: palette.cardStrong }]}>
+              <SymbolView
+                name={resolveSymbolName({ ios: 'square.and.arrow.up', android: 'ios_share', web: 'ios_share' })}
+                size={20}
+                tintColor={palette.accent}
+              />
+            </View>
+            <View style={styles.settingCopy}>
+              <Text style={[styles.settingTitle, { color: palette.text }]}>Export Data</Text>
+              <Text style={[styles.settingSubtitle, { color: palette.mutedText }]}>Available in a future version</Text>
+            </View>
+            <SymbolView
+              name={resolveSymbolName({ ios: 'arrow.down.circle', android: 'download', web: 'download' })}
+              size={20}
+              tintColor={palette.mutedText}
+            />
+          </Pressable>
         </SurfaceCard>
 
-        <Text style={[styles.sectionKicker, { color: palette.mutedText }]}>SUPPORT</Text>
+        <Text style={[styles.sectionKicker, { color: palette.accent }]}>SUPPORT</Text>
         <SurfaceCard palette={palette} style={styles.groupCard}>
           {supportRows.map((row, idx) => (
             <View key={row.id}>
-              <View style={styles.settingRow}>
+              <Pressable style={styles.settingRow} onPress={() => showPlaceholder(row.title)}>
                 <View style={[styles.settingIcon, { backgroundColor: palette.cardStrong }]}>
-                  <SymbolView name={row.icon as any} size={20} tintColor={palette.accent} />
+                  <SymbolView name={resolveSymbolName(row.icon)} size={20} tintColor={palette.accent} />
                 </View>
                 <View style={styles.settingCopy}>
                   <Text style={[styles.settingTitle, { color: palette.text }]}>{row.title}</Text>
                 </View>
                 <SymbolView
-                  name={{ ios: 'arrow.up.forward.app', android: 'open_in_new', web: 'open_in_new' }}
+                  name={resolveSymbolName({ ios: 'arrow.up.forward.app', android: 'open_in_new', web: 'open_in_new' })}
                   size={20}
                   tintColor={palette.mutedText}
                 />
-              </View>
+              </Pressable>
               {idx < supportRows.length - 1 ? (
                 <View style={[styles.settingDivider, { backgroundColor: palette.border }]} />
               ) : null}
@@ -165,10 +178,12 @@ export default function ProfileScreen() {
           ))}
         </SurfaceCard>
 
-        <Text style={styles.signOut}>Sign Out</Text>
-        <Text style={[styles.version, { color: palette.mutedText }]}>Version 2.4.0 (Build 108)</Text>
+        <Pressable onPress={() => Alert.alert('Reset Data', 'Reset data is disabled in this MVP prototype.')}>
+          <Text style={styles.signOut}>Reset Data</Text>
+        </Pressable>
+        <Text style={[styles.version, { color: palette.mutedText }]}>Version 0.0.1 (Build 1 MVP)</Text>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -176,75 +191,98 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
   },
+
   content: {
-    paddingHorizontal: 18,
+    paddingHorizontal: 10,
+    paddingTop: 65,
     paddingBottom: 124,
   },
   titleRow: {
-    marginTop: 4,
     marginBottom: 18,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  dateRow: {
+    marginBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  kicker: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
   title: {
-    fontFamily: 'SpaceMono',
-    fontSize: 30,
-    lineHeight: 34,
+    fontSize: 22,
+    lineHeight: 30,
+    fontWeight: '700',
+  },
+  headerIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   profileWrap: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   avatarRing: {
-    width: 132,
-    height: 132,
-    borderRadius: 66,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     backgroundColor: '#d3b08a',
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarFace: {
-    fontFamily: 'SpaceMono',
-    fontSize: 34,
+    fontSize: 28,
+    fontWeight: '700',
     color: '#301505',
   },
   editChip: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -24,
-    marginLeft: 90,
+    marginTop: -18,
+    marginLeft: 68,
   },
   name: {
-    marginTop: 14,
-    fontFamily: 'SpaceMono',
-    fontSize: 34,
-    lineHeight: 38,
+    marginTop: 10,
+    fontSize: 20,
+    lineHeight: 26,
+    fontWeight: '700',
   },
   member: {
-    fontSize: 27,
-    marginTop: 4,
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: 2,
   },
   sectionKicker: {
     marginBottom: 10,
-    fontSize: 16,
-    fontFamily: 'SpaceMono',
-    letterSpacing: 1.6,
+    paddingHorizontal: 6,
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.8,
   },
   groupCard: {
     paddingVertical: 8,
     marginBottom: 20,
+    borderRadius: 26,
+    backgroundColor: 'rgba(255,255,255,0.035)',
   },
   settingRow: {
     flexDirection: 'row',
@@ -252,9 +290,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   settingIcon: {
-    width: 54,
-    height: 54,
-    borderRadius: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -263,11 +301,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   settingTitle: {
-    fontSize: 25,
+    fontSize: 16,
     fontWeight: '700',
   },
   settingSubtitle: {
-    fontSize: 19,
+    fontSize: 13,
+    lineHeight: 18,
     marginTop: 2,
   },
   settingDivider: {
@@ -279,12 +318,12 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     textAlign: 'center',
     color: '#ff4d83',
-    fontFamily: 'SpaceMono',
-    fontSize: 34,
-    lineHeight: 38,
+    fontSize: 18,
+    lineHeight: 22,
+    fontWeight: '700',
   },
   version: {
     textAlign: 'center',
-    fontSize: 18,
+    fontSize: 13,
   },
 });

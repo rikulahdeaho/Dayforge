@@ -1,130 +1,234 @@
+/**
+ * Reflect Screen - Daily Journaling & Mood Tracking
+ *
+ * Overview:
+ * - Calm, focused interface for daily reflection and mood logging
+ * - Collects mood state and two open-ended journal prompts
+ * - Maintains session-only reflection history (visible during app session)
+ *
+ * Content:
+ * 1. Header with today's date and settings icon
+ * 2. "How are you feeling?" mood selector with 4 options:
+ *    - Sad (😔)
+ *    - Neutral (😐)
+ *    - Good (😊)
+ *    - Happy (🤩)
+ *    - Only one mood can be selected at a time (single-select with visual highlight)
+ * 3. Today's Prompts section with two large text input cards:
+ *    - "What went well today?" (multiline input)
+ *    - "What are you grateful for?" (multiline input)
+ * 4. "Save Reflection" glowing CTA button
+ * 5. Success feedback message (appears briefly after save)
+ * 6. History section showing today's and prior session reflections:
+ *    - Mood emoji
+ *    - Date label
+ *    - Preview text (truncated to 84 chars)
+ *    - Each item is a read-only card
+ *
+ * Interactions:
+ * - Tap mood emoji/label → select that mood (single choice only)
+ * - Type in prompt inputs → controlled text state (editable any time)
+ * - Tap "Save Reflection" → validates mood is selected, creates history entry, prepends to list
+ * - After save: mood/inputs are cleared, success message appears briefly
+ * - History items are display-only (session persists until app reload)
+ * - Session-only state: all reflections reset on app reload to demo defaults
+ */
+
 import { SymbolView } from 'expo-symbols';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { useColorScheme } from '@/components/useColorScheme';
+
+import { DateHeader } from '@/components/dayforge/DateHeader';
+import { TopGradientBackground } from '@/components/dayforge/TopGradientBackground';
+import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
+import { DayforgePalette, GlowButton } from '@/components/dayforge/Primitives';
 import Colors from '@/constants/Colors';
-import { DayforgePalette, GlowButton, SectionTitle, SurfaceCard } from '@/components/dayforge/Primitives';
+import { useAppState } from '@/store/appState';
+import { Mood } from '@/types';
 
-const moods = [
-  { id: 'sad', emoji: '😔', label: 'Sad' },
-  { id: 'neutral', emoji: '😐', label: 'Neutral' },
-  { id: 'good', emoji: '😊', label: 'Good', selected: true },
-  { id: 'happy', emoji: '🤩', label: 'Happy' },
+const moods: { id: Mood; emoji: string; label: string }[] = [
+  { id: 'sad', emoji: '😔', label: 'SAD' },
+  { id: 'neutral', emoji: '😐', label: 'NEUTRAL' },
+  { id: 'good', emoji: '😊', label: 'GOOD' },
+  { id: 'happy', emoji: '✨', label: 'HAPPY' },
 ];
 
-const history = [
-  { id: '1', mood: '🤩', date: 'Yesterday, Oct 22', preview: 'Had an amazing dinner with t...' },
-  { id: '2', mood: '😊', date: 'Oct 21', preview: 'Finally finished reading that ...' },
-  { id: '3', mood: '😐', date: 'Oct 20', preview: 'A productive but very busy F...' },
-];
+function moodEmoji(mood: Mood) {
+  switch (mood) {
+    case 'sad':
+      return '😔';
+    case 'neutral':
+      return '😐';
+    case 'good':
+      return '😊';
+    case 'happy':
+      return '✨';
+    default:
+      return '😊';
+  }
+}
+
 
 export default function ReflectionScreen() {
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme] as DayforgePalette;
+  const palette = Colors.dark as DayforgePalette;
+  const { saveReflection, setMood, setReflectionField, setSuccessMessage, state, successMessage } = useAppState();
+  const headerDate = new Date().toLocaleDateString(undefined, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
+  const visibleHistory = state.reflectionHistory.slice(0, 3);
+
+  const handleSaveReflection = () => {
+    const result = saveReflection();
+
+    if (!result.ok) {
+      Alert.alert('Mood required', 'Please select how you are feeling before saving.');
+    }
+  };
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: palette.background }]}>
+    <View style={[styles.safe, { backgroundColor: palette.background }]}>
+      <TopGradientBackground />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.topRow}>
-          <View>
-            <Text style={[styles.dateText, { color: palette.accent }]}>Monday, Oct 23</Text>
-            <SectionTitle title="Daily Reflection" palette={palette} />
-          </View>
-          <View style={[styles.settings, { backgroundColor: palette.cardStrong }]}> 
-            <SymbolView
-              name={{ ios: 'gearshape.fill', android: 'settings', web: 'settings' }}
-              size={20}
-              tintColor={palette.accent}
+        <DateHeader palette={palette} dateText={headerDate} title="How are you feeling?" />
+
+        <View style={styles.moodRow}>
+          {moods.map((mood) => {
+            const selected = state.reflectionDraft.mood === mood.id;
+            return (
+              <Pressable
+                key={mood.id}
+                onPress={() => {
+                  setMood(mood.id);
+                  if (successMessage) {
+                    setSuccessMessage(null);
+                  }
+                }}
+                style={styles.moodOption}>
+                <View
+                  style={[
+                    styles.moodBubble,
+                    {
+                      backgroundColor: selected ? 'rgba(127,34,255,0.28)' : 'rgba(255,255,255,0.02)',
+                      borderColor: selected ? palette.accent : palette.border,
+                      shadowColor: selected ? palette.accentStrong : 'transparent',
+                    },
+                  ]}>
+                  <Text style={styles.moodEmoji}>{mood.emoji}</Text>
+                </View>
+                <Text
+                  style={[
+                    styles.moodLabel,
+                    {
+                      color: selected ? palette.text : palette.mutedText,
+                      fontWeight: selected ? '700' : '500',
+                    },
+                  ]}>
+                  {mood.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <View style={styles.entrySection}>
+          <Text style={[styles.entryHeading, { color: palette.text }]}>What went well today?</Text>
+          <View
+            style={[
+              styles.textAreaShell,
+              {
+                backgroundColor: 'rgba(255,255,255,0.035)',
+                borderColor: palette.border,
+              },
+            ]}>
+            <TextInput
+              multiline
+              numberOfLines={4}
+              value={state.reflectionDraft.wentWell}
+              onChangeText={(text) => {
+                setReflectionField('wentWell', text);
+                if (successMessage) {
+                  setSuccessMessage(null);
+                }
+              }}
+              placeholder="Focus on the wins, big or small..."
+              placeholderTextColor={palette.mutedText}
+              style={[styles.textArea, { color: palette.text }]}
             />
           </View>
         </View>
 
-        <Text style={[styles.prompt, { color: palette.text }]}>How are you feeling?</Text>
-        <View style={styles.moodRow}>
-          {moods.map((mood) => (
-            <View
-              key={mood.id}
-              style={[
-                styles.moodCard,
-                {
-                  backgroundColor: palette.card,
-                  borderColor: mood.selected ? palette.accent : palette.border,
-                  shadowColor: mood.selected ? palette.accentStrong : 'transparent',
-                },
-              ]}>
-              <Text style={styles.moodEmoji}>{mood.emoji}</Text>
-              <Text
-                style={[
-                  styles.moodLabel,
-                  {
-                    color: mood.selected ? palette.accent : palette.text,
-                    fontWeight: mood.selected ? '700' : '500',
-                  },
-                ]}>
-                {mood.label}
-              </Text>
-            </View>
-          ))}
+        <View style={styles.entrySection}>
+          <Text style={[styles.entryHeading, { color: palette.text }]}>What are you grateful for?</Text>
+          <View
+            style={[
+              styles.textAreaShell,
+              {
+                backgroundColor: 'rgba(255,255,255,0.035)',
+                borderColor: palette.border,
+              },
+            ]}>
+            <TextInput
+              multiline
+              numberOfLines={4}
+              value={state.reflectionDraft.gratefulFor}
+              onChangeText={(text) => {
+                setReflectionField('gratefulFor', text);
+                if (successMessage) {
+                  setSuccessMessage(null);
+                }
+              }}
+              placeholder="Something that made you smile..."
+              placeholderTextColor={palette.mutedText}
+              style={[styles.textArea, { color: palette.text }]}
+            />
+          </View>
         </View>
 
-        <SectionTitle title="Today's Prompts" palette={palette} />
+        <GlowButton
+          label="Save Reflection"
+          palette={palette}
+          style={styles.saveButton}
+          textStyle={styles.saveButtonText}
+          onPress={handleSaveReflection}
+        />
+        {successMessage ? <Text style={[styles.successText, { color: palette.accent }]}>{successMessage}</Text> : null}
 
-        <SurfaceCard palette={palette} style={styles.entryCard}>
-          <Text style={[styles.entryHeading, { color: palette.accent }]}>What went well today?</Text>
-          <TextInput
-            multiline
-            numberOfLines={4}
-            placeholder="I completed the design project ahead of schedule..."
-            placeholderTextColor={palette.mutedText}
+        <View style={styles.historyHeader}>
+          <Text style={[styles.historyHeading, { color: palette.text }]}>Past Entries</Text>
+          <Text style={[styles.historyAction, { color: palette.accent }]}>VIEW ALL</Text>
+        </View>
+
+        {visibleHistory.map((entry) => (
+          <View
+            key={entry.id}
             style={[
-              styles.textArea,
+              styles.historyItem,
               {
-                backgroundColor: palette.cardStrong,
-                color: palette.text,
+                backgroundColor: 'rgba(255,255,255,0.035)',
+                borderColor: palette.border,
+                shadowColor: palette.shadow,
               },
-            ]}
-          />
-        </SurfaceCard>
-
-        <SurfaceCard palette={palette} style={styles.entryCard}>
-          <Text style={[styles.entryHeading, { color: palette.accent }]}>What are you grateful for?</Text>
-          <TextInput
-            multiline
-            numberOfLines={4}
-            placeholder="A warm cup of coffee and morning sunlight..."
-            placeholderTextColor={palette.mutedText}
-            style={[
-              styles.textArea,
-              {
-                backgroundColor: palette.cardStrong,
-                color: palette.text,
-              },
-            ]}
-          />
-        </SurfaceCard>
-
-        <GlowButton label="Save Reflection" palette={palette} style={styles.saveButton} textStyle={styles.saveButtonText} />
-
-        <SectionTitle title="History" action="View All" palette={palette} />
-        {history.map((entry) => (
-          <SurfaceCard key={entry.id} palette={palette} style={styles.historyItem}>
-            <View style={[styles.historyEmoji, { backgroundColor: palette.cardStrong }]}>
-              <Text style={styles.moodEmoji}>{entry.mood}</Text>
+            ]}>
+            <View style={[styles.historyEmoji, { backgroundColor: 'rgba(255,255,255,0.04)' }]}>
+              <Text style={styles.moodEmoji}>{moodEmoji(entry.mood)}</Text>
             </View>
             <View style={styles.historyCopy}>
-              <Text style={[styles.historyDate, { color: palette.mutedText }]}>{entry.date}</Text>
-              <Text style={[styles.historyPreview, { color: palette.text }]}>{entry.preview}</Text>
+              <Text style={[styles.historyDate, { color: palette.text }]}>{entry.dateLabel}</Text>
+              <Text numberOfLines={1} style={[styles.historyPreview, { color: palette.mutedText }]}>
+                {entry.preview}
+              </Text>
             </View>
             <SymbolView
-              name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
-              size={20}
+              name={resolveSymbolName({ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' })}
+              size={18}
               tintColor={palette.mutedText}
             />
-          </SurfaceCard>
+          </View>
         ))}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -133,101 +237,147 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: 18,
+    paddingHorizontal: 10,
+    paddingTop: 65,
     paddingBottom: 128,
   },
-  topRow: {
-    marginBottom: 12,
+  headerBlock: {
+    marginBottom: 18,
+    paddingHorizontal: 6,
+  },
+  dateRow: {
+    marginBottom: 10,
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    gap: 8,
   },
   dateText: {
-    marginBottom: 8,
-    fontSize: 20,
+    fontSize: 16,
+    fontWeight: '600',
   },
-  settings: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  prompt: {
+  heroTitle: {
     fontSize: 22,
-    marginBottom: 14,
+    lineHeight: 30,
     fontWeight: '700',
   },
   moodRow: {
-    marginBottom: 20,
+    marginBottom: 28,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 10,
+    gap: 8,
   },
-  moodCard: {
+  moodOption: {
     flex: 1,
-    minHeight: 110,
-    borderRadius: 24,
+    alignItems: 'center',
+  },
+  moodBubble: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowOpacity: 0.42,
-    shadowRadius: 14,
+    shadowOpacity: 0.38,
+    shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
   },
   moodEmoji: {
-    fontSize: 34,
-    marginBottom: 4,
+    fontSize: 28,
   },
   moodLabel: {
-    fontSize: 22,
+    marginTop: 10,
+    fontSize: 11,
+    letterSpacing: 1.2,
   },
-  entryCard: {
-    marginBottom: 14,
+  entrySection: {
+    marginBottom: 24,
   },
   entryHeading: {
-    fontSize: 28,
-    fontFamily: 'SpaceMono',
-    lineHeight: 32,
-    marginBottom: 10,
+    paddingHorizontal: 6,
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  textAreaShell: {
+    borderRadius: 26,
+    borderWidth: 1,
+    minHeight: 106,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
   },
   textArea: {
-    borderRadius: 18,
-    minHeight: 138,
-    padding: 14,
-    fontSize: 18,
-    lineHeight: 24,
+    minHeight: 76,
+    fontSize: 16,
+    lineHeight: 22,
     textAlignVertical: 'top',
   },
   saveButton: {
-    marginVertical: 8,
+    marginTop: 4,
+    marginBottom: 28,
+    minHeight: 54,
   },
   saveButtonText: {
-    fontSize: 24,
-    lineHeight: 28,
+    fontFamily: Platform.select({ ios: 'System', android: 'sans-serif-medium', default: undefined }),
+    fontSize: 18,
+    lineHeight: 22,
+    fontWeight: '700',
+  },
+  successText: {
+    marginTop: -18,
+    marginBottom: 24,
+    textAlign: 'center',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  historyHeader: {
+    paddingHorizontal: 6,
+    marginBottom: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  historyHeading: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  historyAction: {
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.6,
   },
   historyItem: {
-    marginBottom: 10,
+    marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 24,
+    borderRadius: 26,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    shadowOpacity: 0.22,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 6,
   },
   historyEmoji: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   historyCopy: {
     flex: 1,
+    paddingRight: 10,
   },
   historyDate: {
-    fontSize: 18,
+    marginBottom: 3,
+    fontSize: 15,
+    fontWeight: '700',
   },
   historyPreview: {
-    fontSize: 26,
-    lineHeight: 30,
+    fontSize: 13,
+    lineHeight: 18,
   },
 });

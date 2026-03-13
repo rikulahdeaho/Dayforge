@@ -1,66 +1,192 @@
+/**
+ * Habits Screen - Recurring Habit Tracker & Completion Log
+ *
+ * Overview:
+ * - Dedicated interface for tracking recurring daily habits
+ * - Shows habit completion status for today and weekly mini calendar
+ * - Displays weekly progress visualization (7-day dot indicator)
+ *
+ * Content:
+ * 1. Header with "Today's Habits" title and profile icon
+ * 2. Purple gradient hero card showing:
+ *    - Streak badge ("STREAK ACTIVE")
+ *    - Completion count (e.g., "3/4 completed today")
+ *    - Progress bar (visual representation of habit completion ratio)
+ *    - Motivational message
+ * 3. Weekly mini calendar with 7 day circles (tap to select day context)
+ * 4. Habit cards for each habit:
+ *    - Icon + title + subtitle
+ *    - Right-side action button (+ if incomplete, ✓ if complete)
+ *    - 7-dot weekly progress indicator
+ *    - Status label (e.g., "PERFECT WEEK", "5/7 DAYS", "ON TRACK")
+ * 5. "Create New Habit" dashed button
+ *
+ * Interactions:
+ * - Tap day circle in calendar → select day (updates context for weekly tracking)
+ * - Tap habit card action button (+ or ✓) → toggle habit complete/incomplete for today
+ * - Habit completion updates progress bar and completion count in real-time
+ * - Tap "Create New Habit" → append new demo habit ("New Habit", "Daily routine", "Getting started")
+ * - Session-only state: habit status resets on app reload to demo defaults
+ */
+
 import { SymbolView } from 'expo-symbols';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useEffect } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
-import { useColorScheme } from '@/components/useColorScheme';
+import { DateHeader } from '@/components/dayforge/DateHeader';
+import { TopGradientBackground } from '@/components/dayforge/TopGradientBackground';
+import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
+import { DayforgePalette, DashedAction, ProgressTrack } from '@/components/dayforge/Primitives';
+import { WeekdayPicker } from '@/components/dayforge/WeekdayPicker';
 import Colors from '@/constants/Colors';
-import { DashedAction, DayforgePalette, GlowButton, ProgressTrack, SectionTitle, SurfaceCard } from '@/components/dayforge/Primitives';
+import { useAppState } from '@/store/appState';
 
-const items = [
-  { id: '1', title: 'Morning Meditation', subtitle: '15 mins', streak: '7 day streak', progress: 1, icon: { ios: 'figure.mind.and.body', android: 'self_improvement', web: 'self_improvement' } },
-  { id: '2', title: 'Read 20 Pages', subtitle: 'Nightly', streak: '5/7 days', progress: 0.72, icon: { ios: 'book.fill', android: 'menu_book', web: 'menu_book' } },
-  { id: '3', title: 'Drink 2L Water', subtitle: 'All day', streak: 'On track', progress: 0.95, icon: { ios: 'drop.fill', android: 'water_drop', web: 'water_drop' } },
-  { id: '4', title: 'Workout', subtitle: '30 mins', streak: '4/7 days', progress: 0.57, icon: { ios: 'figure.run', android: 'fitness_center', web: 'fitness_center' } },
-];
+function AnimatedCompleteBadge({ completed, tintColor }: { completed: boolean; tintColor: string }) {
+  const scale = useSharedValue(completed ? 1 : 0.8);
 
-export default function HabitsScreen() {
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme] as DayforgePalette;
+  useEffect(() => {
+    if (completed) {
+      scale.value = withSequence(
+        withTiming(0.8, { duration: 100, easing: Easing.out(Easing.quad) }),
+        withTiming(1.2, { duration: 140, easing: Easing.out(Easing.cubic) }),
+        withTiming(1, { duration: 120, easing: Easing.inOut(Easing.quad) })
+      );
+      return;
+    }
+
+    scale.value = withTiming(0.8, { duration: 120, easing: Easing.out(Easing.quad) });
+  }, [completed, scale]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  if (!completed) {
+    return null;
+  }
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: palette.background }]}>
+    <Animated.View style={animatedStyle}>
+      <SymbolView
+        name={resolveSymbolName({ ios: 'checkmark', android: 'done', web: 'done' })}
+        size={16}
+        tintColor={tintColor}
+      />
+    </Animated.View>
+  );
+}
+
+export default function HabitsScreen() {
+  const palette = Colors.dark as DayforgePalette;
+  const { addHabit, selectHabitDay, state, toggleHabit } = useAppState();
+  const successColor = palette.success;
+  const headerDate = new Date().toLocaleDateString(undefined, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  const completedCount = state.habits.filter((habit) => habit.completedToday).length;
+  const totalCount = state.habits.length;
+  const progressValue = totalCount ? completedCount / totalCount : 0;
+
+  return (
+    <View style={[styles.safe, { backgroundColor: palette.background }]}>
+      <TopGradientBackground />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={[styles.date, { color: palette.mutedText }]}>CURATE YOUR ROUTINE</Text>
-        <SectionTitle title="Habits" action="Manage" palette={palette} />
+        <DateHeader palette={palette} dateText={headerDate} title="Today's Habits" />
 
-        <SurfaceCard palette={palette} style={styles.summaryCard}>
-          <View style={styles.summaryRow}>
-            <Text style={[styles.summaryTitle, { color: palette.text }]}>6 Active Habits</Text>
-            <Text style={[styles.summarySub, { color: palette.accent }]}>4 completed today</Text>
+        <LinearGradient
+          colors={[palette.accentStrong, palette.accent, '#7f22ff']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.heroCard}>
+          <View style={styles.streakPill}>
+            <SymbolView
+              name={resolveSymbolName({ ios: 'flame.fill', android: 'local_fire_department', web: 'local_fire_department' })}
+              size={14}
+              tintColor="#fff"
+            />
+            <Text style={styles.streakText}>STREAK ACTIVE</Text>
           </View>
-          <ProgressTrack value={0.66} palette={palette} tint={palette.accentStrong} style={styles.summaryProgress} />
-        </SurfaceCard>
+          <Text style={styles.heroTitle}>
+            {completedCount}/{totalCount} completed today
+          </Text>
+          <Text style={styles.heroBody}>Keep the chain alive. Every check-in builds your momentum.</Text>
+          <ProgressTrack value={progressValue} palette={palette} style={styles.heroProgress} />
+        </LinearGradient>
 
-        {items.map((item) => (
-          <SurfaceCard key={item.id} palette={palette} style={styles.itemCard}>
-            <View style={styles.itemTop}>
-              <View style={[styles.itemIcon, { backgroundColor: palette.cardStrong }]}>
-                <SymbolView name={item.icon as any} size={22} tintColor={palette.accent} />
-              </View>
-              <View style={styles.itemCopy}>
-                <Text style={[styles.itemTitle, { color: palette.text }]}>{item.title}</Text>
-                <Text style={[styles.itemSub, { color: palette.mutedText }]}>
-                  {item.subtitle} - {item.streak}
-                </Text>
-              </View>
-              <View style={[styles.itemBadge, { borderColor: palette.accent, backgroundColor: palette.cardStrong }]}>
-                <SymbolView name={{ ios: 'checkmark', android: 'done', web: 'done' }} size={16} tintColor={palette.accent} />
-              </View>
+        <WeekdayPicker
+          palette={palette}
+          selectedIndex={state.selectedHabitDayIndex}
+          onSelectDay={(index) => selectHabitDay(index)}
+        />
+
+        {state.habits.map((habit) => {
+          const iconName = resolveSymbolName({ ios: habit.icon, android: 'task_alt', web: 'task_alt' });
+
+          return (
+            <View key={habit.id}>
+              <Pressable onPress={() => toggleHabit(habit.id)}>
+                <View style={[styles.itemCard, { backgroundColor: 'rgba(255,255,255,0.035)', borderColor: palette.border }]}>
+                  <View style={styles.itemTop}>
+                    <View style={[styles.itemIcon, { backgroundColor: 'rgba(255,255,255,0.04)' }]}>
+                      <SymbolView name={iconName} size={48} tintColor={palette.accent} />
+                    </View>
+                    <View style={styles.itemCopy}>
+                      <Text style={[styles.itemTitle, { color: palette.text }]}>{habit.title}</Text>
+                      <Text style={[styles.itemSub, { color: palette.mutedText }]}>{habit.subtitle}</Text>
+                      <Text style={[styles.tapHint, { color: palette.mutedText }]}>Tap to complete</Text>
+                    </View>
+                    <Pressable
+                      onPress={() => toggleHabit(habit.id)}
+                      style={[
+                        styles.itemBadge,
+                        {
+                          borderColor: habit.completedToday ? successColor : palette.border,
+                          backgroundColor: 'transparent',
+                        },
+                      ]}>
+                      <AnimatedCompleteBadge completed={habit.completedToday} tintColor={successColor} />
+                    </Pressable>
+                  </View>
+                  <View style={styles.dotRow}>
+                    {habit.weeklyProgress.map((isDone, index) => (
+                      <View
+                        key={`${habit.id}-dot-${index}`}
+                        style={[
+                          styles.dot,
+                          {
+                            backgroundColor: isDone ? palette.accent : 'rgba(255,255,255,0.08)',
+                          },
+                        ]}
+                      />
+                    ))}
+                  </View>
+                  <Text style={[styles.statusLabel, { color: palette.accent }]}>{habit.statusLabel}</Text>
+                </View>
+              </Pressable>
             </View>
-            <ProgressTrack value={item.progress} palette={palette} tint={palette.accent} style={styles.itemProgress} />
-          </SurfaceCard>
-        ))}
+          );
+        })}
 
         <DashedAction
           label="Create New Habit"
           palette={palette}
-          icon={<SymbolView name={{ ios: 'plus', android: 'add', web: 'add' }} size={20} tintColor={palette.mutedText} />}
+          icon={
+            <SymbolView
+              name={resolveSymbolName({ ios: 'plus', android: 'add', web: 'add' })}
+              size={20}
+              tintColor={palette.mutedText}
+            />
+          }
           style={styles.dashed}
+          onPress={addHabit}
         />
-
-        <GlowButton label="Add Custom Habit" palette={palette} textStyle={styles.ctaText} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -69,37 +195,60 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: 18,
+    paddingHorizontal: 10,
+    paddingTop: 65,
     paddingBottom: 128,
   },
-  date: {
-    marginTop: 6,
-    fontFamily: 'SpaceMono',
-    letterSpacing: 1.8,
-    fontSize: 14,
+  heroCard: {
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    padding: 18,
+    marginBottom: 20,
   },
-  summaryCard: {
-    marginBottom: 16,
-  },
-  summaryRow: {
+  streakPill: {
+    alignSelf: 'flex-start',
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 8,
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(255,255,255,0.18)',
     marginBottom: 10,
   },
-  summaryTitle: {
-    fontSize: 24,
+  streakText: {
+    color: '#fff',
     fontWeight: '700',
+    fontSize: 12,
   },
-  summarySub: {
-    fontSize: 14,
-    fontWeight: '600',
+  heroTitle: {
+    color: '#fff',
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: '700',
+    marginBottom: 6,
   },
-  summaryProgress: {
-    height: 9,
-  },
-  itemCard: {
+  heroBody: {
+    color: 'rgba(255,255,255,0.88)',
+    fontSize: 15,
+    lineHeight: 22,
     marginBottom: 12,
+  },
+  heroProgress: {
+    height: 10,
+  },
+
+  itemCard: {
+    marginBottom: 10,
+    borderRadius: 24,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   itemTop: {
     flexDirection: 'row',
@@ -107,9 +256,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   itemIcon: {
-    width: 54,
-    height: 54,
-    borderRadius: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -118,12 +267,18 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
   },
   itemTitle: {
-    fontSize: 21,
+    fontSize: 16,
     fontWeight: '700',
   },
   itemSub: {
     marginTop: 2,
-    fontSize: 16,
+    fontSize: 13,
+  },
+  tapHint: {
+    marginTop: 6,
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.4,
   },
   itemBadge: {
     width: 34,
@@ -133,14 +288,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  itemProgress: {
+  dotRow: {
+    flexDirection: 'row',
+    gap: 7,
+    marginBottom: 8,
+  },
+  dot: {
+    flex: 1,
     height: 8,
+    borderRadius: 4,
+  },
+  statusLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.6,
   },
   dashed: {
-    marginVertical: 10,
-  },
-  ctaText: {
-    fontSize: 18,
-    lineHeight: 24,
+    marginTop: 8,
+    borderRadius: 26,
   },
 });

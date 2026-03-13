@@ -1,24 +1,60 @@
 import React from 'react';
 import { SymbolView } from 'expo-symbols';
 import { Tabs } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 
-type IconName = {
-  ios: any;
-  android: any;
-  web: any;
+type PlatformIconName = {
+  ios: string;
+  android: string;
+  web: string;
 };
 
-function TabIcon({ color, name, size = 22 }: { color: string; name: IconName; size?: number }) {
-  return <SymbolView name={name as any} tintColor={color} size={size} />;
+function getIconName(icon: PlatformIconName): string {
+  return (
+    Platform.select({
+      ios: icon.ios,
+      android: icon.android,
+      web: icon.web,
+      default: icon.web,
+    }) || icon.web
+  );
+}
+
+function TabIcon({
+  color,
+  focused,
+  name,
+  size = 22,
+  highlightColor,
+}: {
+  color: string;
+  focused: boolean;
+  name: PlatformIconName;
+  size?: number;
+  highlightColor: string;
+}) {
+  return (
+    <View
+      style={[
+        styles.iconWrap,
+        focused
+          ? {
+              backgroundColor: `${highlightColor}33`,
+              borderColor: `${highlightColor}66`,
+            }
+          : null,
+      ]}>
+      <SymbolView name={getIconName(name) as any} tintColor={color} size={size} />
+    </View>
+  );
 }
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme];
+  const palette = Colors[colorScheme ?? 'dark'];
 
   return (
     <Tabs
@@ -34,22 +70,29 @@ export default function TabLayout() {
         },
       }}>
       <Tabs.Screen
-        name="today"
+        name="index"
         options={{
           title: 'Today',
-          tabBarIcon: ({ color }) => (
-            <TabIcon color={color} name={{ ios: 'sun.max.fill', android: 'wb_sunny', web: 'wb_sunny' }} />
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon
+              color={color}
+              focused={focused}
+              highlightColor={palette.accentStrong}
+              name={{ ios: 'house.fill', android: 'home', web: 'home' }}
+            />
           ),
         }}
       />
       <Tabs.Screen
-        name="plan"
+        name="task"
         options={{
-          title: 'Plan',
-          tabBarIcon: ({ color }) => (
+          title: 'Tasks',
+          tabBarIcon: ({ color, focused }) => (
             <TabIcon
               color={color}
-              name={{ ios: 'calendar', android: 'calendar_month', web: 'calendar_month' }}
+              focused={focused}
+              highlightColor={palette.accentStrong}
+              name={{ ios: 'checkmark.square.fill', android: 'checklist', web: 'checklist' }}
             />
           ),
         }}
@@ -58,23 +101,14 @@ export default function TabLayout() {
         name="habits"
         options={{
           title: 'Habits',
-          tabBarLabel: '',
-          tabBarIcon: ({ focused }) => (
-            <View
-              style={[
-                styles.centerOrb,
-                {
-                  borderColor: focused ? palette.accentSoft : palette.border,
-                  shadowColor: palette.accentStrong,
-                  backgroundColor: focused ? palette.accentStrong : palette.cardStrong,
-                },
-              ]}>
-              <TabIcon
-                color={focused ? '#ffffff' : palette.tabIconDefault}
-                size={24}
-                name={{ ios: 'plus', android: 'add', web: 'add' }}
-              />
-            </View>
+          tabBarLabel: 'Habits',
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon
+              color={color}
+              focused={focused}
+              highlightColor={palette.accentStrong}
+              name={{ ios: 'arrow.triangle.2.circlepath', android: 'repeat', web: 'repeat' }}
+            />
           ),
         }}
       />
@@ -82,8 +116,13 @@ export default function TabLayout() {
         name="reflect"
         options={{
           title: 'Reflect',
-          tabBarIcon: ({ color }) => (
-            <TabIcon color={color} name={{ ios: 'sparkles', android: 'auto_awesome', web: 'auto_awesome' }} />
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon
+              color={color}
+              focused={focused}
+              highlightColor={palette.accentStrong}
+              name={{ ios: 'book.closed.fill', android: 'menu_book', web: 'menu_book' }}
+            />
           ),
         }}
       />
@@ -91,8 +130,13 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color }) => (
-            <TabIcon color={color} name={{ ios: 'person.fill', android: 'person', web: 'person' }} />
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon
+              color={color}
+              focused={focused}
+              highlightColor={palette.accentStrong}
+              name={{ ios: 'person.crop.circle.fill', android: 'account_circle', web: 'account_circle' }}
+            />
           ),
         }}
       />
@@ -112,17 +156,13 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 2,
   },
-  centerOrb: {
-    width: 62,
-    height: 62,
-    borderRadius: 31,
-    borderWidth: 1,
-    justifyContent: 'center',
+  iconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
-    marginTop: -18,
-    shadowOpacity: 0.45,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 9 },
-    elevation: 9,
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
 });
