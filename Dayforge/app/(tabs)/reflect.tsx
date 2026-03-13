@@ -37,12 +37,15 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { SymbolView } from 'expo-symbols';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
+
+import { DateHeader } from '@/components/dayforge/DateHeader';
+import { TopGradientBackground } from '@/components/dayforge/TopGradientBackground';
+import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
 import { DayforgePalette, GlowButton } from '@/components/dayforge/Primitives';
 import Colors from '@/constants/Colors';
 import { useAppState } from '@/store/appState';
-import { Mood, PlatformIconName } from '@/types';
+import { Mood } from '@/types';
 
 const moods: { id: Mood; emoji: string; label: string }[] = [
   { id: 'sad', emoji: '😔', label: 'SAD' },
@@ -50,16 +53,6 @@ const moods: { id: Mood; emoji: string; label: string }[] = [
   { id: 'good', emoji: '😊', label: 'GOOD' },
   { id: 'happy', emoji: '✨', label: 'HAPPY' },
 ];
-
-function resolveSymbolName(icon: PlatformIconName) {
-  return (
-    Platform.select({
-      ios: icon.ios,
-      android: icon.android,
-      default: icon.web,
-    }) ?? icon.web
-  ) as any;
-}
 
 function moodEmoji(mood: Mood) {
   switch (mood) {
@@ -76,18 +69,15 @@ function moodEmoji(mood: Mood) {
   }
 }
 
-function formatReflectionDate() {
-  return new Date().toLocaleDateString(undefined, {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
 
 export default function ReflectionScreen() {
   const palette = Colors.dark as DayforgePalette;
   const { saveReflection, setMood, setReflectionField, setSuccessMessage, state, successMessage } = useAppState();
-  const headerDate = formatReflectionDate();
+  const headerDate = new Date().toLocaleDateString(undefined, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
   const visibleHistory = state.reflectionHistory.slice(0, 3);
 
   const handleSaveReflection = () => {
@@ -99,27 +89,10 @@ export default function ReflectionScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: palette.background }]}>
-      <View pointerEvents="none" style={styles.backgroundLayer}>
-        <LinearGradient
-          colors={['rgba(127,34,255,0.22)', 'rgba(127,34,255,0.05)', 'transparent']}
-          start={{ x: 0.8, y: 0 }}
-          end={{ x: 0.2, y: 1 }}
-          style={styles.topGlow}
-        />
-      </View>
+    <View style={[styles.safe, { backgroundColor: palette.background }]}>
+      <TopGradientBackground />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.headerBlock}>
-          <View style={styles.dateRow}>
-            <SymbolView
-              name={resolveSymbolName({ ios: 'calendar', android: 'calendar_month', web: 'calendar_month' })}
-              size={16}
-              tintColor={palette.accent}
-            />
-            <Text style={[styles.dateText, { color: palette.accent }]}>{headerDate}</Text>
-          </View>
-          <Text style={[styles.heroTitle, { color: palette.text }]}>How are you feeling?</Text>
-        </View>
+        <DateHeader palette={palette} dateText={headerDate} title="How are you feeling?" />
 
         <View style={styles.moodRow}>
           {moods.map((mood) => {
@@ -256,7 +229,7 @@ export default function ReflectionScreen() {
           </View>
         ))}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -264,27 +237,9 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
   },
-  backgroundLayer: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  topGlow: {
-    position: 'absolute',
-    top: -60,
-    right: -80,
-    width: 280,
-    height: 280,
-    borderRadius: 999,
-  },
-  bottomGlow: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 160,
-    height: 220,
-  },
   content: {
     paddingHorizontal: 10,
-    paddingTop: 6,
+    paddingTop: 65,
     paddingBottom: 128,
   },
   headerBlock: {

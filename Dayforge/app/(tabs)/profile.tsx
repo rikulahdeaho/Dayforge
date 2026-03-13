@@ -33,13 +33,13 @@
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { SymbolView } from 'expo-symbols';
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { DayforgePalette, SurfaceCard } from '@/components/dayforge/Primitives';
+import { TopGradientBackground } from '@/components/dayforge/TopGradientBackground';
+import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
 import Colors from '@/constants/Colors';
 import { useAppState } from '@/store/appState';
-import { PlatformIconName } from '@/types';
 
 const accountRows = [
   {
@@ -69,16 +69,6 @@ const supportRows = [
   },
 ];
 
-function resolveSymbolName(icon: PlatformIconName) {
-  return (
-    Platform.select({
-      ios: icon.ios,
-      android: icon.android,
-      default: icon.web,
-    }) ?? icon.web
-  ) as any;
-}
-
 function showPlaceholder(featureName: string) {
   Alert.alert(featureName, `${featureName} is available in a future version.`);
 }
@@ -88,52 +78,13 @@ export default function ProfileScreen() {
   const { state, toggleDarkModeSession } = useAppState();
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: palette.background }]}>
-      <View pointerEvents="none" style={styles.backgroundLayer}>
-        <LinearGradient
-          colors={['rgba(127,34,255,0.22)', 'rgba(127,34,255,0.05)', 'transparent']}
-          start={{ x: 0.8, y: 0 }}
-          end={{ x: 0.2, y: 1 }}
-          style={styles.topGlow}
-        />
-      </View>
+    <View style={[styles.safe, { backgroundColor: palette.background }]}>
+      <TopGradientBackground />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.titleRow}>
           <View>
-            <View style={styles.dateRow}>
-              <SymbolView
-                name={resolveSymbolName({ ios: 'gearshape.fill', android: 'settings', web: 'settings' })}
-                size={16}
-                tintColor={palette.accent}
-              />
-              <Text style={[styles.kicker, { color: palette.accent }]}>Preferences</Text>
-            </View>
             <Text style={[styles.title, { color: palette.text }]}>Settings</Text>
           </View>
-          <View style={[styles.headerIcon, { backgroundColor: 'rgba(255,255,255,0.035)', borderColor: palette.border }]}>
-            <SymbolView
-              name={resolveSymbolName({ ios: 'slider.horizontal.3', android: 'tune', web: 'tune' })}
-              size={18}
-              tintColor={palette.text}
-            />
-          </View>
-        </View>
-
-        <View style={styles.profileWrap}>
-          <View style={[styles.avatarRing, { borderColor: palette.accent }]}> 
-            <View style={styles.avatarCircle}>
-              <Text style={styles.avatarFace}>{state.user.avatar}</Text>
-            </View>
-          </View>
-          <View style={[styles.editChip, { backgroundColor: palette.accentStrong }]}>
-            <SymbolView
-              name={resolveSymbolName({ ios: 'pencil', android: 'edit', web: 'edit' })}
-              size={16}
-              tintColor="#fff"
-            />
-          </View>
-          <Text style={[styles.name, { color: palette.text }]}>{state.user.name}</Text>
-          <Text style={[styles.member, { color: palette.accent }]}>{state.user.membership}</Text>
         </View>
 
         <Text style={[styles.sectionKicker, { color: palette.accent }]}>ACCOUNT & PRODUCTIVITY</Text>
@@ -227,12 +178,12 @@ export default function ProfileScreen() {
           ))}
         </SurfaceCard>
 
-        <Pressable onPress={() => Alert.alert('Sign Out', 'Sign out is disabled in this MVP prototype.')}>
-          <Text style={styles.signOut}>Sign Out</Text>
+        <Pressable onPress={() => Alert.alert('Reset Data', 'Reset data is disabled in this MVP prototype.')}>
+          <Text style={styles.signOut}>Reset Data</Text>
         </Pressable>
-        <Text style={[styles.version, { color: palette.mutedText }]}>Version 2.4.0 (Build 108)</Text>
+        <Text style={[styles.version, { color: palette.mutedText }]}>Version 0.0.1 (Build 1 MVP)</Text>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -240,20 +191,10 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
   },
-  backgroundLayer: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  topGlow: {
-    position: 'absolute',
-    top: -90,
-    right: -80,
-    width: 280,
-    height: 280,
-    borderRadius: 999,
-  },
+
   content: {
     paddingHorizontal: 10,
-    paddingTop: 6,
+    paddingTop: 65,
     paddingBottom: 124,
   },
   titleRow: {
@@ -287,48 +228,48 @@ const styles = StyleSheet.create({
   },
   profileWrap: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 16,
   },
   avatarRing: {
-    width: 132,
-    height: 132,
-    borderRadius: 66,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     backgroundColor: '#d3b08a',
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarFace: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '700',
     color: '#301505',
   },
   editChip: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -24,
-    marginLeft: 90,
+    marginTop: -18,
+    marginLeft: 68,
   },
   name: {
-    marginTop: 14,
-    fontSize: 24,
-    lineHeight: 30,
+    marginTop: 10,
+    fontSize: 20,
+    lineHeight: 26,
     fontWeight: '700',
   },
   member: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '600',
-    marginTop: 4,
+    marginTop: 2,
   },
   sectionKicker: {
     marginBottom: 10,

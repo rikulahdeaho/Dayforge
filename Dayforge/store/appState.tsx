@@ -17,7 +17,7 @@ type AppState = {
   tasks: Task[];
   reflectionDraft: ReflectionDraft;
   reflectionHistory: ReflectionHistoryItem[];
-  selectedScheduleDay: string;
+  selectedScheduleDay: number;
   selectedHabitDayIndex: number;
 };
 
@@ -27,7 +27,8 @@ type Action =
   | { type: 'TOGGLE_TASK'; taskId: string }
   | { type: 'ADD_TASK'; task: Task }
   | { type: 'INCREMENT_GOAL_PROGRESS' }
-  | { type: 'SELECT_SCHEDULE_DAY'; dayId: string }
+  | { type: 'DECREMENT_GOAL_PROGRESS' }
+  | { type: 'SELECT_SCHEDULE_DAY'; dayIndex: number }
   | { type: 'SELECT_HABIT_DAY'; dayIndex: number }
   | { type: 'SET_MOOD'; mood: Mood | null }
   | { type: 'SET_REFLECTION_FIELD'; field: 'wentWell' | 'gratefulFor'; value: string }
@@ -38,6 +39,8 @@ type Action =
     }
   | { type: 'TOGGLE_DARK_MODE_SESSION' };
 
+const getMondayBasedDayIndex = () => (new Date().getDay() + 6) % 7;
+
 const initialState: AppState = {
   user: DEMO_USER,
   habits: DEMO_HABITS,
@@ -45,8 +48,8 @@ const initialState: AppState = {
   tasks: DEMO_TASKS,
   reflectionDraft: DEMO_REFLECTION_DRAFT,
   reflectionHistory: DEMO_REFLECTION_HISTORY,
-  selectedScheduleDay: 'tue',
-  selectedHabitDayIndex: new Date().getDay(),
+  selectedScheduleDay: getMondayBasedDayIndex(),
+  selectedHabitDayIndex: getMondayBasedDayIndex(),
 };
 
 function appReducer(state: AppState, action: Action): AppState {
@@ -104,10 +107,19 @@ function appReducer(state: AppState, action: Action): AppState {
         },
       };
 
+    case 'DECREMENT_GOAL_PROGRESS':
+      return {
+        ...state,
+        goal: {
+          ...state.goal,
+          progress: Math.max(0, state.goal.progress - 1),
+        },
+      };
+
     case 'SELECT_SCHEDULE_DAY':
       return {
         ...state,
-        selectedScheduleDay: action.dayId,
+        selectedScheduleDay: action.dayIndex,
       };
 
     case 'SELECT_HABIT_DAY':
@@ -170,7 +182,8 @@ type AppStateContextValue = {
   toggleTask: (taskId: string) => void;
   addTask: () => void;
   incrementGoalProgress: () => void;
-  selectScheduleDay: (dayId: string) => void;
+  decrementGoalProgress: () => void;
+  selectScheduleDay: (dayIndex: number) => void;
   selectHabitDay: (dayIndex: number) => void;
   setMood: (mood: Mood) => void;
   setReflectionField: (field: 'wentWell' | 'gratefulFor', value: string) => void;
@@ -224,8 +237,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       incrementGoalProgress: () => {
         dispatch({ type: 'INCREMENT_GOAL_PROGRESS' });
       },
-      selectScheduleDay: (dayId) => {
-        dispatch({ type: 'SELECT_SCHEDULE_DAY', dayId });
+      decrementGoalProgress: () => {
+        dispatch({ type: 'DECREMENT_GOAL_PROGRESS' });
+      },
+      selectScheduleDay: (dayIndex) => {
+        dispatch({ type: 'SELECT_SCHEDULE_DAY', dayIndex });
       },
       selectHabitDay: (dayIndex) => {
         dispatch({ type: 'SELECT_HABIT_DAY', dayIndex });

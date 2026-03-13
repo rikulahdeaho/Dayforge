@@ -40,7 +40,7 @@ export const DEMO_HABITS: Habit[] = [
 export const DEMO_GOAL: Goal = {
   id: 'goal-1',
   title: 'Apply to 3 jobs',
-  label: 'CURRENT OBJECTIVE',
+  label: 'Weekly Focus',
   progress: 1,
   target: 3,
 };

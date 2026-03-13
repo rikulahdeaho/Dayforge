@@ -31,65 +31,72 @@
 
 import { SymbolView } from 'expo-symbols';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useEffect } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
+import { DateHeader } from '@/components/dayforge/DateHeader';
+import { TopGradientBackground } from '@/components/dayforge/TopGradientBackground';
+import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
 import { DayforgePalette, DashedAction, ProgressTrack, SectionTitle, SurfaceCard } from '@/components/dayforge/Primitives';
+import { WeekdayPicker } from '@/components/dayforge/WeekdayPicker';
 import Colors from '@/constants/Colors';
 import { useAppState } from '@/store/appState';
-import { PlatformIconName } from '@/types';
 
-const weekdayKeys = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+function AnimatedCompleteBadge({ completed, tintColor }: { completed: boolean; tintColor: string }) {
+  const scale = useSharedValue(completed ? 1 : 0.8);
 
-function resolveSymbolName(icon: PlatformIconName) {
+  useEffect(() => {
+    if (completed) {
+      scale.value = withSequence(
+        withTiming(0.8, { duration: 100, easing: Easing.out(Easing.quad) }),
+        withTiming(1.2, { duration: 140, easing: Easing.out(Easing.cubic) }),
+        withTiming(1, { duration: 120, easing: Easing.inOut(Easing.quad) })
+      );
+      return;
+    }
+
+    scale.value = withTiming(0.8, { duration: 120, easing: Easing.out(Easing.quad) });
+  }, [completed, scale]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  if (!completed) {
+    return null;
+  }
+
   return (
-    Platform.select({
-      ios: icon.ios,
-      android: icon.android,
-      default: icon.web,
-    }) ?? icon.web
-  ) as any;
+    <Animated.View style={animatedStyle}>
+      <SymbolView
+        name={resolveSymbolName({ ios: 'checkmark', android: 'done', web: 'done' })}
+        size={16}
+        tintColor={tintColor}
+      />
+    </Animated.View>
+  );
 }
 
 export default function HabitsScreen() {
   const palette = Colors.dark as DayforgePalette;
   const { addHabit, selectHabitDay, state, toggleHabit } = useAppState();
+  const successColor = palette.success;
+  const headerDate = new Date().toLocaleDateString(undefined, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
 
   const completedCount = state.habits.filter((habit) => habit.completedToday).length;
   const totalCount = state.habits.length;
   const progressValue = totalCount ? completedCount / totalCount : 0;
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: palette.background }]}>
-      <View pointerEvents="none" style={styles.backgroundLayer}>
-        <LinearGradient
-          colors={['rgba(127,34,255,0.22)', 'rgba(127,34,255,0.05)', 'transparent']}
-          start={{ x: 0.8, y: 0 }}
-          end={{ x: 0.2, y: 1 }}
-          style={styles.topGlow}
-        />
-      </View>
+    <View style={[styles.safe, { backgroundColor: palette.background }]}>
+      <TopGradientBackground />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.headerRow}>
-          <View>
-            <View style={styles.dateRow}>
-              <SymbolView
-                name={resolveSymbolName({ ios: 'calendar', android: 'calendar_month', web: 'calendar_month' })}
-                size={16}
-                tintColor={palette.accent}
-              />
-              <Text style={[styles.date, { color: palette.accent }]}>Today • Habit Tracker</Text>
-            </View>
-            <Text style={[styles.title, { color: palette.text }]}>Today's Habits</Text>
-          </View>
-          <View style={[styles.profileIcon, { backgroundColor: palette.cardStrong, borderColor: palette.border }]}>
-            <SymbolView
-              name={resolveSymbolName({ ios: 'person.fill', android: 'person', web: 'person' })}
-              size={20}
-              tintColor={palette.text}
-            />
-          </View>
-        </View>
+        <DateHeader palette={palette} dateText={headerDate} title="Today's Habits" />
 
         <LinearGradient
           colors={[palette.accentStrong, palette.accent, '#7f22ff']}
@@ -111,78 +118,57 @@ export default function HabitsScreen() {
           <ProgressTrack value={progressValue} palette={palette} style={styles.heroProgress} />
         </LinearGradient>
 
-        <SurfaceCard palette={palette} style={styles.calendarCard}>
-          <Text style={[styles.calendarTitle, { color: palette.text }]}>Weekly mini calendar</Text>
-          <View style={styles.weekRow}>
-            {weekdayKeys.map((label, index) => {
-              const selected = state.selectedHabitDayIndex === index;
-              return (
-                <Pressable
-                  key={`${label}-${index}`}
-                  onPress={() => selectHabitDay(index)}
-                  style={[
-                    styles.dayCircle,
-                    {
-                      backgroundColor: selected ? palette.accentStrong : palette.cardStrong,
-                      borderColor: selected ? palette.accentSoft : 'transparent',
-                    },
-                  ]}>
-                  <Text style={[styles.dayText, { color: selected ? '#fff' : palette.mutedText }]}>{label}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </SurfaceCard>
+        <WeekdayPicker
+          palette={palette}
+          selectedIndex={state.selectedHabitDayIndex}
+          onSelectDay={(index) => selectHabitDay(index)}
+        />
 
         {state.habits.map((habit) => {
           const iconName = resolveSymbolName({ ios: habit.icon, android: 'task_alt', web: 'task_alt' });
 
           return (
-            <SurfaceCard key={habit.id} palette={palette} style={styles.itemCard}>
-              <View style={styles.itemTop}>
-                <View style={[styles.itemIcon, { backgroundColor: palette.cardStrong }]}>
-                  <SymbolView name={iconName} size={22} tintColor={palette.accent} />
+            <View key={habit.id}>
+              <Pressable onPress={() => toggleHabit(habit.id)}>
+                <View style={[styles.itemCard, { backgroundColor: 'rgba(255,255,255,0.035)', borderColor: palette.border }]}>
+                  <View style={styles.itemTop}>
+                    <View style={[styles.itemIcon, { backgroundColor: 'rgba(255,255,255,0.04)' }]}>
+                      <SymbolView name={iconName} size={48} tintColor={palette.accent} />
+                    </View>
+                    <View style={styles.itemCopy}>
+                      <Text style={[styles.itemTitle, { color: palette.text }]}>{habit.title}</Text>
+                      <Text style={[styles.itemSub, { color: palette.mutedText }]}>{habit.subtitle}</Text>
+                      <Text style={[styles.tapHint, { color: palette.mutedText }]}>Tap to complete</Text>
+                    </View>
+                    <Pressable
+                      onPress={() => toggleHabit(habit.id)}
+                      style={[
+                        styles.itemBadge,
+                        {
+                          borderColor: habit.completedToday ? successColor : palette.border,
+                          backgroundColor: 'transparent',
+                        },
+                      ]}>
+                      <AnimatedCompleteBadge completed={habit.completedToday} tintColor={successColor} />
+                    </Pressable>
+                  </View>
+                  <View style={styles.dotRow}>
+                    {habit.weeklyProgress.map((isDone, index) => (
+                      <View
+                        key={`${habit.id}-dot-${index}`}
+                        style={[
+                          styles.dot,
+                          {
+                            backgroundColor: isDone ? palette.accent : 'rgba(255,255,255,0.08)',
+                          },
+                        ]}
+                      />
+                    ))}
+                  </View>
+                  <Text style={[styles.statusLabel, { color: palette.accent }]}>{habit.statusLabel}</Text>
                 </View>
-                <View style={styles.itemCopy}>
-                  <Text style={[styles.itemTitle, { color: palette.text }]}>{habit.title}</Text>
-                  <Text style={[styles.itemSub, { color: palette.mutedText }]}>{habit.subtitle}</Text>
-                </View>
-                <Pressable
-                  onPress={() => toggleHabit(habit.id)}
-                  style={[
-                    styles.itemBadge,
-                    {
-                      borderColor: habit.completedToday ? palette.accent : palette.border,
-                      backgroundColor: habit.completedToday ? palette.accent : palette.cardStrong,
-                    },
-                  ]}>
-                  <SymbolView
-                    name={resolveSymbolName(
-                      habit.completedToday
-                        ? { ios: 'checkmark', android: 'done', web: 'done' }
-                        : { ios: 'plus', android: 'add', web: 'add' }
-                    )}
-                    size={16}
-                    tintColor={habit.completedToday ? '#fff' : palette.mutedText}
-                  />
-                </Pressable>
-              </View>
-
-              <View style={styles.dotRow}>
-                {habit.weeklyProgress.map((isDone, index) => (
-                  <View
-                    key={`${habit.id}-dot-${index}`}
-                    style={[
-                      styles.dot,
-                      {
-                        backgroundColor: isDone ? palette.accent : palette.cardStrong,
-                      },
-                    ]}
-                  />
-                ))}
-              </View>
-              <Text style={[styles.statusLabel, { color: palette.accent }]}>{habit.statusLabel}</Text>
-            </SurfaceCard>
+              </Pressable>
+            </View>
           );
         })}
 
@@ -200,7 +186,7 @@ export default function HabitsScreen() {
           onPress={addHabit}
         />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -208,50 +194,10 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
   },
-  backgroundLayer: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  topGlow: {
-    position: 'absolute',
-    top: -80,
-    right: -80,
-    width: 280,
-    height: 280,
-    borderRadius: 999,
-  },
   content: {
     paddingHorizontal: 10,
-    paddingTop: 6,
+    paddingTop: 65,
     paddingBottom: 128,
-  },
-  headerRow: {
-    marginBottom: 18,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  profileIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  dateRow: {
-    marginBottom: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  date: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  title: {
-    fontSize: 22,
-    lineHeight: 30,
-    fontWeight: '700',
   },
   heroCard: {
     borderRadius: 30,
@@ -292,36 +238,17 @@ const styles = StyleSheet.create({
   heroProgress: {
     height: 10,
   },
-  calendarCard: {
-    marginBottom: 16,
-    borderRadius: 26,
-    backgroundColor: 'rgba(255,255,255,0.035)',
-  },
-  calendarTitle: {
-    fontSize: 16,
-    marginBottom: 10,
-    fontWeight: '700',
-  },
-  weekRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  dayCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dayText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
+
   itemCard: {
-    marginBottom: 12,
-    borderRadius: 26,
-    backgroundColor: 'rgba(255,255,255,0.035)',
+    marginBottom: 10,
+    borderRadius: 24,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   itemTop: {
     flexDirection: 'row',
@@ -329,9 +256,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   itemIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -347,6 +274,12 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontSize: 13,
   },
+  tapHint: {
+    marginTop: 6,
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.4,
+  },
   itemBadge: {
     width: 34,
     height: 34,
@@ -357,13 +290,13 @@ const styles = StyleSheet.create({
   },
   dotRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 7,
     marginBottom: 8,
   },
   dot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    flex: 1,
+    height: 8,
+    borderRadius: 4,
   },
   statusLabel: {
     fontSize: 12,

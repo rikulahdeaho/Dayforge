@@ -26,10 +26,15 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { SymbolView } from 'expo-symbols';
 import { useRouter } from 'expo-router';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useEffect } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
 import { DEMO_SCHEDULE } from '@/data/mockData';
+
+import { DateHeader } from '@/components/dayforge/DateHeader';
+import { TopGradientBackground } from '@/components/dayforge/TopGradientBackground';
+import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
 import {
   DashedAction,
   DayforgePalette,
@@ -39,79 +44,68 @@ import {
   SectionTitle,
   SurfaceCard,
 } from '@/components/dayforge/Primitives';
+import { WeekdayPicker } from '@/components/dayforge/WeekdayPicker';
 import Colors from '@/constants/Colors';
 import { useAppState } from '@/store/appState';
-import { PlatformIconName } from '@/types';
 
-function resolveSymbolName(icon: PlatformIconName) {
+function AnimatedCompleteCheck({ completed, tintColor }: { completed: boolean; tintColor: string }) {
+  const scale = useSharedValue(completed ? 1 : 0.8);
+
+  useEffect(() => {
+    if (completed) {
+      scale.value = withSequence(
+        withTiming(0.8, { duration: 100, easing: Easing.out(Easing.quad) }),
+        withTiming(1.2, { duration: 140, easing: Easing.out(Easing.cubic) }),
+        withTiming(1, { duration: 120, easing: Easing.inOut(Easing.quad) })
+      );
+      return;
+    }
+
+    scale.value = withTiming(0.8, { duration: 120, easing: Easing.out(Easing.quad) });
+  }, [completed, scale]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  if (!completed) {
+    return null;
+  }
+
   return (
-    Platform.select({
-      ios: icon.ios,
-      android: icon.android,
-      default: icon.web,
-    }) ?? icon.web
-  ) as any;
+    <Animated.View style={animatedStyle}>
+      <SymbolView
+        name={resolveSymbolName({ ios: 'checkmark', android: 'done', web: 'done' })}
+        size={15}
+        tintColor={tintColor}
+      />
+    </Animated.View>
+  );
 }
 
 export default function TaskScreen() {
   const router = useRouter();
   const palette = Colors.dark as DayforgePalette;
-  const { state, addTask, incrementGoalProgress, selectScheduleDay, toggleTask } = useAppState();
+  const { state, addTask, decrementGoalProgress, incrementGoalProgress, selectScheduleDay, toggleTask } = useAppState();
 
   const goalProgress = state.goal.target > 0 ? state.goal.progress / state.goal.target : 0;
   const completedTasks = state.tasks.filter((task) => task.completed).length;
   const remainingTasks = state.tasks.length - completedTasks;
   const isGoalComplete = state.goal.progress >= state.goal.target;
+  const successColor = palette.success;
+
+  const headerDate = new Date().toLocaleDateString(undefined, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: palette.background }]}>
-      <View pointerEvents="none" style={styles.backgroundLayer}>
-        <LinearGradient
-          colors={['rgba(127,34,255,0.22)', 'rgba(127,34,255,0.05)', 'transparent']}
-          start={{ x: 0.8, y: 0 }}
-          end={{ x: 0.2, y: 1 }}
-          style={styles.topGlow}
-        />
-      </View>
+    <View style={[styles.safe, { backgroundColor: palette.background }]}>
+      <TopGradientBackground />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <View>
-            <View style={styles.dateRow}>
-              <SymbolView
-                name={resolveSymbolName({ ios: 'calendar', android: 'calendar_month', web: 'calendar_month' })}
-                size={16}
-                tintColor={palette.accent}
-              />
-              <Text style={[styles.dateRange, { color: palette.accent }]}>February 26 - March 3</Text>
-            </View>
-            <Text style={[styles.title, { color: palette.text }]}>Week 9</Text>
-          </View>
-          <View style={[styles.bellWrap, { backgroundColor: palette.cardStrong, borderColor: palette.border }]}>
-            <SymbolView
-              name={resolveSymbolName({ ios: 'bell.fill', android: 'notifications', web: 'notifications' })}
-              size={22}
-              tintColor={palette.accent}
-            />
-          </View>
-        </View>
+        <DateHeader palette={palette} dateText={headerDate} title="Today's Tasks" />
 
-        <SurfaceCard palette={palette} style={styles.progressCard}>
-          <View style={styles.rowBetween}>
-            <Text style={[styles.progressLabel, { color: palette.text }]}>Goals in progress</Text>
-            <Text style={[styles.progressValue, { color: palette.mutedText }]}>1 / 1 active</Text>
-          </View>
-          <ProgressTrack
-            value={goalProgress}
-            palette={palette}
-            tint={palette.accentStrong}
-            style={styles.summaryProgress}
-          />
-        </SurfaceCard>
-
-        <View style={styles.sectionRow}>
-          <Text style={[styles.sectionTitle, { color: palette.text }]}>Weekly Focus</Text>
-          <Text style={[styles.sectionAction, { color: palette.accent }]}>DETAILS</Text>
-        </View>
         <GradientCard palette={palette} style={styles.focusCard}>
           <View style={styles.focusTop}>
             <View style={styles.objectiveTag}>
@@ -126,69 +120,65 @@ export default function TaskScreen() {
             </Text>
           </View>
           <View style={styles.ctaWrap}>
-            <Pressable
-              disabled={isGoalComplete}
-              style={[
-                styles.whiteButton,
-                { opacity: isGoalComplete ? 0.55 : 1 },
-              ]}
-              onPress={incrementGoalProgress}>
-              <Text style={[styles.whiteButtonText, { color: palette.accentStrong }]}>Update progress</Text>
+            <View style={styles.stepperGroup}>
+              <Pressable
+                style={[styles.stepperButton, { opacity: state.goal.progress <= 0 ? 0.55 : 1 }]}
+                disabled={state.goal.progress <= 0}
+                onPress={decrementGoalProgress}>
+                <Text style={styles.stepperText}>-</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.stepperButton, { opacity: isGoalComplete ? 0.55 : 1 }]}
+                disabled={isGoalComplete}
+                onPress={incrementGoalProgress}>
+                <Text style={styles.stepperText}>+</Text>
+              </Pressable>
+            </View>
+            <Pressable style={[styles.editButton, { borderColor: palette.accentStrong }]}> 
+              <SymbolView
+                name={resolveSymbolName({ ios: 'square.and.pencil', android: 'edit', web: 'edit' })}
+                size={18}
+                tintColor={palette.accentStrong}
+              />
             </Pressable>
           </View>
         </GradientCard>
 
-        <View style={styles.sectionRow}>
-          <Text style={[styles.sectionTitle, { color: palette.text }]}>Schedule</Text>
-          <Text style={[styles.sectionAction, { color: palette.accent }]}>TAP DAY</Text>
-        </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scheduleList}>
-          {DEMO_SCHEDULE.map((item) => {
-            const selected = item.id === state.selectedScheduleDay;
-
-            return (
-              <Pressable
-                key={item.id}
-                onPress={() => selectScheduleDay(item.id)}
-                style={[
-                  styles.scheduleCard,
-                  {
-                    backgroundColor: selected ? palette.accentStrong : palette.card,
-                    borderColor: selected ? palette.accentSoft : palette.border,
-                    shadowColor: selected ? palette.accentStrong : 'transparent',
-                  },
-                ]}>
-                <Text style={[styles.scheduleDay, { color: selected ? '#ffffff' : palette.mutedText }]}>{item.day}</Text>
-                <Text style={[styles.scheduleDate, { color: selected ? '#ffffff' : palette.text }]}>{item.date}</Text>
-                {selected ? <View style={styles.scheduleDot} /> : null}
-              </Pressable>
-            );
-          })}
-        </ScrollView>
+        <WeekdayPicker
+          palette={palette}
+          selectedIndex={state.selectedScheduleDay}
+          onSelectDay={(index) => selectScheduleDay(index)}
+        />
 
         <View style={styles.sectionRow}>
-          <Text style={[styles.sectionTitle, { color: palette.text }]}>Today's Tasks</Text>
+          <View style={styles.sectionLeftWrap}>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>Today's Tasks</Text>
+            <Pressable style={[styles.addTaskChip, { borderColor: palette.border }]} onPress={addTask}>
+              <View style={styles.addTaskChipInner}>
+                <SymbolView
+                  name={resolveSymbolName({ ios: 'plus', android: 'add', web: 'add' })}
+                  size={12}
+                  tintColor={palette.accent}
+                />
+                <Text style={[styles.addTaskChipText, { color: palette.accent }]}>Add task</Text>
+              </View>
+            </Pressable>
+          </View>
           <Text style={[styles.sectionAction, { color: palette.accent }]}>{remainingTasks} REMAINING</Text>
         </View>
         {state.tasks.map((task) => (
           <Pressable key={task.id} onPress={() => toggleTask(task.id)}>
-            <SurfaceCard palette={palette} style={styles.taskCard}>
+            <SurfaceCard palette={palette} style={[styles.taskCard, { opacity: task.completed ? 0.6 : 1 }]}>
               <View style={styles.taskRow}>
                 <View
                   style={[
                     styles.taskCheck,
                     {
-                      borderColor: task.completed ? palette.accent : palette.border,
-                      backgroundColor: task.completed ? palette.accent : 'transparent',
+                      borderColor: task.completed ? successColor : palette.border,
+                      backgroundColor: 'transparent',
                     },
                   ]}>
-                  {task.completed ? (
-                    <SymbolView
-                      name={resolveSymbolName({ ios: 'checkmark', android: 'done', web: 'done' })}
-                      size={15}
-                      tintColor="#ffffff"
-                    />
-                  ) : null}
+                  <AnimatedCompleteCheck completed={task.completed} tintColor={successColor} />
                 </View>
                 <Text
                   style={[
@@ -219,7 +209,7 @@ export default function TaskScreen() {
           onPress={addTask}
         />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -227,53 +217,10 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
   },
-  backgroundLayer: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  topGlow: {
-    position: 'absolute',
-    top: -100,
-    right: -100,
-    width: 280,
-    height: 280,
-    borderRadius: 999,
-    padding: 0,
-    borderWidth: 0,
-    shadowOpacity: 0,
-  },
   content: {
     paddingHorizontal: 10,
-    paddingTop: 6,
+    paddingTop: 65,
     paddingBottom: 132,
-  },
-  header: {
-    marginBottom: 18,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  dateRow: {
-    marginBottom: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  dateRange: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  title: {
-    fontSize: 22,
-    lineHeight: 30,
-    fontWeight: '700',
-  },
-  bellWrap: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
   },
   progressCard: {
     marginBottom: 24,
@@ -304,9 +251,30 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  sectionLeftWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
+  },
+  addTaskChip: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  addTaskChipText: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.4,
+  },
+  addTaskChipInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   sectionAction: {
     fontSize: 13,
@@ -353,17 +321,38 @@ const styles = StyleSheet.create({
   },
   ctaWrap: {
     marginTop: 18,
-  },
-  whiteButton: {
-    backgroundColor: '#fff',
-    borderRadius: 999,
-    paddingVertical: 14,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  whiteButtonText: {
-    fontSize: 16,
+  stepperGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  stepperButton: {
+    width: 56,
+    height: 56,
+    backgroundColor: '#fff',
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepperText: {
+    color: '#5b21b6',
+    fontSize: 26,
     fontWeight: '700',
   },
+  editButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgb(255, 255, 255)',
+  },
+
   scheduleList: {
     paddingBottom: 12,
     gap: 10,

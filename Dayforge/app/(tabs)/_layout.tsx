@@ -1,7 +1,7 @@
 import React from 'react';
 import { SymbolView } from 'expo-symbols';
 import { Tabs } from 'expo-router';
-import { Platform, StyleSheet } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -23,8 +23,33 @@ function getIconName(icon: PlatformIconName): string {
   );
 }
 
-function TabIcon({ color, name, size = 22 }: { color: string; name: PlatformIconName; size?: number }) {
-  return <SymbolView name={getIconName(name) as any} tintColor={color} size={size} />;
+function TabIcon({
+  color,
+  focused,
+  name,
+  size = 22,
+  highlightColor,
+}: {
+  color: string;
+  focused: boolean;
+  name: PlatformIconName;
+  size?: number;
+  highlightColor: string;
+}) {
+  return (
+    <View
+      style={[
+        styles.iconWrap,
+        focused
+          ? {
+              backgroundColor: `${highlightColor}33`,
+              borderColor: `${highlightColor}66`,
+            }
+          : null,
+      ]}>
+      <SymbolView name={getIconName(name) as any} tintColor={color} size={size} />
+    </View>
+  );
 }
 
 export default function TabLayout() {
@@ -48,8 +73,13 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Today',
-          tabBarIcon: ({ color }) => (
-            <TabIcon color={color} name={{ ios: 'house.fill', android: 'home', web: 'home' }} />
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon
+              color={color}
+              focused={focused}
+              highlightColor={palette.accentStrong}
+              name={{ ios: 'house.fill', android: 'home', web: 'home' }}
+            />
           ),
         }}
       />
@@ -57,8 +87,13 @@ export default function TabLayout() {
         name="task"
         options={{
           title: 'Tasks',
-          tabBarIcon: ({ color }) => (
-            <TabIcon color={color} name={{ ios: 'checkmark.square.fill', android: 'checklist', web: 'checklist' }} />
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon
+              color={color}
+              focused={focused}
+              highlightColor={palette.accentStrong}
+              name={{ ios: 'checkmark.square.fill', android: 'checklist', web: 'checklist' }}
+            />
           ),
         }}
       />
@@ -67,8 +102,13 @@ export default function TabLayout() {
         options={{
           title: 'Habits',
           tabBarLabel: 'Habits',
-          tabBarIcon: ({ color }) => (
-            <TabIcon color={color} name={{ ios: 'arrow.triangle.2.circlepath', android: 'repeat', web: 'repeat' }} />
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon
+              color={color}
+              focused={focused}
+              highlightColor={palette.accentStrong}
+              name={{ ios: 'arrow.triangle.2.circlepath', android: 'repeat', web: 'repeat' }}
+            />
           ),
         }}
       />
@@ -76,8 +116,13 @@ export default function TabLayout() {
         name="reflect"
         options={{
           title: 'Reflect',
-          tabBarIcon: ({ color }) => (
-            <TabIcon color={color} name={{ ios: 'book.closed.fill', android: 'menu_book', web: 'menu_book' }} />
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon
+              color={color}
+              focused={focused}
+              highlightColor={palette.accentStrong}
+              name={{ ios: 'book.closed.fill', android: 'menu_book', web: 'menu_book' }}
+            />
           ),
         }}
       />
@@ -85,8 +130,13 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color }) => (
-            <TabIcon color={color} name={{ ios: 'person.crop.circle.fill', android: 'account_circle', web: 'account_circle' }} />
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon
+              color={color}
+              focused={focused}
+              highlightColor={palette.accentStrong}
+              name={{ ios: 'person.crop.circle.fill', android: 'account_circle', web: 'account_circle' }}
+            />
           ),
         }}
       />
@@ -105,5 +155,14 @@ const styles = StyleSheet.create({
     fontFamily: 'SpaceMono',
     fontSize: 11,
     marginTop: 2,
+  },
+  iconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
 });
