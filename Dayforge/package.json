@@ -6,10 +6,12 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "test:store": "tsc -p tsconfig.store-tests.json && node .tmp-tests/store/__tests__/appState.reducer.test.js"
   },
   "dependencies": {
     "@expo/ngrok": "^4.1.3",
+    "@react-native-async-storage/async-storage": "2.2.0",
     "@react-navigation/native": "^7.1.8",
     "expo": "^54.0.0",
     "expo-constants": "~18.0.13",

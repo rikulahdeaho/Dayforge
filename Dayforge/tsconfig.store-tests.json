@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "outDir": "./.tmp-tests",
+    "rootDir": ".",
+    "noEmit": false
+  },
+  "include": [
+    "store/**/*.ts",
+    "data/mockData.ts",
+    "types/**/*.ts"
+  ]
+}

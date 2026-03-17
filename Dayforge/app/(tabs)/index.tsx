@@ -41,6 +41,19 @@ import { TopGradientBackground } from '@/components/dayforge/TopGradientBackgrou
 import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
 import { DayforgePalette, GradientCard, ProgressTrack, SurfaceCard } from '@/components/dayforge/Primitives';
 import { useAppState } from '@/store/appState';
+import {
+  selectCompletedHabitsCount,
+  selectCompletedTasksCount,
+  selectFirstName,
+  selectHabitProgress,
+  selectMostProductiveDay,
+  selectReflectionStreak,
+  selectRemainingTasksCount,
+  selectTotalHabitsCount,
+  selectTotalTasksCount,
+  selectWeeklyChart,
+  selectWeeklyTrendDelta,
+} from '@/store/appState.selectors';
 import type { Task } from '@/types';
 
 export default function TodayScreen() {
@@ -61,15 +74,15 @@ export default function TodayScreen() {
     }, 600);
   };
 
-  const completedHabits = state.habits.filter((habit) => habit.completedToday).length;
-  const totalHabits = state.habits.length;
-  const habitProgress = totalHabits ? completedHabits / totalHabits : 0;
-  const remainingTasks = state.tasks.filter((task) => !task.completed).length;
-  const completedTasks = state.tasks.filter((task) => task.completed).length;
-  const firstName = state.user.name.split(' ')[0] ?? state.user.name;
+  const completedHabits = selectCompletedHabitsCount(state);
+  const totalHabits = selectTotalHabitsCount(state);
+  const habitProgress = selectHabitProgress(state);
+  const remainingTasks = selectRemainingTasksCount(state);
+  const completedTasks = selectCompletedTasksCount(state);
+  const firstName = selectFirstName(state);
   const streakDays = 5;
-  const reflectionStreak = Math.min(7, state.reflectionHistory.length + (state.reflectionDraft.mood ? 1 : 0));
-  const totalTasks = state.tasks.length;
+  const reflectionStreak = selectReflectionStreak(state);
+  const totalTasks = selectTotalTasksCount(state);
 
   const firePulse = useSharedValue(1);
 
@@ -89,39 +102,16 @@ export default function TodayScreen() {
     opacity: 0.88 + (firePulse.value - 1) * 0.5,
   }));
 
-  const weekdayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
   const weeklyStats = [
     { id: 'habits', title: 'Habits', value: completedHabits, sub: `${totalHabits} today` },
     { id: 'tasks', title: 'Tasks', value: completedTasks, sub: `${totalTasks} total` },
     { id: 'reflect', title: 'Reflection', value: reflectionStreak, sub: 'streak' },
   ];
 
-  const dailyHabitCounts = weekdayLabels.map((_, dayIndex) =>
-    state.habits.reduce((sum, habit) => sum + (habit.weeklyProgress[dayIndex] ? 1 : 0), 0)
-  );
-
-  const safeGoalProgress = state.goal.target > 0 ? state.goal.progress / state.goal.target : 0;
-  const safeTaskProgress = totalTasks > 0 ? completedTasks / totalTasks : 0;
-
-  const weeklyChart = dailyHabitCounts.map((count, dayIndex) => {
-    const habitsScore = (count / Math.max(1, totalHabits)) * 72;
-    const supportScore = safeGoalProgress * 18 + safeTaskProgress * 10;
-    const value = Math.max(10, Math.min(100, Math.round(habitsScore + supportScore)));
-
-    return {
-      id: `weekly-bar-${dayIndex}`,
-      label: weekdayLabels[dayIndex],
-      value,
-    };
-  });
-
-  const earlyWeekAverage = (weeklyChart[0].value + weeklyChart[1].value + weeklyChart[2].value) / 3;
-  const lateWeekAverage = (weeklyChart[4].value + weeklyChart[5].value + weeklyChart[6].value) / 3;
-  const trendDelta = Math.round(lateWeekAverage - earlyWeekAverage);
+  const weeklyChart = selectWeeklyChart(state);
+  const trendDelta = selectWeeklyTrendDelta(state);
   const trendUp = trendDelta >= 0;
-
-  const mostProductiveDay = weeklyChart.reduce((best, day) => (day.value > best.value ? day : best), weeklyChart[0]);
+  const mostProductiveDay = selectMostProductiveDay(state);
   const todayDate = new Date().toLocaleDateString(undefined, {
     weekday: 'long',
     month: 'long',
