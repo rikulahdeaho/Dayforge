@@ -147,7 +147,7 @@ export default function ProfileScreen() {
               <Text style={[styles.settingSubtitle, { color: palette.mutedText }]}>Session-only preference</Text>
             </View>
             <Switch
-              value={state.user.darkMode}
+              value={state.preferences.darkMode}
               onValueChange={toggleDarkModeSession}
               trackColor={{ false: palette.border, true: palette.accent }}
               thumbColor="#ffffff"

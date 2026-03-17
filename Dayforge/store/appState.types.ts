@@ -1,25 +1,22 @@
-import { Goal, Habit, Mood, ReflectionDraft, ReflectionHistoryItem, Task, User } from '@/types';
+import { Goal, Habit, Mood, Preferences, ReflectionDraft, ReflectionHistoryItem, Task, User } from '../types';
 
 export type AppState = {
   user: User;
+  preferences: Preferences;
   habits: Habit[];
   goal: Goal;
   tasks: Task[];
   reflectionDraft: ReflectionDraft;
   reflectionHistory: ReflectionHistoryItem[];
-  selectedScheduleDay: number;
-  selectedHabitDayIndex: number;
 };
 
 export type AppStateAction =
-  | { type: 'TOGGLE_HABIT'; habitId: string }
+  | { type: 'TOGGLE_HABIT'; habitId: string; dayIndex: number }
   | { type: 'ADD_HABIT'; habit: Habit }
   | { type: 'TOGGLE_TASK'; taskId: string }
   | { type: 'ADD_TASK'; task: Task }
   | { type: 'INCREMENT_GOAL_PROGRESS' }
   | { type: 'DECREMENT_GOAL_PROGRESS' }
-  | { type: 'SELECT_SCHEDULE_DAY'; dayIndex: number }
-  | { type: 'SELECT_HABIT_DAY'; dayIndex: number }
   | { type: 'SET_MOOD'; mood: Mood | null }
   | { type: 'SET_REFLECTION_FIELD'; field: 'wentWell' | 'gratefulFor'; value: string }
   | {

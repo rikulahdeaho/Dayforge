@@ -9,9 +9,10 @@ import React, {
   useState,
 } from 'react';
 
-import { Mood } from '@/types';
+import { Mood } from '../types';
 
 import { clearPersistedAppState, loadPersistedAppState, persistAppState } from './appState.persistence';
+import { buildReflectionHistoryItem } from './appState.helpers';
 import { appReducer, getInitialAppState } from './appState.reducer';
 import { AppState } from './appState.types';
 
@@ -19,14 +20,12 @@ type AppStateContextValue = {
   state: AppState;
   successMessage: string | null;
   setSuccessMessage: (message: string | null) => void;
-  toggleHabit: (habitId: string) => void;
+  toggleHabit: (habitId: string, dayIndex: number) => void;
   addHabit: (habitInput: { title: string; subtitle: string; icon: string }) => void;
   toggleTask: (taskId: string) => void;
   addTask: (title: string) => void;
   incrementGoalProgress: () => void;
   decrementGoalProgress: () => void;
-  selectScheduleDay: (dayIndex: number) => void;
-  selectHabitDay: (dayIndex: number) => void;
   setMood: (mood: Mood) => void;
   setReflectionField: (field: 'wentWell' | 'gratefulFor', value: string) => void;
   saveReflection: () => { ok: true } | { ok: false; reason: 'mood-required' };
@@ -108,8 +107,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       state,
       successMessage,
       setSuccessMessage,
-      toggleHabit: (habitId) => {
-        dispatch({ type: 'TOGGLE_HABIT', habitId });
+      toggleHabit: (habitId, dayIndex) => {
+        dispatch({ type: 'TOGGLE_HABIT', habitId, dayIndex });
       },
       addHabit: ({ title, subtitle, icon }) => {
         const normalizedTitle = title.trim();
@@ -149,12 +148,6 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       decrementGoalProgress: () => {
         dispatch({ type: 'DECREMENT_GOAL_PROGRESS' });
       },
-      selectScheduleDay: (dayIndex) => {
-        dispatch({ type: 'SELECT_SCHEDULE_DAY', dayIndex });
-      },
-      selectHabitDay: (dayIndex) => {
-        dispatch({ type: 'SELECT_HABIT_DAY', dayIndex });
-      },
       setMood: (mood) => {
         dispatch({ type: 'SET_MOOD', mood });
       },
@@ -162,30 +155,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         dispatch({ type: 'SET_REFLECTION_FIELD', field, value });
       },
       saveReflection: () => {
-        const { mood, wentWell, gratefulFor } = state.reflectionDraft;
+        const { mood } = state.reflectionDraft;
 
         if (!mood) {
           return { ok: false, reason: 'mood-required' as const };
         }
 
-        const fallbackPreview = 'A calm and focused day with steady progress.';
-        const previewSource = wentWell.trim() || gratefulFor.trim() || fallbackPreview;
-        const preview = previewSource.length > 84 ? `${previewSource.slice(0, 84)}...` : previewSource;
-        const dateLabel = new Date().toLocaleDateString(undefined, {
-          month: 'short',
-          day: 'numeric',
-        });
-
         dispatch({
           type: 'SAVE_REFLECTION',
-          historyItem: {
-            id: `reflection-${Date.now()}`,
-            dateLabel,
-            mood,
-            preview,
-            wentWell,
-            gratefulFor,
-          },
+          historyItem: buildReflectionHistoryItem({ draft: state.reflectionDraft }),
           clearDraft: true,
         });
 

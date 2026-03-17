@@ -43,6 +43,12 @@ import {
 import { WeekdayPicker } from '@/components/dayforge/WeekdayPicker';
 import Colors from '@/constants/Colors';
 import { useAppState } from '@/store/appState';
+import { getCurrentMondayBasedDayIndex } from '@/store/appState.helpers';
+import {
+  selectCompletedTasksCount,
+  selectGoalProgress,
+  selectRemainingTasksCount,
+} from '@/store/appState.selectors';
 import { useRouter } from 'expo-router';
 
 function AnimatedCompleteCheck({ completed, tintColor }: { completed: boolean; tintColor: string }) {
@@ -83,13 +89,14 @@ function AnimatedCompleteCheck({ completed, tintColor }: { completed: boolean; t
 export default function TaskScreen() {
   const router = useRouter();
   const palette = Colors.dark as DayforgePalette;
-  const { state, addTask, decrementGoalProgress, incrementGoalProgress, selectScheduleDay, toggleTask } = useAppState();
+  const { state, addTask, decrementGoalProgress, incrementGoalProgress, toggleTask } = useAppState();
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [selectedScheduleDay, setSelectedScheduleDay] = useState(getCurrentMondayBasedDayIndex);
 
-  const goalProgress = state.goal.target > 0 ? state.goal.progress / state.goal.target : 0;
-  const completedTasks = state.tasks.filter((task) => task.completed).length;
-  const remainingTasks = state.tasks.length - completedTasks;
+  const goalProgress = selectGoalProgress(state);
+  const completedTasks = selectCompletedTasksCount(state);
+  const remainingTasks = selectRemainingTasksCount(state);
   const isGoalComplete = state.goal.progress >= state.goal.target;
   const successColor = palette.success;
 
@@ -163,8 +170,8 @@ export default function TaskScreen() {
 
         <WeekdayPicker
           palette={palette}
-          selectedIndex={state.selectedScheduleDay}
-          onSelectDay={(index) => selectScheduleDay(index)}
+          selectedIndex={selectedScheduleDay}
+          onSelectDay={setSelectedScheduleDay}
         />
 
         <View style={styles.sectionRow}>

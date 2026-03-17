@@ -4,6 +4,9 @@ export type User = {
   name: string;
   membership: string;
   avatar: string;
+};
+
+export type Preferences = {
   darkMode: boolean;
 };
 

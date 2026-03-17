@@ -42,6 +42,8 @@ import { DayforgePalette, DashedAction, ProgressTrack } from '@/components/dayfo
 import { WeekdayPicker } from '@/components/dayforge/WeekdayPicker';
 import Colors from '@/constants/Colors';
 import { useAppState } from '@/store/appState';
+import { getCurrentMondayBasedDayIndex } from '@/store/appState.helpers';
+import { selectCompletedHabitsCount, selectHabitProgress, selectTotalHabitsCount } from '@/store/appState.selectors';
 
 const habitIconOptions = [
   {
@@ -113,11 +115,12 @@ function AnimatedCompleteBadge({ completed, tintColor }: { completed: boolean; t
 
 export default function HabitsScreen() {
   const palette = Colors.dark as DayforgePalette;
-  const { addHabit, selectHabitDay, state, toggleHabit } = useAppState();
+  const { addHabit, state, toggleHabit } = useAppState();
   const [isHabitModalOpen, setIsHabitModalOpen] = useState(false);
   const [habitTitle, setHabitTitle] = useState('');
   const [habitSubtitle, setHabitSubtitle] = useState('');
   const [habitIcon, setHabitIcon] = useState(habitIconOptions[0].id);
+  const [selectedHabitDayIndex, setSelectedHabitDayIndex] = useState(getCurrentMondayBasedDayIndex);
   const successColor = palette.success;
   const headerDate = new Date().toLocaleDateString(undefined, {
     weekday: 'long',
@@ -125,9 +128,9 @@ export default function HabitsScreen() {
     day: 'numeric',
   });
 
-  const completedCount = state.habits.filter((habit) => habit.completedToday).length;
-  const totalCount = state.habits.length;
-  const progressValue = totalCount ? completedCount / totalCount : 0;
+  const completedCount = selectCompletedHabitsCount(state);
+  const totalCount = selectTotalHabitsCount(state);
+  const progressValue = selectHabitProgress(state);
 
   const openHabitModal = () => {
     setIsHabitModalOpen(true);
@@ -177,8 +180,8 @@ export default function HabitsScreen() {
 
         <WeekdayPicker
           palette={palette}
-          selectedIndex={state.selectedHabitDayIndex}
-          onSelectDay={(index) => selectHabitDay(index)}
+          selectedIndex={selectedHabitDayIndex}
+          onSelectDay={setSelectedHabitDayIndex}
         />
 
         {state.habits.map((habit) => {
@@ -186,7 +189,7 @@ export default function HabitsScreen() {
 
           return (
             <View key={habit.id}>
-              <Pressable onPress={() => toggleHabit(habit.id)}>
+              <Pressable onPress={() => toggleHabit(habit.id, selectedHabitDayIndex)}>
                 <View style={[styles.itemCard, { backgroundColor: 'rgba(255,255,255,0.035)', borderColor: palette.border }]}>
                   <View style={styles.itemTop}>
                     <View style={[styles.itemIcon, { backgroundColor: 'rgba(255,255,255,0.04)' }]}>
@@ -198,7 +201,7 @@ export default function HabitsScreen() {
                       <Text style={[styles.tapHint, { color: palette.mutedText }]}>Tap to complete</Text>
                     </View>
                     <Pressable
-                      onPress={() => toggleHabit(habit.id)}
+                      onPress={() => toggleHabit(habit.id, selectedHabitDayIndex)}
                       style={[
                         styles.itemBadge,
                         {

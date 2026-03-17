@@ -1,27 +1,24 @@
 import {
   DEMO_GOAL,
   DEMO_HABITS,
+  DEMO_PREFERENCES,
   DEMO_REFLECTION_DRAFT,
   DEMO_REFLECTION_HISTORY,
   DEMO_TASKS,
   DEMO_USER,
-} from '@/data/mockData';
+} from '../data/mockData';
 
 import { AppState, AppStateAction } from './appState.types';
-
-const getMondayBasedDayIndex = () => (new Date().getDay() + 6) % 7;
-const clampDayIndex = (value: number) => Math.max(0, Math.min(6, value));
 
 export function getInitialAppState(): AppState {
   return {
     user: DEMO_USER,
+    preferences: DEMO_PREFERENCES,
     habits: DEMO_HABITS,
     goal: DEMO_GOAL,
     tasks: DEMO_TASKS,
     reflectionDraft: DEMO_REFLECTION_DRAFT,
     reflectionHistory: DEMO_REFLECTION_HISTORY,
-    selectedScheduleDay: getMondayBasedDayIndex(),
-    selectedHabitDayIndex: getMondayBasedDayIndex(),
   };
 }
 
@@ -32,6 +29,7 @@ export function mergePersistedAppState(persisted: Partial<AppState>): AppState {
     ...initialState,
     ...persisted,
     user: persisted.user ?? initialState.user,
+    preferences: persisted.preferences ?? initialState.preferences,
     habits: Array.isArray(persisted.habits) ? persisted.habits : initialState.habits,
     goal: persisted.goal ?? initialState.goal,
     tasks: Array.isArray(persisted.tasks) ? persisted.tasks : initialState.tasks,
@@ -39,16 +37,6 @@ export function mergePersistedAppState(persisted: Partial<AppState>): AppState {
     reflectionHistory: Array.isArray(persisted.reflectionHistory)
       ? persisted.reflectionHistory
       : initialState.reflectionHistory,
-    selectedScheduleDay: clampDayIndex(
-      typeof persisted.selectedScheduleDay === 'number'
-        ? persisted.selectedScheduleDay
-        : initialState.selectedScheduleDay
-    ),
-    selectedHabitDayIndex: clampDayIndex(
-      typeof persisted.selectedHabitDayIndex === 'number'
-        ? persisted.selectedHabitDayIndex
-        : initialState.selectedHabitDayIndex
-    ),
   };
 }
 
@@ -62,7 +50,7 @@ export function appReducer(state: AppState, action: AppStateAction): AppState {
 
         const isCompleted = !habit.completedToday;
         const progress = [...habit.weeklyProgress];
-        const safeIndex = Math.max(0, Math.min(6, state.selectedHabitDayIndex));
+        const safeIndex = Math.max(0, Math.min(6, action.dayIndex));
         progress[safeIndex] = isCompleted;
 
         return {
@@ -116,18 +104,6 @@ export function appReducer(state: AppState, action: AppStateAction): AppState {
         },
       };
 
-    case 'SELECT_SCHEDULE_DAY':
-      return {
-        ...state,
-        selectedScheduleDay: action.dayIndex,
-      };
-
-    case 'SELECT_HABIT_DAY':
-      return {
-        ...state,
-        selectedHabitDayIndex: action.dayIndex,
-      };
-
     case 'SET_MOOD':
       return {
         ...state,
@@ -168,9 +144,9 @@ export function appReducer(state: AppState, action: AppStateAction): AppState {
     case 'TOGGLE_DARK_MODE_SESSION':
       return {
         ...state,
-        user: {
-          ...state.user,
-          darkMode: !state.user.darkMode,
+        preferences: {
+          ...state.preferences,
+          darkMode: !state.preferences.darkMode,
         },
       };
 

@@ -117,7 +117,7 @@ Current examples:
 - tasks
 - goal progress
 - reflection draft/history
-- user preferences currently stored in `user`
+- user preferences in `preferences`
 
 ## What Should Stay Local
 
@@ -172,8 +172,7 @@ The next low-risk cleanup steps would be:
 
 - move repeated screen calculations to selectors
 - separate persisted domain data from transient UI values
-- move `darkMode` from `user` to a dedicated `preferences` object
-- decide whether selected weekday indexes really belong in persisted global state
+- keep selected weekday indexes local to their screens unless they become meaningful app data
 - add a small migration helper when storage version `2` is introduced
 
 ## If Backend Is Added Later

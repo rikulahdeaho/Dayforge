@@ -1,9 +1,12 @@
-import { Goal, Habit, ReflectionDraft, ReflectionHistoryItem, Task, User } from '@/types';
+import { Goal, Habit, Preferences, ReflectionDraft, ReflectionHistoryItem, Task, User } from '../types';
 
 export const DEMO_USER: User = {
   name: 'Alex Rivers',
   membership: 'Premium Member',
   avatar: 'AR',
+};
+
+export const DEMO_PREFERENCES: Preferences = {
   darkMode: true,
 };
 
