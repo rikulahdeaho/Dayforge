@@ -24,8 +24,8 @@
  * - Session-only state: resets on app reload
  */
 import { SymbolView } from 'expo-symbols';
-import { useEffect } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
 import { DateHeader } from '@/components/dayforge/DateHeader';
@@ -84,6 +84,8 @@ export default function TaskScreen() {
   const router = useRouter();
   const palette = Colors.dark as DayforgePalette;
   const { state, addTask, decrementGoalProgress, incrementGoalProgress, selectScheduleDay, toggleTask } = useAppState();
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState('');
 
   const goalProgress = state.goal.target > 0 ? state.goal.progress / state.goal.target : 0;
   const completedTasks = state.tasks.filter((task) => task.completed).length;
@@ -96,6 +98,24 @@ export default function TaskScreen() {
     month: 'long',
     day: 'numeric',
   });
+
+  const openTaskModal = () => {
+    setIsTaskModalOpen(true);
+  };
+
+  const closeTaskModal = () => {
+    setIsTaskModalOpen(false);
+    setNewTaskTitle('');
+  };
+
+  const submitTask = () => {
+    if (!newTaskTitle.trim()) {
+      return;
+    }
+
+    addTask(newTaskTitle);
+    closeTaskModal();
+  };
 
   return (
     <View style={[styles.safe, { backgroundColor: palette.background }]}>
@@ -150,7 +170,7 @@ export default function TaskScreen() {
         <View style={styles.sectionRow}>
           <View style={styles.sectionLeftWrap}>
             <Text style={[styles.sectionTitle, { color: palette.text }]}>Today's Tasks</Text>
-            <Pressable style={[styles.addTaskChip, { borderColor: palette.border }]} onPress={addTask}>
+            <Pressable style={[styles.addTaskChip, { borderColor: palette.border }]} onPress={openTaskModal}>
               <View style={styles.addTaskChipInner}>
                 <SymbolView
                   name={resolveSymbolName({ ios: 'plus', android: 'add', web: 'add' })}
@@ -203,8 +223,41 @@ export default function TaskScreen() {
             />
           }
           style={styles.addTask}
-          onPress={addTask}
+          onPress={openTaskModal}
         />
+
+        <Modal visible={isTaskModalOpen} transparent animationType="fade" onRequestClose={closeTaskModal}>
+          <View style={styles.modalBackdrop}>
+            <View style={[styles.modalCard, { backgroundColor: palette.cardStrong, borderColor: palette.border }]}>
+              <Text style={[styles.modalTitle, { color: palette.text }]}>Add Task</Text>
+              <TextInput
+                value={newTaskTitle}
+                onChangeText={setNewTaskTitle}
+                placeholder="Task title"
+                placeholderTextColor={palette.mutedText}
+                style={[styles.modalInput, { color: palette.text, borderColor: palette.border }]}
+                autoFocus
+                returnKeyType="done"
+                onSubmitEditing={submitTask}
+              />
+              <View style={styles.modalActions}>
+                <Pressable style={[styles.modalButton, { borderColor: palette.border }]} onPress={closeTaskModal}>
+                  <Text style={[styles.modalButtonText, { color: palette.mutedText }]}>Cancel</Text>
+                </Pressable>
+                <Pressable
+                  style={[
+                    styles.modalButton,
+                    styles.modalButtonPrimary,
+                    { opacity: newTaskTitle.trim() ? 1 : 0.5, backgroundColor: palette.accent },
+                  ]}
+                  disabled={!newTaskTitle.trim()}
+                  onPress={submitTask}>
+                  <Text style={styles.modalButtonPrimaryText}>Add</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </ScrollView>
     </View>
   );
@@ -408,6 +461,56 @@ const styles = StyleSheet.create({
   addTask: {
     marginTop: 2,
     marginBottom: 20,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalCard: {
+    width: '100%',
+    borderWidth: 1,
+    borderRadius: 22,
+    padding: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+    marginBottom: 14,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  modalButton: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalButtonPrimary: {
+    borderWidth: 0,
+  },
+  modalButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  modalButtonPrimaryText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
   },
   reflectionCard: {
     alignItems: 'center',

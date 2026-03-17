@@ -75,7 +75,27 @@ function showPlaceholder(featureName: string) {
 
 export default function ProfileScreen() {
   const palette = Colors.dark as DayforgePalette;
-  const { state, toggleDarkModeSession } = useAppState();
+  const { state, toggleDarkModeSession, resetAppData } = useAppState();
+
+  const confirmResetData = () => {
+    Alert.alert('Reset Data', 'This will clear all saved app data on this device. Continue?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Reset',
+        style: 'destructive',
+        onPress: () => {
+          void (async () => {
+            try {
+              await resetAppData();
+              Alert.alert('Reset complete', 'Saved data has been reset to defaults.');
+            } catch (error) {
+              Alert.alert('Reset failed', 'Could not reset saved data. Please try again.');
+            }
+          })();
+        },
+      },
+    ]);
+  };
 
   return (
     <View style={[styles.safe, { backgroundColor: palette.background }]}>
@@ -178,7 +198,7 @@ export default function ProfileScreen() {
           ))}
         </SurfaceCard>
 
-        <Pressable onPress={() => Alert.alert('Reset Data', 'Reset data is disabled in this MVP prototype.')}>
+        <Pressable onPress={confirmResetData}>
           <Text style={styles.signOut}>Reset Data</Text>
         </Pressable>
         <Text style={[styles.version, { color: palette.mutedText }]}>Version 0.0.1 (Build 1 MVP)</Text>

@@ -14,7 +14,7 @@ export const DEMO_HABITS: Habit[] = [
     subtitle: '15 mins - Morning',
     icon: 'figure.mind.and.body',
     completedToday: true,
-    weeklyProgress: [true, true, true, true, true, true, true],
+    weeklyProgress: [true, false, false, false, false, false, false],
     statusLabel: 'PERFECT WEEK',
   },
   {
@@ -23,7 +23,7 @@ export const DEMO_HABITS: Habit[] = [
     subtitle: 'Nightly habit',
     icon: 'book.fill',
     completedToday: false,
-    weeklyProgress: [true, true, true, false, true, true, false],
+    weeklyProgress: [true, false, false, false, false, false, false],
     statusLabel: '5/7 DAYS',
   },
   {
@@ -32,7 +32,7 @@ export const DEMO_HABITS: Habit[] = [
     subtitle: 'Throughout the day',
     icon: 'drop.fill',
     completedToday: true,
-    weeklyProgress: [true, true, true, true, true, true, true],
+    weeklyProgress: [false, false, false, false, false, false, false],
     statusLabel: 'ON TRACK',
   },
 ];

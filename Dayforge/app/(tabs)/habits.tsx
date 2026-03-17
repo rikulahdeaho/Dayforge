@@ -31,8 +31,8 @@
 
 import { SymbolView } from 'expo-symbols';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
 import { DateHeader } from '@/components/dayforge/DateHeader';
@@ -42,6 +42,39 @@ import { DayforgePalette, DashedAction, ProgressTrack } from '@/components/dayfo
 import { WeekdayPicker } from '@/components/dayforge/WeekdayPicker';
 import Colors from '@/constants/Colors';
 import { useAppState } from '@/store/appState';
+
+const habitIconOptions = [
+  {
+    id: 'figure.mind.and.body',
+    label: 'Mind',
+    icon: { ios: 'figure.mind.and.body', android: 'self_improvement', web: 'self_improvement' },
+  },
+  {
+    id: 'book.fill',
+    label: 'Read',
+    icon: { ios: 'book.fill', android: 'menu_book', web: 'menu_book' },
+  },
+  {
+    id: 'drop.fill',
+    label: 'Water',
+    icon: { ios: 'drop.fill', android: 'water_drop', web: 'water_drop' },
+  },
+  {
+    id: 'dumbbell.fill',
+    label: 'Workout',
+    icon: { ios: 'dumbbell.fill', android: 'fitness_center', web: 'fitness_center' },
+  },
+  {
+    id: 'moon.stars.fill',
+    label: 'Sleep',
+    icon: { ios: 'moon.stars.fill', android: 'bedtime', web: 'bedtime' },
+  },
+  {
+    id: 'heart.fill',
+    label: 'Health',
+    icon: { ios: 'heart.fill', android: 'favorite', web: 'favorite' },
+  },
+];
 
 function AnimatedCompleteBadge({ completed, tintColor }: { completed: boolean; tintColor: string }) {
   const scale = useSharedValue(completed ? 1 : 0.8);
@@ -81,6 +114,10 @@ function AnimatedCompleteBadge({ completed, tintColor }: { completed: boolean; t
 export default function HabitsScreen() {
   const palette = Colors.dark as DayforgePalette;
   const { addHabit, selectHabitDay, state, toggleHabit } = useAppState();
+  const [isHabitModalOpen, setIsHabitModalOpen] = useState(false);
+  const [habitTitle, setHabitTitle] = useState('');
+  const [habitSubtitle, setHabitSubtitle] = useState('');
+  const [habitIcon, setHabitIcon] = useState(habitIconOptions[0].id);
   const successColor = palette.success;
   const headerDate = new Date().toLocaleDateString(undefined, {
     weekday: 'long',
@@ -91,6 +128,26 @@ export default function HabitsScreen() {
   const completedCount = state.habits.filter((habit) => habit.completedToday).length;
   const totalCount = state.habits.length;
   const progressValue = totalCount ? completedCount / totalCount : 0;
+
+  const openHabitModal = () => {
+    setIsHabitModalOpen(true);
+  };
+
+  const closeHabitModal = () => {
+    setIsHabitModalOpen(false);
+    setHabitTitle('');
+    setHabitSubtitle('');
+    setHabitIcon(habitIconOptions[0].id);
+  };
+
+  const submitHabit = () => {
+    if (!habitTitle.trim()) {
+      return;
+    }
+
+    addHabit({ title: habitTitle, subtitle: habitSubtitle, icon: habitIcon });
+    closeHabitModal();
+  };
 
   return (
     <View style={[styles.safe, { backgroundColor: palette.background }]}>
@@ -183,8 +240,67 @@ export default function HabitsScreen() {
             />
           }
           style={styles.dashed}
-          onPress={addHabit}
+          onPress={openHabitModal}
         />
+
+        <Modal visible={isHabitModalOpen} transparent animationType="fade" onRequestClose={closeHabitModal}>
+          <View style={styles.modalBackdrop}>
+            <View style={[styles.modalCard, { backgroundColor: palette.cardStrong, borderColor: palette.border }]}>
+              <Text style={[styles.modalTitle, { color: palette.text }]}>Create New Habit</Text>
+              <TextInput
+                value={habitTitle}
+                onChangeText={setHabitTitle}
+                placeholder="Habit name"
+                placeholderTextColor={palette.mutedText}
+                style={[styles.modalInput, { color: palette.text, borderColor: palette.border }]}
+                autoFocus
+              />
+              <TextInput
+                value={habitSubtitle}
+                onChangeText={setHabitSubtitle}
+                placeholder="Subtitle (optional)"
+                placeholderTextColor={palette.mutedText}
+                style={[styles.modalInput, { color: palette.text, borderColor: palette.border }]}
+              />
+              <Text style={[styles.iconPickerTitle, { color: palette.mutedText }]}>Select icon</Text>
+              <View style={styles.iconGrid}>
+                {habitIconOptions.map((option) => {
+                  const selected = option.id === habitIcon;
+                  return (
+                    <Pressable
+                      key={option.id}
+                      onPress={() => setHabitIcon(option.id)}
+                      style={[
+                        styles.iconOption,
+                        {
+                          borderColor: selected ? palette.accent : palette.border,
+                          backgroundColor: selected ? 'rgba(76, 175, 255, 0.15)' : 'transparent',
+                        },
+                      ]}>
+                      <SymbolView name={resolveSymbolName(option.icon)} size={18} tintColor={palette.accent} />
+                      <Text style={[styles.iconLabel, { color: palette.text }]}>{option.label}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+              <View style={styles.modalActions}>
+                <Pressable style={[styles.modalButton, { borderColor: palette.border }]} onPress={closeHabitModal}>
+                  <Text style={[styles.modalButtonText, { color: palette.mutedText }]}>Cancel</Text>
+                </Pressable>
+                <Pressable
+                  style={[
+                    styles.modalButton,
+                    styles.modalButtonPrimary,
+                    { opacity: habitTitle.trim() ? 1 : 0.5, backgroundColor: palette.accent },
+                  ]}
+                  disabled={!habitTitle.trim()}
+                  onPress={submitHabit}>
+                  <Text style={styles.modalButtonPrimaryText}>Add Habit</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </ScrollView>
     </View>
   );
@@ -306,5 +422,82 @@ const styles = StyleSheet.create({
   dashed: {
     marginTop: 8,
     borderRadius: 26,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalCard: {
+    width: '100%',
+    borderWidth: 1,
+    borderRadius: 22,
+    padding: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+    marginBottom: 10,
+  },
+  iconPickerTitle: {
+    marginTop: 4,
+    marginBottom: 8,
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  iconGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 14,
+  },
+  iconOption: {
+    minWidth: 88,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  iconLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  modalButton: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalButtonPrimary: {
+    borderWidth: 0,
+  },
+  modalButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  modalButtonPrimaryText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });
