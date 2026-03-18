@@ -70,8 +70,8 @@ function moodEmoji(mood: Mood) {
 
 
 export default function ReflectionScreen() {
-  const palette = Colors.dark as DayforgePalette;
   const { saveReflection, setMood, setReflectionField, setSuccessMessage, state, successMessage } = useAppState();
+  const palette = (state.preferences.darkMode ? Colors.dark : Colors.light) as DayforgePalette;
   const headerDate = new Date().toLocaleDateString(undefined, {
     weekday: 'long',
     month: 'long',
@@ -215,7 +215,7 @@ export default function ReflectionScreen() {
               <Text style={styles.moodEmoji}>{moodEmoji(entry.mood)}</Text>
             </View>
             <View style={styles.historyCopy}>
-              <Text style={[styles.historyDate, { color: palette.text }]}>{entry.dateLabel}</Text>
+              <Text style={[styles.historyDate, { color: palette.text }]}>{entry.fullDate}</Text>
               <Text numberOfLines={1} style={[styles.historyPreview, { color: palette.mutedText }]}>
                 {entry.preview}
               </Text>

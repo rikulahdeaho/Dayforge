@@ -17,6 +17,7 @@ export type Habit = {
   icon: string;
   completedToday: boolean;
   weeklyProgress: boolean[];
+  completionByDate: Record<string, boolean>;
   statusLabel: string;
 };
 
@@ -31,7 +32,10 @@ export type Goal = {
 export type Task = {
   id: string;
   title: string;
-  completed: boolean;
+  dateKey: string;
+  completedToday: boolean;
+  weeklyProgress: boolean[];
+  completionByDate: Record<string, boolean>;
 };
 
 export type ReflectionDraft = {
@@ -43,6 +47,7 @@ export type ReflectionDraft = {
 export type ReflectionHistoryItem = {
   id: string;
   dateLabel: string;
+  fullDate: string;
   mood: Mood;
   preview: string;
   wentWell?: string;

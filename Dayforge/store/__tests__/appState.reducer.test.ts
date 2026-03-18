@@ -1,33 +1,44 @@
 import assert from 'node:assert/strict';
 
-import { buildReflectionHistoryItem } from '../appState.helpers';
-import { appReducer, getInitialAppState, mergePersistedAppState } from '../appState.reducer';
+import {
+  buildReflectionHistoryItem,
+  getCurrentMondayBasedDayIndex,
+  getDateKeyForMondayBasedDayIndex,
+  getTodayDateKey,
+} from '../appState.helpers';
+import { appReducer, getEmptyAppState, getInitialAppState, mergePersistedAppState } from '../appState.reducer';
 
 function runTests() {
   {
     const initialState = getInitialAppState();
+    const todayIndex = getCurrentMondayBasedDayIndex();
     const nextState = appReducer(initialState, {
       type: 'TOGGLE_HABIT',
       habitId: 'read',
-      dayIndex: 2,
+      dayIndex: todayIndex,
+      dateKey: getDateKeyForMondayBasedDayIndex(todayIndex),
     });
     const habit = nextState.habits.find((item) => item.id === 'read');
 
     assert.ok(habit);
     assert.equal(habit.completedToday, true);
-    assert.equal(habit.weeklyProgress[2], true);
+    assert.equal(habit.weeklyProgress[todayIndex], true);
   }
 
   {
     const initialState = getInitialAppState();
+    const todayIndex = getCurrentMondayBasedDayIndex();
     const nextState = appReducer(initialState, {
       type: 'TOGGLE_TASK',
       taskId: 'task-1',
+      dayIndex: todayIndex,
+      dateKey: getDateKeyForMondayBasedDayIndex(todayIndex),
     });
     const task = nextState.tasks.find((item) => item.id === 'task-1');
 
     assert.ok(task);
-    assert.equal(task.completed, true);
+    assert.equal(task.weeklyProgress[todayIndex], true);
+    assert.equal(task.completionByDate[getTodayDateKey()], true);
   }
 
   {
@@ -63,7 +74,16 @@ function runTests() {
       type: 'RESET_STATE',
     });
 
-    assert.deepEqual(resetState, getInitialAppState());
+    assert.deepEqual(resetState, getEmptyAppState());
+  }
+
+  {
+    const emptyState = getEmptyAppState();
+    const restoredState = appReducer(emptyState, {
+      type: 'RESTORE_MOCK_DATA',
+    });
+
+    assert.deepEqual(restoredState, getInitialAppState());
   }
 
   {

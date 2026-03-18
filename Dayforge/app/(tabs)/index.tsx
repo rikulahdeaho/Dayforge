@@ -54,13 +54,16 @@ import {
   selectWeeklyChart,
   selectWeeklyTrendDelta,
 } from '@/store/appState.selectors';
+import { getCurrentMondayBasedDayIndex, getDateKeyForMondayBasedDayIndex } from '@/store/appState.helpers';
 import type { Task } from '@/types';
 
 export default function TodayScreen() {
   const router = useRouter();
-  const palette = Colors.dark as DayforgePalette;
   const { state, toggleTask } = useAppState();
+  const palette = (state.preferences.darkMode ? Colors.dark : Colors.light) as DayforgePalette;
   const [animatingTaskIds, setAnimatingTaskIds] = useState<Set<string>>(new Set());
+  const todayIndex = getCurrentMondayBasedDayIndex();
+  const todayDateKey = getDateKeyForMondayBasedDayIndex(todayIndex);
 
   const handleTaskToggle = (taskId: string) => {
     setAnimatingTaskIds((prev) => new Set(prev).add(taskId));
@@ -158,13 +161,15 @@ export default function TodayScreen() {
         </View>
         <SurfaceCard palette={palette} style={styles.previewCard}>
           {state.tasks
-            .filter((task) => !task.completed || animatingTaskIds.has(task.id))
+            .filter((task) => task.dateKey === todayDateKey)
+            .filter((task) => !task.completionByDate[todayDateKey] || animatingTaskIds.has(task.id))
             .slice(0, 3)
             .map((task) => (
               <TaskPreviewItem
                 key={task.id}
                 task={task}
                 palette={palette}
+                dayIndex={todayIndex}
                 onToggle={() => handleTaskToggle(task.id)}
               />
             ))}
@@ -293,12 +298,16 @@ function AnimatedCompleteCheck({ completed, tintColor }: { completed: boolean; t
 function TaskPreviewItem({
   task,
   palette,
+  dayIndex,
   onToggle,
 }: {
   task: Task;
   palette: DayforgePalette;
+  dayIndex: number;
   onToggle: () => void;
 }) {
+  const completedForDay = Boolean(task.completionByDate[getDateKeyForMondayBasedDayIndex(dayIndex)]);
+
   return (
     <Pressable
       onPress={onToggle}
@@ -310,20 +319,20 @@ function TaskPreviewItem({
         style={[
           styles.previewDot,
           {
-            borderColor: task.completed ? palette.success : palette.border,
+            borderColor: completedForDay ? palette.success : palette.border,
             backgroundColor: 'transparent',
             justifyContent: 'center',
             alignItems: 'center',
           },
         ]}>
-        <AnimatedCompleteCheck completed={task.completed} tintColor={palette.success} />
+        <AnimatedCompleteCheck completed={completedForDay} tintColor={palette.success} />
       </View>
       <Text
         style={[
           styles.previewText,
           {
-            color: task.completed ? palette.mutedText : palette.text,
-            textDecorationLine: task.completed ? 'line-through' : 'none',
+            color: completedForDay ? palette.mutedText : palette.text,
+            textDecorationLine: completedForDay ? 'line-through' : 'none',
           },
         ]}>
         {task.title}

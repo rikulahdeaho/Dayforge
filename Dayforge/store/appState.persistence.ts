@@ -21,6 +21,22 @@ type LegacyAppStateV1 = Omit<AppState, 'preferences'> & {
   selectedHabitDayIndex?: number;
 };
 
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isPersistedPayload(value: unknown): value is PersistedAppState {
+  if (!isObject(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.version === 'number' &&
+    'state' in value &&
+    isObject(value.state)
+  );
+}
+
 function migrateToCurrentState(rawState: Partial<AppState> | LegacyAppStateV1): AppState {
   const legacyState = rawState as LegacyAppStateV1;
   const currentState = rawState as Partial<AppState>;
@@ -48,9 +64,16 @@ export async function loadPersistedAppState(): Promise<AppState | null> {
     return null;
   }
 
-  const parsedState = JSON.parse(storedState) as Partial<AppState> | PersistedAppState;
+  let parsedState: unknown;
 
-  if ('version' in parsedState && 'state' in parsedState) {
+  try {
+    parsedState = JSON.parse(storedState);
+  } catch (error) {
+    console.warn('Invalid persisted app state JSON, falling back to defaults.', error);
+    return null;
+  }
+
+  if (isPersistedPayload(parsedState)) {
     if (parsedState.version >= STORAGE_VERSION) {
       return mergePersistedAppState(parsedState.state);
     }
@@ -58,7 +81,11 @@ export async function loadPersistedAppState(): Promise<AppState | null> {
     return migrateToCurrentState(parsedState.state as LegacyAppStateV1);
   }
 
-  return migrateToCurrentState(parsedState as LegacyAppStateV1);
+  if (isObject(parsedState)) {
+    return migrateToCurrentState(parsedState as LegacyAppStateV1);
+  }
+
+  return null;
 }
 
 export async function persistAppState(state: AppState): Promise<void> {

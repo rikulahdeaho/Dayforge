@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { SymbolView } from 'expo-symbols';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -13,6 +14,12 @@ interface WeekdayPickerProps {
 const weekdayKeys = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export function WeekdayPicker({ palette, selectedIndex, onSelectDay }: WeekdayPickerProps) {
+  const todayIndex = (new Date().getDay() + 6) % 7;
+
+  useEffect(() => {
+    onSelectDay(todayIndex);
+  }, [onSelectDay, todayIndex]);
+
   return (
     <SurfaceCard palette={palette} style={styles.calendarCard}>
       <View style={styles.calendarHeader}>

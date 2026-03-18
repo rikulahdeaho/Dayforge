@@ -1,4 +1,5 @@
 import { AppState } from './appState.types';
+import { getCurrentMondayBasedDayIndex, getDateKeyForMondayBasedDayIndex, getTodayDateKey } from './appState.helpers';
 
 const weekdayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -11,19 +12,24 @@ export function selectTotalHabitsCount(state: AppState) {
 }
 
 export function selectCompletedHabitsCount(state: AppState) {
-  return state.habits.filter((habit) => habit.completedToday).length;
+  const todayDateKey = getTodayDateKey();
+  return state.habits.filter((habit) => Boolean(habit.completionByDate[todayDateKey])).length;
 }
 
 export function selectTotalTasksCount(state: AppState) {
-  return state.tasks.length;
+  const todayDateKey = getTodayDateKey();
+  return state.tasks.filter((task) => task.dateKey === todayDateKey).length;
 }
 
-export function selectCompletedTasksCount(state: AppState) {
-  return state.tasks.filter((task) => task.completed).length;
+export function selectCompletedTasksCount(state: AppState, dayIndex = getCurrentMondayBasedDayIndex()) {
+  const dateKey = getDateKeyForMondayBasedDayIndex(dayIndex);
+  return state.tasks.filter((task) => task.dateKey === dateKey && Boolean(task.completionByDate[dateKey])).length;
 }
 
-export function selectRemainingTasksCount(state: AppState) {
-  return state.tasks.filter((task) => !task.completed).length;
+export function selectRemainingTasksCount(state: AppState, dayIndex = getCurrentMondayBasedDayIndex()) {
+  const dateKey = getDateKeyForMondayBasedDayIndex(dayIndex);
+  const totalForDay = state.tasks.filter((task) => task.dateKey === dateKey).length;
+  return totalForDay - selectCompletedTasksCount(state, dayIndex);
 }
 
 export function selectHabitProgress(state: AppState) {
@@ -34,8 +40,10 @@ export function selectGoalProgress(state: AppState) {
   return state.goal.target > 0 ? state.goal.progress / state.goal.target : 0;
 }
 
-export function selectTaskProgress(state: AppState) {
-  return state.tasks.length ? selectCompletedTasksCount(state) / state.tasks.length : 0;
+export function selectTaskProgress(state: AppState, dayIndex = getCurrentMondayBasedDayIndex()) {
+  const dateKey = getDateKeyForMondayBasedDayIndex(dayIndex);
+  const totalForDay = state.tasks.filter((task) => task.dateKey === dateKey).length;
+  return totalForDay ? selectCompletedTasksCount(state, dayIndex) / totalForDay : 0;
 }
 
 export function selectReflectionStreak(state: AppState) {
@@ -43,9 +51,10 @@ export function selectReflectionStreak(state: AppState) {
 }
 
 export function selectDailyHabitCounts(state: AppState) {
-  return weekdayLabels.map((_, dayIndex) =>
-    state.habits.reduce((sum, habit) => sum + (habit.weeklyProgress[dayIndex] ? 1 : 0), 0)
-  );
+  return weekdayLabels.map((_, dayIndex) => {
+    const dateKey = getDateKeyForMondayBasedDayIndex(dayIndex);
+    return state.habits.reduce((sum, habit) => sum + (habit.completionByDate[dateKey] ? 1 : 0), 0);
+  });
 }
 
 export function selectWeeklyChart(state: AppState) {

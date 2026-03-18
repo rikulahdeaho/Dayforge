@@ -5,8 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/components/useColorScheme';
-import { AppStateProvider } from '@/store/appState';
+import { AppStateProvider, useAppState } from '@/store/appState';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -44,15 +43,21 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav() {
-  const colorScheme = useColorScheme();
-
   return (
     <AppStateProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        </Stack>
-      </ThemeProvider>
+      <RootNavigator />
     </AppStateProvider>
+  );
+}
+
+function RootNavigator() {
+  const { state } = useAppState();
+
+  return (
+    <ThemeProvider value={state.preferences.darkMode ? DarkTheme : DefaultTheme}>
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      </Stack>
+    </ThemeProvider>
   );
 }

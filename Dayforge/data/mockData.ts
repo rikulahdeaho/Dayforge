@@ -18,6 +18,9 @@ export const DEMO_HABITS: Habit[] = [
     icon: 'figure.mind.and.body',
     completedToday: true,
     weeklyProgress: [true, false, false, false, false, false, false],
+    completionByDate: {
+      '2026-03-16': true,
+    },
     statusLabel: 'PERFECT WEEK',
   },
   {
@@ -27,6 +30,9 @@ export const DEMO_HABITS: Habit[] = [
     icon: 'book.fill',
     completedToday: false,
     weeklyProgress: [true, false, false, false, false, false, false],
+    completionByDate: {
+      '2026-03-16': true,
+    },
     statusLabel: '5/7 DAYS',
   },
   {
@@ -36,6 +42,9 @@ export const DEMO_HABITS: Habit[] = [
     icon: 'drop.fill',
     completedToday: true,
     weeklyProgress: [false, false, false, false, false, false, false],
+    completionByDate: {
+      '2026-03-18': true,
+    },
     statusLabel: 'ON TRACK',
   },
 ];
@@ -49,9 +58,32 @@ export const DEMO_GOAL: Goal = {
 };
 
 export const DEMO_TASKS: Task[] = [
-  { id: 'task-1', title: 'Morning meditation (15 mins)', completed: false },
-  { id: 'task-2', title: 'Drink 2L of water', completed: true },
-  { id: 'task-3', title: 'Finalize portfolio case study', completed: false },
+  {
+    id: 'task-1',
+    title: 'Morning meditation (15 mins)',
+    dateKey: '2026-03-18',
+    completedToday: false,
+    weeklyProgress: [false, false, false, false, false, false, false],
+    completionByDate: {},
+  },
+  {
+    id: 'task-2',
+    title: 'Drink 2L of water',
+    dateKey: '2026-03-17',
+    completedToday: true,
+    weeklyProgress: [true, false, false, false, false, false, false],
+    completionByDate: {
+      '2026-03-16': true,
+    },
+  },
+  {
+    id: 'task-3',
+    title: 'Finalize portfolio case study',
+    dateKey: '2026-03-16',
+    completedToday: false,
+    weeklyProgress: [false, false, false, false, false, false, false],
+    completionByDate: {},
+  },
 ];
 
 export const DEMO_REFLECTION_DRAFT: ReflectionDraft = {
@@ -64,6 +96,7 @@ export const DEMO_REFLECTION_HISTORY: ReflectionHistoryItem[] = [
   {
     id: 'history-1',
     dateLabel: 'Yesterday',
+    fullDate: '17.03.2026',
     mood: 'happy',
     preview: 'Had an amazing dinner with friends and disconnected from work stress.',
     wentWell: 'Wrapped up my tasks before dinner and stayed present.',
@@ -72,6 +105,7 @@ export const DEMO_REFLECTION_HISTORY: ReflectionHistoryItem[] = [
   {
     id: 'history-2',
     dateLabel: 'Oct 21',
+    fullDate: '21.10.2025',
     mood: 'good',
     preview: 'Finally finished reading that book and took notes for future ideas.',
     wentWell: 'Read for 30 focused minutes before sleep.',
@@ -80,6 +114,7 @@ export const DEMO_REFLECTION_HISTORY: ReflectionHistoryItem[] = [
   {
     id: 'history-3',
     dateLabel: 'Oct 20',
+    fullDate: '20.10.2025',
     mood: 'neutral',
     preview: 'A productive but very busy Friday with little downtime.',
     wentWell: 'Completed most urgent tasks by noon.',

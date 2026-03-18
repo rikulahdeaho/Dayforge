@@ -74,22 +74,41 @@ function showPlaceholder(featureName: string) {
 }
 
 export default function ProfileScreen() {
-  const palette = Colors.dark as DayforgePalette;
-  const { state, toggleDarkModeSession, resetAppData } = useAppState();
+  const { state, toggleDarkModeSession, resetAppData, loadMockData } = useAppState();
+  const palette = (state.preferences.darkMode ? Colors.dark : Colors.light) as DayforgePalette;
 
   const confirmResetData = () => {
-    Alert.alert('Reset Data', 'This will clear all saved app data on this device. Continue?', [
+    Alert.alert('Clear All Data', 'This will remove all habits, tasks, goals, and reflections on this device. Continue?', [
       { text: 'Cancel', style: 'cancel' },
       {
-        text: 'Reset',
+        text: 'Clear',
         style: 'destructive',
         onPress: () => {
           void (async () => {
             try {
               await resetAppData();
-              Alert.alert('Reset complete', 'Saved data has been reset to defaults.');
+              Alert.alert('Data cleared', 'All saved data has been removed.');
             } catch (error) {
-              Alert.alert('Reset failed', 'Could not reset saved data. Please try again.');
+              Alert.alert('Clear failed', 'Could not clear saved data. Please try again.');
+            }
+          })();
+        },
+      },
+    ]);
+  };
+
+  const confirmLoadMockData = () => {
+    Alert.alert('Load Mock Data', 'This will replace current data with demo data. Continue?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Load',
+        onPress: () => {
+          void (async () => {
+            try {
+              await loadMockData();
+              Alert.alert('Mock data loaded', 'Demo data is now active.');
+            } catch (error) {
+              Alert.alert('Load failed', 'Could not load mock data. Please try again.');
             }
           })();
         },
@@ -199,7 +218,10 @@ export default function ProfileScreen() {
         </SurfaceCard>
 
         <Pressable onPress={confirmResetData}>
-          <Text style={styles.signOut}>Reset Data</Text>
+          <Text style={styles.signOut}>Clear All Data</Text>
+        </Pressable>
+        <Pressable onPress={confirmLoadMockData}>
+          <Text style={[styles.signOut, { color: palette.accent, marginTop: 8 }]}>Load Mock Data</Text>
         </Pressable>
         <Text style={[styles.version, { color: palette.mutedText }]}>Version 0.0.1 (Build 1 MVP)</Text>
       </ScrollView>

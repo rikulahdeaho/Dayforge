@@ -43,7 +43,11 @@ import {
 import { WeekdayPicker } from '@/components/dayforge/WeekdayPicker';
 import Colors from '@/constants/Colors';
 import { useAppState } from '@/store/appState';
-import { getCurrentMondayBasedDayIndex } from '@/store/appState.helpers';
+import {
+  getCurrentMondayBasedDayIndex,
+  getDateForMondayBasedDayIndex,
+  getDateKeyForMondayBasedDayIndex,
+} from '@/store/appState.helpers';
 import {
   selectCompletedTasksCount,
   selectGoalProgress,
@@ -88,15 +92,22 @@ function AnimatedCompleteCheck({ completed, tintColor }: { completed: boolean; t
 
 export default function TaskScreen() {
   const router = useRouter();
-  const palette = Colors.dark as DayforgePalette;
   const { state, addTask, decrementGoalProgress, incrementGoalProgress, toggleTask } = useAppState();
+  const palette = (state.preferences.darkMode ? Colors.dark : Colors.light) as DayforgePalette;
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [selectedScheduleDay, setSelectedScheduleDay] = useState(getCurrentMondayBasedDayIndex);
+  const selectedDateKey = getDateKeyForMondayBasedDayIndex(selectedScheduleDay);
+  const selectedDateLabel = getDateForMondayBasedDayIndex(selectedScheduleDay).toLocaleDateString(undefined, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
 
   const goalProgress = selectGoalProgress(state);
-  const completedTasks = selectCompletedTasksCount(state);
-  const remainingTasks = selectRemainingTasksCount(state);
+  const completedTasks = selectCompletedTasksCount(state, selectedScheduleDay);
+  const remainingTasks = selectRemainingTasksCount(state, selectedScheduleDay);
   const isGoalComplete = state.goal.progress >= state.goal.target;
   const successColor = palette.success;
 
@@ -120,7 +131,7 @@ export default function TaskScreen() {
       return;
     }
 
-    addTask(newTaskTitle);
+    addTask(newTaskTitle, selectedScheduleDay);
     closeTaskModal();
   };
 
@@ -128,7 +139,7 @@ export default function TaskScreen() {
     <View style={[styles.safe, { backgroundColor: palette.background }]}>
       <TopGradientBackground />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <DateHeader palette={palette} dateText={headerDate} title="Today's Tasks" />
+        <DateHeader palette={palette} dateText={headerDate} title="Tasks" subtitle={selectedDateLabel} />
 
         <GradientCard palette={palette} style={styles.focusCard}>
           <View style={styles.focusTop}>
@@ -190,26 +201,33 @@ export default function TaskScreen() {
           </View>
           <Text style={[styles.sectionAction, { color: palette.accent }]}>{remainingTasks} REMAINING</Text>
         </View>
-        {state.tasks.map((task) => (
-          <Pressable key={task.id} onPress={() => toggleTask(task.id)}>
-            <SurfaceCard palette={palette} style={[styles.taskCard, { opacity: task.completed ? 0.6 : 1 }]}>
+        {state.tasks
+          .filter((task) => task.dateKey === selectedDateKey)
+          .map((task) => (
+          <Pressable key={task.id} onPress={() => toggleTask(task.id, selectedScheduleDay)}>
+            <SurfaceCard
+              palette={palette}
+              style={[styles.taskCard, { opacity: task.completionByDate[selectedDateKey] ? 0.6 : 1 }]}>
               <View style={styles.taskRow}>
                 <View
                   style={[
                     styles.taskCheck,
                     {
-                      borderColor: task.completed ? successColor : palette.border,
+                      borderColor: task.completionByDate[selectedDateKey] ? successColor : palette.border,
                       backgroundColor: 'transparent',
                     },
                   ]}>
-                  <AnimatedCompleteCheck completed={task.completed} tintColor={successColor} />
+                  <AnimatedCompleteCheck
+                    completed={Boolean(task.completionByDate[selectedDateKey])}
+                    tintColor={successColor}
+                  />
                 </View>
                 <Text
                   style={[
                     styles.taskText,
                     {
-                      color: task.completed ? palette.mutedText : palette.text,
-                      textDecorationLine: task.completed ? 'line-through' : 'none',
+                      color: task.completionByDate[selectedDateKey] ? palette.mutedText : palette.text,
+                      textDecorationLine: task.completionByDate[selectedDateKey] ? 'line-through' : 'none',
                     },
                   ]}>
                   {task.title}

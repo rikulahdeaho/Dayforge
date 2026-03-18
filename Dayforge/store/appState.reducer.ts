@@ -7,8 +7,14 @@ import {
   DEMO_TASKS,
   DEMO_USER,
 } from '../data/mockData';
+import { Habit, Task } from '../types';
 
 import { AppState, AppStateAction } from './appState.types';
+import {
+  getCurrentMondayBasedDayIndex,
+  getDateKeyForMondayBasedDayIndex,
+  getTodayDateKey,
+} from './appState.helpers';
 
 export function getInitialAppState(): AppState {
   return {
@@ -22,7 +28,121 @@ export function getInitialAppState(): AppState {
   };
 }
 
+export function getEmptyAppState(): AppState {
+  return {
+    user: {
+      name: 'New User',
+      membership: 'Free Member',
+      avatar: 'NU',
+    },
+    preferences: {
+      darkMode: true,
+    },
+    habits: [],
+    goal: {
+      id: 'goal-empty',
+      title: 'Set your weekly goal',
+      label: 'Weekly Focus',
+      progress: 0,
+      target: 1,
+    },
+    tasks: [],
+    reflectionDraft: {
+      mood: null,
+      wentWell: '',
+      gratefulFor: '',
+    },
+    reflectionHistory: [],
+  };
+}
+
 const initialState = getInitialAppState();
+
+function normalizeWeeklyProgress(progress: unknown, fallback = false): boolean[] {
+  if (!Array.isArray(progress)) {
+    return Array(7).fill(fallback);
+  }
+
+  return Array.from({ length: 7 }, (_, index) => Boolean(progress[index]));
+}
+
+function normalizeCompletionByDate(
+  completionByDate: unknown,
+  weeklyProgress: boolean[],
+  completedFallback = false
+): Record<string, boolean> {
+  const result: Record<string, boolean> = {};
+
+  if (completionByDate && typeof completionByDate === 'object' && !Array.isArray(completionByDate)) {
+    for (const [dateKey, value] of Object.entries(completionByDate as Record<string, unknown>)) {
+      if (value) {
+        result[dateKey] = true;
+      }
+    }
+  }
+
+  const hasAnyDate = Object.keys(result).length > 0;
+  if (!hasAnyDate) {
+    weeklyProgress.forEach((done, dayIndex) => {
+      if (done) {
+        result[getDateKeyForMondayBasedDayIndex(dayIndex)] = true;
+      }
+    });
+  }
+
+  if (!hasAnyDate && completedFallback) {
+    result[getTodayDateKey()] = true;
+  }
+
+  return result;
+}
+
+function buildWeeklyProgressFromDateMap(completionByDate: Record<string, boolean>) {
+  return Array.from({ length: 7 }, (_, dayIndex) => Boolean(completionByDate[getDateKeyForMondayBasedDayIndex(dayIndex)]));
+}
+
+function normalizePersistedHabit(habit: Habit): Habit {
+  const weeklyProgress = normalizeWeeklyProgress(habit.weeklyProgress);
+  const completionByDate = normalizeCompletionByDate((habit as Habit).completionByDate, weeklyProgress);
+  const normalizedWeeklyProgress = buildWeeklyProgressFromDateMap(completionByDate);
+  const todayIndex = getCurrentMondayBasedDayIndex();
+
+  return {
+    ...habit,
+    weeklyProgress: normalizedWeeklyProgress,
+    completionByDate,
+    completedToday: Boolean(normalizedWeeklyProgress[todayIndex]),
+  };
+}
+
+function normalizePersistedTask(task: Task | (Omit<Task, 'completedToday' | 'weeklyProgress'> & { completed?: boolean })): Task {
+  const legacyTask = task as Task & { completed?: boolean };
+  const weeklyProgress = normalizeWeeklyProgress(
+    legacyTask.weeklyProgress,
+    Boolean(legacyTask.completed)
+  );
+  const completionByDate = normalizeCompletionByDate(
+    legacyTask.completionByDate,
+    weeklyProgress,
+    Boolean(legacyTask.completed)
+  );
+  const normalizedWeeklyProgress = buildWeeklyProgressFromDateMap(completionByDate);
+  const todayIndex = getCurrentMondayBasedDayIndex();
+
+  const normalizedDateKey =
+    typeof legacyTask.dateKey === 'string'
+      ? legacyTask.dateKey
+      : Object.keys(completionByDate)[0] ?? getTodayDateKey();
+
+  return {
+    id: task.id,
+    title: task.title,
+    dateKey: normalizedDateKey,
+    completedToday: Boolean(normalizedWeeklyProgress[todayIndex]),
+    weeklyProgress: normalizedWeeklyProgress,
+    completionByDate,
+  };
+}
 
 export function mergePersistedAppState(persisted: Partial<AppState>): AppState {
   return {
@@ -30,9 +150,13 @@ export function mergePersistedAppState(persisted: Partial<AppState>): AppState {
     ...persisted,
     user: persisted.user ?? initialState.user,
     preferences: persisted.preferences ?? initialState.preferences,
-    habits: Array.isArray(persisted.habits) ? persisted.habits : initialState.habits,
+    habits: Array.isArray(persisted.habits)
+      ? persisted.habits.map((habit) => normalizePersistedHabit(habit))
+      : initialState.habits,
     goal: persisted.goal ?? initialState.goal,
-    tasks: Array.isArray(persisted.tasks) ? persisted.tasks : initialState.tasks,
+    tasks: Array.isArray(persisted.tasks)
+      ? persisted.tasks.map((task) => normalizePersistedTask(task))
+      : initialState.tasks,
     reflectionDraft: persisted.reflectionDraft ?? initialState.reflectionDraft,
     reflectionHistory: Array.isArray(persisted.reflectionHistory)
       ? persisted.reflectionHistory
@@ -48,15 +172,17 @@ export function appReducer(state: AppState, action: AppStateAction): AppState {
           return habit;
         }
 
-        const isCompleted = !habit.completedToday;
-        const progress = [...habit.weeklyProgress];
-        const safeIndex = Math.max(0, Math.min(6, action.dayIndex));
-        progress[safeIndex] = isCompleted;
+        const completionByDate = { ...habit.completionByDate };
+        const isCompleted = !Boolean(completionByDate[action.dateKey]);
+        const todayIndex = getCurrentMondayBasedDayIndex();
+        completionByDate[action.dateKey] = isCompleted;
+        const weeklyProgress = buildWeeklyProgressFromDateMap(completionByDate);
 
         return {
           ...habit,
-          completedToday: isCompleted,
-          weeklyProgress: progress,
+          completedToday: Boolean(weeklyProgress[todayIndex]),
+          weeklyProgress,
+          completionByDate,
         };
       });
 
@@ -72,13 +198,31 @@ export function appReducer(state: AppState, action: AppStateAction): AppState {
         habits: [action.habit, ...state.habits],
       };
 
-    case 'TOGGLE_TASK':
+    case 'TOGGLE_TASK': {
+      const updatedTasks = state.tasks.map((task) => {
+        if (task.id !== action.taskId) {
+          return task;
+        }
+
+        const completionByDate = { ...task.completionByDate };
+        const todayIndex = getCurrentMondayBasedDayIndex();
+        const isCompleted = !Boolean(completionByDate[action.dateKey]);
+        completionByDate[action.dateKey] = isCompleted;
+        const weeklyProgress = buildWeeklyProgressFromDateMap(completionByDate);
+
+        return {
+          ...task,
+          completedToday: Boolean(weeklyProgress[todayIndex]),
+          weeklyProgress,
+          completionByDate,
+        };
+      });
+
       return {
         ...state,
-        tasks: state.tasks.map((task) =>
-          task.id === action.taskId ? { ...task, completed: !task.completed } : task
-        ),
+        tasks: updatedTasks,
       };
+    }
 
     case 'ADD_TASK':
       return {
@@ -139,6 +283,9 @@ export function appReducer(state: AppState, action: AppStateAction): AppState {
       return action.state;
 
     case 'RESET_STATE':
+      return getEmptyAppState();
+
+    case 'RESTORE_MOCK_DATA':
       return getInitialAppState();
 
     case 'TOGGLE_DARK_MODE_SESSION':

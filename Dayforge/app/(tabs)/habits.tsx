@@ -42,7 +42,7 @@ import { DayforgePalette, DashedAction, ProgressTrack } from '@/components/dayfo
 import { WeekdayPicker } from '@/components/dayforge/WeekdayPicker';
 import Colors from '@/constants/Colors';
 import { useAppState } from '@/store/appState';
-import { getCurrentMondayBasedDayIndex } from '@/store/appState.helpers';
+import { getCurrentMondayBasedDayIndex, getDateKeyForMondayBasedDayIndex } from '@/store/appState.helpers';
 import { selectCompletedHabitsCount, selectHabitProgress, selectTotalHabitsCount } from '@/store/appState.selectors';
 
 const habitIconOptions = [
@@ -114,8 +114,8 @@ function AnimatedCompleteBadge({ completed, tintColor }: { completed: boolean; t
 }
 
 export default function HabitsScreen() {
-  const palette = Colors.dark as DayforgePalette;
   const { addHabit, state, toggleHabit } = useAppState();
+  const palette = (state.preferences.darkMode ? Colors.dark : Colors.light) as DayforgePalette;
   const [isHabitModalOpen, setIsHabitModalOpen] = useState(false);
   const [habitTitle, setHabitTitle] = useState('');
   const [habitSubtitle, setHabitSubtitle] = useState('');
@@ -186,6 +186,8 @@ export default function HabitsScreen() {
 
         {state.habits.map((habit) => {
           const iconName = resolveSymbolName({ ios: habit.icon, android: 'task_alt', web: 'task_alt' });
+          const selectedDateKey = getDateKeyForMondayBasedDayIndex(selectedHabitDayIndex);
+          const isCompletedForSelectedDay = Boolean(habit.completionByDate[selectedDateKey]);
 
           return (
             <View key={habit.id}>
@@ -205,11 +207,11 @@ export default function HabitsScreen() {
                       style={[
                         styles.itemBadge,
                         {
-                          borderColor: habit.completedToday ? successColor : palette.border,
+                          borderColor: isCompletedForSelectedDay ? successColor : palette.border,
                           backgroundColor: 'transparent',
                         },
                       ]}>
-                      <AnimatedCompleteBadge completed={habit.completedToday} tintColor={successColor} />
+                      <AnimatedCompleteBadge completed={isCompletedForSelectedDay} tintColor={successColor} />
                     </Pressable>
                   </View>
                   <View style={styles.dotRow}>
