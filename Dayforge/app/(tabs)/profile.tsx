@@ -185,7 +185,7 @@ export default function ProfileScreen() {
               <Text style={[styles.settingSubtitle, { color: palette.mutedText }]}>Available in a future version</Text>
             </View>
             <SymbolView
-              name={resolveSymbolName({ ios: 'arrow.down.circle', android: 'download', web: 'download' })}
+              name={resolveSymbolName({ ios: 'arrow.up.circle', android: 'download', web: 'download' })}
               size={20}
               tintColor={palette.mutedText}
             />
@@ -204,7 +204,7 @@ export default function ProfileScreen() {
               <Text style={[styles.settingSubtitle, { color: palette.mutedText }]}>Available in a future version</Text>
             </View>
             <SymbolView
-              name={resolveSymbolName({ ios: 'arrow.up.circle', android: 'upload', web: 'upload' })}
+              name={resolveSymbolName({ ios: 'arrow.down.circle', android: 'upload', web: 'upload' })}
               size={20}
               tintColor={palette.mutedText}
             />
