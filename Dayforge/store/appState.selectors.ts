@@ -57,33 +57,65 @@ export function selectDailyHabitCounts(state: AppState) {
   });
 }
 
+export function selectDailyTaskCounts(state: AppState) {
+  return weekdayLabels.map((_, dayIndex) => {
+    const dateKey = getDateKeyForMondayBasedDayIndex(dayIndex);
+    return state.tasks.reduce(
+      (sum, task) => sum + (task.dateKey === dateKey && task.completionByDate[dateKey] ? 1 : 0),
+      0
+    );
+  });
+}
+
+export function selectWeeklyCompletions(state: AppState) {
+  const dailyHabits = selectDailyHabitCounts(state);
+  const dailyTasks = selectDailyTaskCounts(state);
+
+  return weekdayLabels.map((label, dayIndex) => ({
+    id: `weekly-bar-${dayIndex}`,
+    label,
+    totalCompleted: dailyHabits[dayIndex] + dailyTasks[dayIndex],
+  }));
+}
+
 export function selectWeeklyChart(state: AppState) {
-  const totalHabits = Math.max(1, selectTotalHabitsCount(state));
-  const goalProgress = selectGoalProgress(state);
-  const taskProgress = selectTaskProgress(state);
+  const weeklyCompletions = selectWeeklyCompletions(state);
+  const maxCompleted = Math.max(...weeklyCompletions.map((day) => day.totalCompleted), 0);
 
-  return selectDailyHabitCounts(state).map((count, dayIndex) => {
-    const habitsScore = (count / totalHabits) * 72;
-    const supportScore = goalProgress * 18 + taskProgress * 10;
-    const value = Math.max(10, Math.min(100, Math.round(habitsScore + supportScore)));
-
+  return weeklyCompletions.map((day) => {
+    const value = maxCompleted > 0 ? Math.round((day.totalCompleted / maxCompleted) * 100) : 0;
     return {
-      id: `weekly-bar-${dayIndex}`,
-      label: weekdayLabels[dayIndex],
+      id: day.id,
+      label: day.label,
       value,
+      totalCompleted: day.totalCompleted,
     };
   });
 }
 
 export function selectWeeklyTrendDelta(state: AppState) {
-  const weeklyChart = selectWeeklyChart(state);
-  const earlyWeekAverage = (weeklyChart[0].value + weeklyChart[1].value + weeklyChart[2].value) / 3;
-  const lateWeekAverage = (weeklyChart[4].value + weeklyChart[5].value + weeklyChart[6].value) / 3;
+  const todayIndex = getCurrentMondayBasedDayIndex();
+  const weeklyCompletions = selectWeeklyCompletions(state).slice(0, todayIndex + 1);
+
+  if (weeklyCompletions.length < 2) {
+    return 0;
+  }
+
+  const splitAt = Math.max(1, Math.floor(weeklyCompletions.length / 2));
+  const earlyWeek = weeklyCompletions.slice(0, splitAt);
+  const lateWeek = weeklyCompletions.slice(splitAt);
+  const earlyWeekAverage = earlyWeek.reduce((sum, day) => sum + day.totalCompleted, 0) / earlyWeek.length;
+  const lateWeekAverage = lateWeek.length
+    ? lateWeek.reduce((sum, day) => sum + day.totalCompleted, 0) / lateWeek.length
+    : earlyWeekAverage;
 
   return Math.round(lateWeekAverage - earlyWeekAverage);
 }
 
 export function selectMostProductiveDay(state: AppState) {
-  const weeklyChart = selectWeeklyChart(state);
-  return weeklyChart.reduce((best, day) => (day.value > best.value ? day : best), weeklyChart[0]);
+  const weeklyCompletions = selectWeeklyCompletions(state);
+  return weeklyCompletions.reduce(
+    (best, day) => (day.totalCompleted > best.totalCompleted ? day : best),
+    weeklyCompletions[0]
+  );
 }

@@ -4,6 +4,8 @@ export type User = {
   name: string;
   membership: string;
   avatar: string;
+  personalGoals: string;
+  reminders: string;
 };
 
 export type Preferences = {

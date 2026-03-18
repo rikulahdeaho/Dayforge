@@ -9,7 +9,7 @@ import React, {
   useState,
 } from 'react';
 
-import { Mood } from '../types';
+import { Habit, Mood, Task } from '../types';
 
 import { loadPersistedAppState, persistAppState } from './appState.persistence';
 import {
@@ -23,30 +23,69 @@ import { AppState } from './appState.types';
 
 type AppStateContextValue = {
   state: AppState;
+  isHydrated: boolean;
   successMessage: string | null;
   setSuccessMessage: (message: string | null) => void;
   toggleHabit: (habitId: string, dayIndex: number) => void;
   addHabit: (habitInput: { title: string; subtitle: string; icon: string }) => void;
+  removeHabit: (habitId: string) => void;
   toggleTask: (taskId: string, dayIndex?: number) => void;
   addTask: (title: string, dayIndex?: number) => void;
+  removeTask: (taskId: string) => void;
   incrementGoalProgress: () => void;
   decrementGoalProgress: () => void;
+  updateGoal: (input: { title: string; target: number }) => void;
   setMood: (mood: Mood) => void;
   setReflectionField: (field: 'wentWell' | 'gratefulFor', value: string) => void;
   saveReflection: () => { ok: true } | { ok: false; reason: 'mood-required' };
   toggleDarkModeSession: () => void;
+  completeOnboarding: (input: OnboardingInput) => void;
+  skipOnboarding: () => void;
   resetAppData: () => Promise<void>;
   loadMockData: () => Promise<void>;
+};
+
+type OnboardingInput = {
+  name: string;
+  personalGoals: string;
+  reminders: string;
+  darkMode: boolean;
+  weeklyGoalTitle: string;
+  weeklyGoalTarget: number;
+  tasks: string[];
+  habits: string[];
 };
 
 const AppStateContext = createContext<AppStateContextValue | undefined>(undefined);
 
 export function AppStateProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(appReducer, undefined, getInitialAppState);
+  const [state, dispatch] = useReducer(appReducer, undefined, getEmptyAppState);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
   const isStorageUnavailableRef = useRef(false);
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const buildTaskFromTitle = (title: string): Task => ({
+    id: createEntityId('task'),
+    title,
+    dateKey: getDateKeyForMondayBasedDayIndex(getCurrentMondayBasedDayIndex()),
+    completedToday: false,
+    weeklyProgress: [false, false, false, false, false, false, false],
+    completionByDate: {},
+  });
+
+  const habitIcons = ['figure.mind.and.body', 'book.fill', 'drop.fill', 'dumbbell.fill', 'moon.stars.fill', 'heart.fill'];
+
+  const buildHabitFromTitle = (title: string, index: number): Habit => ({
+    id: createEntityId('habit'),
+    title,
+    subtitle: 'Daily routine',
+    icon: habitIcons[index % habitIcons.length],
+    completedToday: false,
+    weeklyProgress: [false, false, false, false, false, false, false],
+    completionByDate: {},
+    statusLabel: 'GETTING STARTED',
+  });
 
   const disableStorageWithWarning = (phase: 'hydrate' | 'persist' | 'reset', error: unknown) => {
     if (isStorageUnavailableRef.current) {
@@ -123,6 +162,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AppStateContextValue>(
     () => ({
       state,
+      isHydrated,
       successMessage,
       setSuccessMessage,
       toggleHabit: (habitId, dayIndex) => {
@@ -152,6 +192,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         });
         setSuccessMessage(`Added habit #${nextHabitNumber} for this session.`);
       },
+      removeHabit: (habitId) => {
+        dispatch({ type: 'REMOVE_HABIT', habitId });
+      },
       toggleTask: (taskId, dayIndex = getCurrentMondayBasedDayIndex()) => {
         dispatch({
           type: 'TOGGLE_TASK',
@@ -174,11 +217,17 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           },
         });
       },
+      removeTask: (taskId) => {
+        dispatch({ type: 'REMOVE_TASK', taskId });
+      },
       incrementGoalProgress: () => {
         dispatch({ type: 'INCREMENT_GOAL_PROGRESS' });
       },
       decrementGoalProgress: () => {
         dispatch({ type: 'DECREMENT_GOAL_PROGRESS' });
+      },
+      updateGoal: ({ title, target }) => {
+        dispatch({ type: 'UPDATE_GOAL', title, target });
       },
       setMood: (mood) => {
         dispatch({ type: 'SET_MOOD', mood });
@@ -204,6 +253,53 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       },
       toggleDarkModeSession: () => {
         dispatch({ type: 'TOGGLE_DARK_MODE_SESSION' });
+      },
+      completeOnboarding: (input) => {
+        const normalizedName = input.name.trim() || 'New User';
+        const initials = normalizedName
+          .split(/\s+/)
+          .filter(Boolean)
+          .slice(0, 2)
+          .map((part) => part[0]?.toUpperCase() ?? '')
+          .join('') || 'NU';
+        const normalizedTasks = input.tasks.map((task) => task.trim()).filter(Boolean);
+        const normalizedHabits = input.habits.map((habit) => habit.trim()).filter(Boolean);
+        const nextState: AppState = {
+          ...getEmptyAppState(),
+          hasCompletedOnboarding: true,
+          user: {
+            name: normalizedName,
+            membership: 'Free Member',
+            avatar: initials,
+            personalGoals: input.personalGoals.trim() || 'Define your personal goals.',
+            reminders: input.reminders.trim() || 'No reminders configured yet.',
+          },
+          preferences: {
+            darkMode: input.darkMode,
+          },
+          goal: {
+            id: createEntityId('goal'),
+            title: input.weeklyGoalTitle.trim() || 'Set your weekly goal',
+            label: 'Weekly Focus',
+            progress: 0,
+            target: Math.max(1, Math.trunc(input.weeklyGoalTarget || 1)),
+          },
+          tasks: (normalizedTasks.length ? normalizedTasks : ['First task placeholder']).map(buildTaskFromTitle),
+          habits: (normalizedHabits.length ? normalizedHabits : ['First habit placeholder']).map(buildHabitFromTitle),
+        };
+        dispatch({ type: 'HYDRATE_STATE', state: nextState });
+      },
+      skipOnboarding: () => {
+        const emptyState = getEmptyAppState();
+        dispatch({
+          type: 'HYDRATE_STATE',
+          state: {
+            ...emptyState,
+            hasCompletedOnboarding: true,
+            tasks: [buildTaskFromTitle('First task placeholder')],
+            habits: [buildHabitFromTitle('First habit placeholder', 0)],
+          },
+        });
       },
       resetAppData: async () => {
         const emptyState = getEmptyAppState();
@@ -242,7 +338,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         }
       },
     }),
-    [state, successMessage]
+    [isHydrated, state, successMessage]
   );
 
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;

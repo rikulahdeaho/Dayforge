@@ -41,21 +41,6 @@ import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
 import Colors from '@/constants/Colors';
 import { useAppState } from '@/store/appState';
 
-const accountRows = [
-  {
-    id: 'goals',
-    title: 'Personal Goals',
-    subtitle: 'Manage your weekly targets',
-    icon: { ios: 'scope', android: 'track_changes', web: 'track_changes' },
-  },
-  {
-    id: 'reminders',
-    title: 'Reminders',
-    subtitle: 'Daily habit and reflection alerts',
-    icon: { ios: 'bell.fill', android: 'notifications', web: 'notifications' },
-  },
-];
-
 const supportRows = [
   {
     id: 'about',
@@ -76,6 +61,20 @@ function showPlaceholder(featureName: string) {
 export default function ProfileScreen() {
   const { state, toggleDarkModeSession, resetAppData, loadMockData } = useAppState();
   const palette = (state.preferences.darkMode ? Colors.dark : Colors.light) as DayforgePalette;
+  const accountRows = [
+    {
+      id: 'goals',
+      title: 'Personal Goals',
+      subtitle: state.user.personalGoals,
+      icon: { ios: 'scope', android: 'track_changes', web: 'track_changes' },
+    },
+    {
+      id: 'reminders',
+      title: 'Reminders',
+      subtitle: state.user.reminders,
+      icon: { ios: 'bell.fill', android: 'notifications', web: 'notifications' },
+    },
+  ];
 
   const confirmResetData = () => {
     Alert.alert('Clear All Data', 'This will remove all habits, tasks, goals, and reflections on this device. Continue?', [
@@ -187,6 +186,25 @@ export default function ProfileScreen() {
             </View>
             <SymbolView
               name={resolveSymbolName({ ios: 'arrow.down.circle', android: 'download', web: 'download' })}
+              size={20}
+              tintColor={palette.mutedText}
+            />
+          </Pressable>
+          <View style={[styles.settingDivider, { backgroundColor: palette.border }]} />
+          <Pressable style={styles.settingRow} onPress={() => showPlaceholder('Import Data')}>
+            <View style={[styles.settingIcon, { backgroundColor: palette.cardStrong }]}>
+              <SymbolView
+                name={resolveSymbolName({ ios: 'square.and.arrow.down', android: 'ios_download', web: 'ios_download' })}
+                size={20}
+                tintColor={palette.accent}
+              />
+            </View>
+            <View style={styles.settingCopy}>
+              <Text style={[styles.settingTitle, { color: palette.text }]}>Import Data</Text>
+              <Text style={[styles.settingSubtitle, { color: palette.mutedText }]}>Available in a future version</Text>
+            </View>
+            <SymbolView
+              name={resolveSymbolName({ ios: 'arrow.up.circle', android: 'upload', web: 'upload' })}
               size={20}
               tintColor={palette.mutedText}
             />

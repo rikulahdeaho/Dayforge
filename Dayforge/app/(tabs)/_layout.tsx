@@ -1,10 +1,10 @@
 import React from 'react';
 import { SymbolView } from 'expo-symbols';
-import { Tabs } from 'expo-router';
+import { Redirect, Tabs } from 'expo-router';
 import { Platform, StyleSheet, View } from 'react-native';
 
 import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
+import { useAppState } from '@/store/appState';
 
 type PlatformIconName = {
   ios: string;
@@ -53,8 +53,16 @@ function TabIcon({
 }
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme ?? 'dark'];
+  const { isHydrated, state } = useAppState();
+  const palette = state.preferences.darkMode ? Colors.dark : Colors.light;
+
+  if (!isHydrated) {
+    return null;
+  }
+
+  if (!state.hasCompletedOnboarding) {
+    return <Redirect href="/onboarding" />;
+  }
 
   return (
     <Tabs

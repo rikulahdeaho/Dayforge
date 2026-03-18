@@ -38,6 +38,7 @@ import Animated, {
 import Colors from '@/constants/Colors';
 import { DateHeader } from '@/components/dayforge/DateHeader';
 import { TopGradientBackground } from '@/components/dayforge/TopGradientBackground';
+import { WeeklyProgressChart } from '@/components/dayforge/WeeklyProgressChart';
 import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
 import { DayforgePalette, GradientCard, ProgressTrack, SurfaceCard } from '@/components/dayforge/Primitives';
 import { useAppState } from '@/store/appState';
@@ -144,7 +145,7 @@ export default function TodayScreen() {
               </Animated.View>
               <Text style={styles.streakText}>{streakDays} DAY STREAK</Text>
             </View>
-            <Text style={styles.heroSubtle}>Session Progress</Text>
+            {/* <Text style={styles.heroSubtle}>Session Progress</Text> */}
           </View>
           <Text style={styles.heroTitle}>
             {completedHabits}/{totalHabits} habits done
@@ -211,25 +212,7 @@ export default function TodayScreen() {
             ))}
           </View>
 
-          <View style={styles.weeklyChartWrap}>
-            {weeklyChart.map((bar) => (
-              <View key={bar.id} style={styles.weeklyChartColumn}>
-                <View style={[styles.weeklyChartTrack, { backgroundColor: 'rgba(255,255,255,0.07)' }]}>
-                  <View
-                    style={[
-                      styles.weeklyChartFill,
-                      {
-                        backgroundColor: palette.accent,
-                        height: `${bar.value}%`,
-                        opacity: 0.84,
-                      },
-                    ]}
-                  />
-                </View>
-                <Text style={[styles.weekdayLabel, { color: palette.mutedText }]}>{bar.label}</Text>
-              </View>
-            ))}
-          </View>
+          <WeeklyProgressChart bars={weeklyChart} palette={palette} />
 
           <View style={[styles.insightRow, { borderColor: palette.border, backgroundColor: 'rgba(255,255,255,0.035)' }]}>
             <SymbolView
@@ -535,34 +518,6 @@ const styles = StyleSheet.create({
   weeklyStatValue: {
     fontSize: 20,
     fontWeight: '700',
-  },
-  weeklyChartWrap: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    gap: 6,
-    marginBottom: 10,
-  },
-  weeklyChartColumn: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  weeklyChartTrack: {
-    width: '100%',
-    height: 66,
-    borderRadius: 10,
-    justifyContent: 'flex-end',
-    overflow: 'hidden',
-  },
-  weeklyChartFill: {
-    width: '100%',
-    borderRadius: 10,
-    minHeight: 8,
-  },
-  weekdayLabel: {
-    marginTop: 6,
-    fontSize: 10,
-    fontWeight: '600',
   },
   insightRow: {
     borderWidth: 1,

@@ -92,6 +92,8 @@ function runTests() {
         name: 'Test User',
         membership: 'Free',
         avatar: 'TU',
+        personalGoals: 'Stay consistent',
+        reminders: 'Evenings',
       },
       preferences: {
         darkMode: false,
@@ -100,6 +102,15 @@ function runTests() {
 
     assert.equal(migratedState.preferences.darkMode, false);
     assert.equal(migratedState.user.name, 'Test User');
+  }
+
+  {
+    const initialState = getInitialAppState();
+    const withoutTask = appReducer(initialState, { type: 'REMOVE_TASK', taskId: 'task-1' });
+    const withoutHabit = appReducer(withoutTask, { type: 'REMOVE_HABIT', habitId: 'read' });
+
+    assert.equal(withoutTask.tasks.some((task) => task.id === 'task-1'), false);
+    assert.equal(withoutHabit.habits.some((habit) => habit.id === 'read'), false);
   }
 
   console.log('store reducer tests passed');

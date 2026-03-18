@@ -4,6 +4,8 @@ export const DEMO_USER: User = {
   name: 'Alex Rivers',
   membership: 'Premium Member',
   avatar: 'AR',
+  personalGoals: 'Build consistent focus routines and finish key weekly milestones.',
+  reminders: 'Daily at 08:00 and 20:00',
 };
 
 export const DEMO_PREFERENCES: Preferences = {

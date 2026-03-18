@@ -18,6 +18,7 @@ import {
 
 export function getInitialAppState(): AppState {
   return {
+    hasCompletedOnboarding: true,
     user: DEMO_USER,
     preferences: DEMO_PREFERENCES,
     habits: DEMO_HABITS,
@@ -30,10 +31,13 @@ export function getInitialAppState(): AppState {
 
 export function getEmptyAppState(): AppState {
   return {
+    hasCompletedOnboarding: false,
     user: {
       name: 'New User',
       membership: 'Free Member',
       avatar: 'NU',
+      personalGoals: 'Set your first personal goals.',
+      reminders: 'No reminders configured yet.',
     },
     preferences: {
       darkMode: true,
@@ -56,7 +60,7 @@ export function getEmptyAppState(): AppState {
   };
 }
 
-const initialState = getInitialAppState();
+const initialState = getEmptyAppState();
 
 function normalizeWeeklyProgress(progress: unknown, fallback = false): boolean[] {
   if (!Array.isArray(progress)) {
@@ -148,7 +152,14 @@ export function mergePersistedAppState(persisted: Partial<AppState>): AppState {
   return {
     ...initialState,
     ...persisted,
-    user: persisted.user ?? initialState.user,
+    hasCompletedOnboarding:
+      typeof persisted.hasCompletedOnboarding === 'boolean'
+        ? persisted.hasCompletedOnboarding
+        : initialState.hasCompletedOnboarding,
+    user: {
+      ...initialState.user,
+      ...(persisted.user ?? {}),
+    },
     preferences: persisted.preferences ?? initialState.preferences,
     habits: Array.isArray(persisted.habits)
       ? persisted.habits.map((habit) => normalizePersistedHabit(habit))
@@ -198,6 +209,12 @@ export function appReducer(state: AppState, action: AppStateAction): AppState {
         habits: [action.habit, ...state.habits],
       };
 
+    case 'REMOVE_HABIT':
+      return {
+        ...state,
+        habits: state.habits.filter((habit) => habit.id !== action.habitId),
+      };
+
     case 'TOGGLE_TASK': {
       const updatedTasks = state.tasks.map((task) => {
         if (task.id !== action.taskId) {
@@ -230,6 +247,12 @@ export function appReducer(state: AppState, action: AppStateAction): AppState {
         tasks: [action.task, ...state.tasks],
       };
 
+    case 'REMOVE_TASK':
+      return {
+        ...state,
+        tasks: state.tasks.filter((task) => task.id !== action.taskId),
+      };
+
     case 'INCREMENT_GOAL_PROGRESS':
       return {
         ...state,
@@ -247,6 +270,19 @@ export function appReducer(state: AppState, action: AppStateAction): AppState {
           progress: Math.max(0, state.goal.progress - 1),
         },
       };
+
+    case 'UPDATE_GOAL': {
+      const normalizedTarget = Math.max(1, Math.trunc(action.target || 1));
+      return {
+        ...state,
+        goal: {
+          ...state.goal,
+          title: action.title.trim() || state.goal.title,
+          target: normalizedTarget,
+          progress: Math.min(state.goal.progress, normalizedTarget),
+        },
+      };
+    }
 
     case 'SET_MOOD':
       return {

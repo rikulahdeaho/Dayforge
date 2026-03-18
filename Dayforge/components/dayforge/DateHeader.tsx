@@ -1,5 +1,6 @@
 import { SymbolView } from 'expo-symbols';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { DayforgePalette } from './types';
 import { resolveSymbolName } from './resolveSymbolName';
@@ -12,30 +13,57 @@ type DateHeaderProps = {
 };
 
 export function DateHeader({ palette, dateText, title, subtitle }: DateHeaderProps) {
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const notifications = [
+    'Dayforge update: smarter weekly insights are coming soon.',
+    'Tip: Complete 3 tasks today to keep your streak alive.',
+    'Reminder: Evening reflection unlocks better weekly trends.',
+  ];
+
   return (
-    <View style={styles.header}>
-      <View>
-        <View style={styles.dateRow}>
+    <>
+      <View style={styles.header}>
+        <View>
+          <View style={styles.dateRow}>
+            <SymbolView
+              name={resolveSymbolName({ ios: 'calendar', android: 'calendar_month', web: 'calendar_month' })}
+              size={16}
+              tintColor={palette.accent}
+            />
+            <Text style={[styles.dateText, { color: palette.accent }]}>{dateText}</Text>
+          </View>
+          <Text style={[styles.title, { color: palette.text }]}>{title}</Text>
+          {subtitle ? <Text style={[styles.subtitle, { color: palette.mutedText }]}>{subtitle}</Text> : null}
+        </View>
+        <Pressable
+          onPress={() => setIsNotificationsOpen(true)}
+          style={[styles.bellWrap, { backgroundColor: palette.cardStrong, borderColor: palette.border }]}>
           <SymbolView
-            name={resolveSymbolName({ ios: 'calendar', android: 'calendar_month', web: 'calendar_month' })}
-            size={16}
+            name={resolveSymbolName({ ios: 'bell.fill', android: 'notifications', web: 'notifications' })}
+            size={22}
             tintColor={palette.accent}
           />
-          <Text style={[styles.dateText, { color: palette.accent }]}>{dateText}</Text>
-        </View>
-        <Text style={[styles.title, { color: palette.text }]}>{title}</Text>
-        {subtitle ? <Text style={[styles.subtitle, { color: palette.mutedText }]}>{subtitle}</Text> : null}
+        </Pressable>
       </View>
-      <Pressable
-        onPress={() => {}}
-        style={[styles.bellWrap, { backgroundColor: palette.cardStrong, borderColor: palette.border }]}>
-        <SymbolView
-          name={resolveSymbolName({ ios: 'bell.fill', android: 'notifications', web: 'notifications' })}
-          size={22}
-          tintColor={palette.accent}
-        />
-      </Pressable>
-    </View>
+
+      <Modal visible={isNotificationsOpen} transparent animationType="fade" onRequestClose={() => setIsNotificationsOpen(false)}>
+        <View style={styles.modalBackdrop}>
+          <View style={[styles.modalCard, { backgroundColor: palette.cardStrong, borderColor: palette.border }]}>
+            <Text style={[styles.modalTitle, { color: palette.text }]}>Notifications</Text>
+            {notifications.map((item) => (
+              <View key={item} style={[styles.notificationRow, { borderColor: palette.border }]}>
+                <Text style={[styles.notificationText, { color: palette.text }]}>{item}</Text>
+              </View>
+            ))}
+            <Pressable
+              onPress={() => setIsNotificationsOpen(false)}
+              style={[styles.closeButton, { backgroundColor: palette.accent }]}>
+              <Text style={styles.closeButtonText}>Close</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 
@@ -74,5 +102,45 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    justifyContent: 'center',
+    paddingHorizontal: 18,
+  },
+  modalCard: {
+    borderWidth: 1,
+    borderRadius: 22,
+    padding: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  notificationRow: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 8,
+  },
+  notificationText: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '500',
+  },
+  closeButton: {
+    marginTop: 8,
+    borderRadius: 12,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });
