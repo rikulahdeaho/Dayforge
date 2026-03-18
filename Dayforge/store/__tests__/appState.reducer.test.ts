@@ -113,6 +113,33 @@ function runTests() {
     assert.equal(withoutHabit.habits.some((habit) => habit.id === 'read'), false);
   }
 
+  {
+    const initialState = getInitialAppState();
+    const updatedState = appReducer(initialState, {
+      type: 'UPDATE_GOAL',
+      title: '  Ship MVP polish  ',
+      target: 0,
+    });
+
+    assert.equal(updatedState.goal.title, 'Ship MVP polish');
+    assert.equal(updatedState.goal.target, 1);
+  }
+
+  {
+    const initialState = getInitialAppState();
+    const progressedState = appReducer(
+      appReducer(initialState, { type: 'INCREMENT_GOAL_PROGRESS' }),
+      { type: 'INCREMENT_GOAL_PROGRESS' }
+    );
+    const clampedState = appReducer(progressedState, {
+      type: 'UPDATE_GOAL',
+      title: 'Smaller target',
+      target: 1,
+    });
+
+    assert.equal(clampedState.goal.progress, 1);
+  }
+
   console.log('store reducer tests passed');
 }
 

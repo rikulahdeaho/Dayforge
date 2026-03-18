@@ -3,6 +3,7 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import { ActivityIndicator, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
@@ -55,7 +56,13 @@ function RootNavigator() {
   const { isHydrated, state } = useAppState();
 
   if (!isHydrated) {
-    return null;
+    return (
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0f081b' }}>
+          <ActivityIndicator size="large" color="#a44cff" />
+        </View>
+      </GestureHandlerRootView>
+    );
   }
 
   return (

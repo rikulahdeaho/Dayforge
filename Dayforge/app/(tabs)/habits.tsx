@@ -31,7 +31,7 @@
 
 import { SymbolView } from 'expo-symbols';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
@@ -86,6 +86,7 @@ export default function HabitsScreen() {
   const { removeHabit, state, toggleHabit } = useAppState();
   const palette = (state.preferences.darkMode ? Colors.dark : Colors.light) as DayforgePalette;
   const [selectedHabitDayIndex, setSelectedHabitDayIndex] = useState(getCurrentMondayBasedDayIndex);
+  const longPressHabitIdRef = useRef<string | null>(null);
   const successColor = palette.success;
   const headerDate = new Date().toLocaleDateString(undefined, {
     weekday: 'long',
@@ -154,8 +155,21 @@ export default function HabitsScreen() {
           return (
             <View key={habit.id}>
               <Pressable
-                onPress={() => toggleHabit(habit.id, selectedHabitDayIndex)}
-                onLongPress={() => confirmDeleteHabit(habit.id, habit.title)}
+                onPress={() => {
+                  if (longPressHabitIdRef.current === habit.id) {
+                    return;
+                  }
+                  toggleHabit(habit.id, selectedHabitDayIndex);
+                }}
+                onLongPress={() => {
+                  longPressHabitIdRef.current = habit.id;
+                  confirmDeleteHabit(habit.id, habit.title);
+                }}
+                onPressOut={() => {
+                  if (longPressHabitIdRef.current === habit.id) {
+                    longPressHabitIdRef.current = null;
+                  }
+                }}
                 delayLongPress={280}>
                 <View style={[styles.itemCard, { backgroundColor: 'rgba(255,255,255,0.035)', borderColor: palette.border }]}>
                   <View style={styles.itemTop}>

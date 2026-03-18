@@ -6,7 +6,7 @@ export function scrollFocusedInputIntoView(
   target: number | null | undefined,
   customKeyboardOffset?: number
 ) {
-  if (!target) {
+  if (target == null) {
     return;
   }
 
