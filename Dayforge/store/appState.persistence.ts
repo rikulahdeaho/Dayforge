@@ -4,14 +4,19 @@ import { AppState } from './appState.types';
 import { mergePersistedAppState } from './appState.reducer';
 
 const STORAGE_KEY = '@dayforge/app-state-v1';
-const STORAGE_VERSION = 2;
+const STORAGE_VERSION = 3;
 
 type PersistedAppState = {
   version: number;
   state: Partial<AppState>;
 };
 
-type LegacyUserV1 = AppState['user'] & {
+type LegacyUserV1 = {
+  name: string;
+  membership: string;
+  avatar: string;
+  personalGoals?: string;
+  reminders?: string;
   darkMode?: boolean;
 };
 
@@ -42,6 +47,7 @@ function migrateToCurrentState(rawState: Partial<AppState> | LegacyAppStateV1): 
   const currentState = rawState as Partial<AppState>;
   const migratedState: Partial<AppState> = {
     ...legacyState,
+    hasCompletedOnboarding: currentState.hasCompletedOnboarding ?? true,
     preferences: {
       darkMode: currentState.preferences?.darkMode ?? legacyState.user?.darkMode ?? true,
     },
@@ -50,6 +56,8 @@ function migrateToCurrentState(rawState: Partial<AppState> | LegacyAppStateV1): 
           name: legacyState.user.name,
           membership: legacyState.user.membership,
           avatar: legacyState.user.avatar,
+          personalGoals: currentState.user?.personalGoals ?? 'Set your first personal goals.',
+          reminders: currentState.user?.reminders ?? 'No reminders configured yet.',
         }
       : undefined,
   };

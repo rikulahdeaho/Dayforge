@@ -1,89 +1,181 @@
-import { Goal, Habit, Preferences, ReflectionDraft, ReflectionHistoryItem, Task, User } from '../types';
+import {
+  Goal,
+  Habit,
+  Mood,
+  Preferences,
+  ReflectionDraft,
+  ReflectionHistoryItem,
+  Task,
+  User,
+} from '../types';
+import { formatFullDateLabel, getDateKeyForMondayBasedDayIndex, toDateKey } from '../store/appState.helpers';
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+const todayKey = toDateKey(today);
+
+function dateFromOffset(daysFromToday: number) {
+  return new Date(today.getTime() + daysFromToday * MS_PER_DAY);
+}
+
+function dateKeyFromOffset(daysFromToday: number) {
+  return toDateKey(dateFromOffset(daysFromToday));
+}
+
+function buildCompletionByOffset(offsets: number[]) {
+  return offsets.reduce<Record<string, boolean>>((acc, offset) => {
+    acc[dateKeyFromOffset(offset)] = true;
+    return acc;
+  }, {});
+}
+
+function buildWeeklyProgressFromCompletionMap(completionByDate: Record<string, boolean>) {
+  return Array.from({ length: 7 }, (_, dayIndex) => Boolean(completionByDate[getDateKeyForMondayBasedDayIndex(dayIndex, today)]));
+}
+
+function buildTask({
+  id,
+  title,
+  offset,
+  completed,
+}: {
+  id: string;
+  title: string;
+  offset: number;
+  completed: boolean;
+}): Task {
+  const dateKey = dateKeyFromOffset(offset);
+  const completionByDate = completed ? { [dateKey]: true } : {};
+  const weeklyProgress = buildWeeklyProgressFromCompletionMap(completionByDate);
+
+  return {
+    id,
+    title,
+    dateKey,
+    completedToday: Boolean(completionByDate[todayKey]),
+    weeklyProgress,
+    completionByDate,
+  };
+}
+
+function buildReflectionHistoryItemFromOffset({
+  id,
+  daysAgo,
+  mood,
+  wentWell,
+  gratefulFor,
+}: {
+  id: string;
+  daysAgo: number;
+  mood: Mood;
+  wentWell: string;
+  gratefulFor: string;
+}): ReflectionHistoryItem {
+  const entryDate = dateFromOffset(-daysAgo);
+  const dateLabel = entryDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const fullDate = formatFullDateLabel(entryDate);
+  const previewSource = wentWell.trim() || gratefulFor.trim();
+  const preview = previewSource.length > 84 ? `${previewSource.slice(0, 84)}...` : previewSource;
+
+  return {
+    id,
+    dateLabel,
+    fullDate,
+    mood,
+    preview,
+    wentWell,
+    gratefulFor,
+  };
+}
 
 export const DEMO_USER: User = {
   name: 'Alex Rivers',
   membership: 'Premium Member',
   avatar: 'AR',
+  personalGoals: 'Build consistent focus routines, ship portfolio updates, and keep stress low.',
+  reminders: 'Weekdays at 08:00 and 20:30',
 };
 
 export const DEMO_PREFERENCES: Preferences = {
   darkMode: true,
 };
 
+const meditationCompletion = buildCompletionByOffset([-13, -12, -10, -9, -7, -6, -5, -3, -2, -1, 0]);
+const readingCompletion = buildCompletionByOffset([-12, -11, -9, -8, -6, -5, -3, -2]);
+const hydrationCompletion = buildCompletionByOffset([-13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0]);
+const walkCompletion = buildCompletionByOffset([-11, -9, -8, -6, -4, -3, -1]);
+
 export const DEMO_HABITS: Habit[] = [
   {
-    id: 'meditation',
+    id: 'habit-meditation',
     title: 'Morning Meditation',
-    subtitle: '15 mins - Morning',
+    subtitle: '12 minutes before work',
     icon: 'figure.mind.and.body',
-    completedToday: true,
-    weeklyProgress: [true, false, false, false, false, false, false],
-    completionByDate: {
-      '2026-03-16': true,
-    },
-    statusLabel: 'PERFECT WEEK',
+    completedToday: Boolean(meditationCompletion[todayKey]),
+    weeklyProgress: buildWeeklyProgressFromCompletionMap(meditationCompletion),
+    completionByDate: meditationCompletion,
+    statusLabel: 'CONSISTENT',
   },
   {
     id: 'read',
     title: 'Read 20 Pages',
-    subtitle: 'Nightly habit',
+    subtitle: 'Evening wind-down',
     icon: 'book.fill',
-    completedToday: false,
-    weeklyProgress: [true, false, false, false, false, false, false],
-    completionByDate: {
-      '2026-03-16': true,
-    },
-    statusLabel: '5/7 DAYS',
+    completedToday: Boolean(readingCompletion[todayKey]),
+    weeklyProgress: buildWeeklyProgressFromCompletionMap(readingCompletion),
+    completionByDate: readingCompletion,
+    statusLabel: 'ON TRACK',
   },
   {
-    id: 'water',
+    id: 'habit-water',
     title: 'Drink 2L Water',
-    subtitle: 'Throughout the day',
+    subtitle: 'Across the day',
     icon: 'drop.fill',
-    completedToday: true,
-    weeklyProgress: [false, false, false, false, false, false, false],
-    completionByDate: {
-      '2026-03-18': true,
-    },
-    statusLabel: 'ON TRACK',
+    completedToday: Boolean(hydrationCompletion[todayKey]),
+    weeklyProgress: buildWeeklyProgressFromCompletionMap(hydrationCompletion),
+    completionByDate: hydrationCompletion,
+    statusLabel: 'STREAKING',
+  },
+  {
+    id: 'habit-walk',
+    title: '10-Min Walk',
+    subtitle: 'After lunch reset',
+    icon: 'heart.fill',
+    completedToday: Boolean(walkCompletion[todayKey]),
+    weeklyProgress: buildWeeklyProgressFromCompletionMap(walkCompletion),
+    completionByDate: walkCompletion,
+    statusLabel: 'BUILDING',
   },
 ];
 
 export const DEMO_GOAL: Goal = {
   id: 'goal-1',
-  title: 'Apply to 3 jobs',
+  title: 'Ship 2 portfolio case studies',
   label: 'Weekly Focus',
-  progress: 1,
-  target: 3,
+  progress: 6,
+  target: 10,
 };
 
 export const DEMO_TASKS: Task[] = [
-  {
-    id: 'task-1',
-    title: 'Morning meditation (15 mins)',
-    dateKey: '2026-03-18',
-    completedToday: false,
-    weeklyProgress: [false, false, false, false, false, false, false],
-    completionByDate: {},
-  },
-  {
-    id: 'task-2',
-    title: 'Drink 2L of water',
-    dateKey: '2026-03-17',
-    completedToday: true,
-    weeklyProgress: [true, false, false, false, false, false, false],
-    completionByDate: {
-      '2026-03-16': true,
-    },
-  },
-  {
-    id: 'task-3',
-    title: 'Finalize portfolio case study',
-    dateKey: '2026-03-16',
-    completedToday: false,
-    weeklyProgress: [false, false, false, false, false, false, false],
-    completionByDate: {},
-  },
+  buildTask({ id: 'task-1', title: 'Plan top 3 priorities', offset: -13, completed: true }),
+  buildTask({ id: 'task-02', title: 'Deep work sprint (90m)', offset: -12, completed: true }),
+  buildTask({ id: 'task-03', title: 'Send recruiter follow-up', offset: -11, completed: true }),
+  buildTask({ id: 'task-04', title: 'Update portfolio hero copy', offset: -10, completed: false }),
+  buildTask({ id: 'task-05', title: 'Apply to Product Designer role', offset: -9, completed: true }),
+  buildTask({ id: 'task-06', title: 'Gym session', offset: -8, completed: true }),
+  buildTask({ id: 'task-07', title: 'Review monthly budget', offset: -7, completed: false }),
+  buildTask({ id: 'task-08', title: 'Refactor case study visuals', offset: -6, completed: true }),
+  buildTask({ id: 'task-09', title: 'Message design mentor', offset: -5, completed: true }),
+  buildTask({ id: 'task-10', title: 'Weekly planning for next sprint', offset: -4, completed: false }),
+  buildTask({ id: 'task-11', title: 'Write reflection notes', offset: -3, completed: true }),
+  buildTask({ id: 'task-12', title: 'Prepare interview stories', offset: -2, completed: true }),
+  buildTask({ id: 'task-13', title: 'Organize file system', offset: -1, completed: true }),
+  buildTask({ id: 'task-14', title: 'Send proposal email', offset: 0, completed: false }),
+  buildTask({ id: 'task-15', title: 'Polish mobile layout details', offset: 0, completed: true }),
+  buildTask({ id: 'task-16', title: 'Draft LinkedIn post', offset: 1, completed: false }),
+  buildTask({ id: 'task-17', title: 'Research company shortlist', offset: 2, completed: false }),
+  buildTask({ id: 'task-18', title: 'Prepare weekly review', offset: 3, completed: false }),
 ];
 
 export const DEMO_REFLECTION_DRAFT: ReflectionDraft = {
@@ -93,41 +185,86 @@ export const DEMO_REFLECTION_DRAFT: ReflectionDraft = {
 };
 
 export const DEMO_REFLECTION_HISTORY: ReflectionHistoryItem[] = [
-  {
-    id: 'history-1',
-    dateLabel: 'Yesterday',
-    fullDate: '17.03.2026',
+  buildReflectionHistoryItemFromOffset({
+    id: 'reflection-01',
+    daysAgo: 1,
     mood: 'happy',
-    preview: 'Had an amazing dinner with friends and disconnected from work stress.',
-    wentWell: 'Wrapped up my tasks before dinner and stayed present.',
-    gratefulFor: 'Great friends and meaningful conversations.',
-  },
-  {
-    id: 'history-2',
-    dateLabel: 'Oct 21',
-    fullDate: '21.10.2025',
+    wentWell: 'Finished a deep work block and wrapped two pending tasks before noon.',
+    gratefulFor: 'Supportive feedback from a friend and steady focus.',
+  }),
+  buildReflectionHistoryItemFromOffset({
+    id: 'reflection-02',
+    daysAgo: 2,
     mood: 'good',
-    preview: 'Finally finished reading that book and took notes for future ideas.',
-    wentWell: 'Read for 30 focused minutes before sleep.',
-    gratefulFor: 'Quiet evening and mental clarity.',
-  },
-  {
-    id: 'history-3',
-    dateLabel: 'Oct 20',
-    fullDate: '20.10.2025',
+    wentWell: 'Cleaned up project structure and reduced visual bugs in the dashboard.',
+    gratefulFor: 'A calm evening walk and good sleep.',
+  }),
+  buildReflectionHistoryItemFromOffset({
+    id: 'reflection-03',
+    daysAgo: 3,
     mood: 'neutral',
-    preview: 'A productive but very busy Friday with little downtime.',
-    wentWell: 'Completed most urgent tasks by noon.',
-    gratefulFor: 'Good health and steady progress.',
-  },
+    wentWell: 'Managed meetings well even though the day was fragmented.',
+    gratefulFor: 'Having clear priorities written down.',
+  }),
+  buildReflectionHistoryItemFromOffset({
+    id: 'reflection-04',
+    daysAgo: 4,
+    mood: 'good',
+    wentWell: 'Shipped a meaningful improvement to onboarding and task interactions.',
+    gratefulFor: 'Productive momentum and healthy meals.',
+  }),
+  buildReflectionHistoryItemFromOffset({
+    id: 'reflection-05',
+    daysAgo: 5,
+    mood: 'happy',
+    wentWell: 'Closed the week with strong output and no context switching fatigue.',
+    gratefulFor: 'Time with family and a low-stress evening.',
+  }),
+  buildReflectionHistoryItemFromOffset({
+    id: 'reflection-06',
+    daysAgo: 6,
+    mood: 'good',
+    wentWell: 'Completed admin tasks early and protected focused time for design work.',
+    gratefulFor: 'Good coffee and meaningful progress.',
+  }),
+  buildReflectionHistoryItemFromOffset({
+    id: 'reflection-07',
+    daysAgo: 7,
+    mood: 'neutral',
+    wentWell: 'Recovered from a slow start and still got key tasks done.',
+    gratefulFor: 'Patience and a supportive routine.',
+  }),
+  buildReflectionHistoryItemFromOffset({
+    id: 'reflection-08',
+    daysAgo: 8,
+    mood: 'good',
+    wentWell: 'Made a clean weekly plan and followed it better than last week.',
+    gratefulFor: 'Healthy body and steady energy.',
+  }),
+  buildReflectionHistoryItemFromOffset({
+    id: 'reflection-09',
+    daysAgo: 9,
+    mood: 'sad',
+    wentWell: 'Even with lower energy, I finished one difficult task.',
+    gratefulFor: 'Rest and the ability to reset tomorrow.',
+  }),
+  buildReflectionHistoryItemFromOffset({
+    id: 'reflection-10',
+    daysAgo: 10,
+    mood: 'good',
+    wentWell: 'Got positive response on portfolio update and improved confidence.',
+    gratefulFor: 'Learning opportunities and constructive feedback.',
+  }),
 ];
 
-export const DEMO_SCHEDULE = [
-  { id: 'mon', day: 'MON', date: '26' },
-  { id: 'tue', day: 'TUE', date: '27' },
-  { id: 'wed', day: 'WED', date: '28' },
-  { id: 'thu', day: 'THU', date: '29' },
-  { id: 'fri', day: 'FRI', date: '01' },
-  { id: 'sat', day: 'SAT', date: '02' },
-  { id: 'sun', day: 'SUN', date: '03' },
-];
+export const DEMO_SCHEDULE = Array.from({ length: 7 }, (_, dayIndex) => {
+  const date = dateFromOffset(dayIndex - 3);
+  const day = date.toLocaleDateString(undefined, { weekday: 'short' }).toUpperCase();
+  const dateLabel = String(date.getDate()).padStart(2, '0');
+
+  return {
+    id: `day-${dayIndex}`,
+    day,
+    date: dateLabel,
+  };
+});

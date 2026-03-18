@@ -35,10 +35,13 @@
  */
 
 import { SymbolView } from 'expo-symbols';
+import { useRouter } from 'expo-router';
+import { useRef } from 'react';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 
 import { DateHeader } from '@/components/dayforge/DateHeader';
+import { scrollFocusedInputIntoView } from '@/components/dayforge/scrollFocusedInputIntoView';
 import { TopGradientBackground } from '@/components/dayforge/TopGradientBackground';
 import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
 import { DayforgePalette, GlowButton } from '@/components/dayforge/Primitives';
@@ -70,8 +73,10 @@ function moodEmoji(mood: Mood) {
 
 
 export default function ReflectionScreen() {
+  const router = useRouter();
   const { saveReflection, setMood, setReflectionField, setSuccessMessage, state, successMessage } = useAppState();
   const palette = (state.preferences.darkMode ? Colors.dark : Colors.light) as DayforgePalette;
+  const scrollRef = useRef<ScrollView>(null);
   const headerDate = new Date().toLocaleDateString(undefined, {
     weekday: 'long',
     month: 'long',
@@ -90,7 +95,11 @@ export default function ReflectionScreen() {
   return (
     <View style={[styles.safe, { backgroundColor: palette.background }]}>
       <TopGradientBackground />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        ref={scrollRef}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled">
         <DateHeader palette={palette} dateText={headerDate} title="How are you feeling?" />
 
         <View style={styles.moodRow}>
@@ -145,6 +154,7 @@ export default function ReflectionScreen() {
             <TextInput
               multiline
               numberOfLines={4}
+              onFocus={(event) => scrollFocusedInputIntoView(scrollRef, event.nativeEvent.target)}
               value={state.reflectionDraft.wentWell}
               onChangeText={(text) => {
                 setReflectionField('wentWell', text);
@@ -172,6 +182,7 @@ export default function ReflectionScreen() {
             <TextInput
               multiline
               numberOfLines={4}
+              onFocus={(event) => scrollFocusedInputIntoView(scrollRef, event.nativeEvent.target, 220)}
               value={state.reflectionDraft.gratefulFor}
               onChangeText={(text) => {
                 setReflectionField('gratefulFor', text);
@@ -197,12 +208,17 @@ export default function ReflectionScreen() {
 
         <View style={styles.historyHeader}>
           <Text style={[styles.historyHeading, { color: palette.text }]}>Past Entries</Text>
-          <Text style={[styles.historyAction, { color: palette.accent }]}>VIEW ALL</Text>
+          <Pressable onPress={() => router.push('/reflections' as never)}>
+            <Text style={[styles.historyAction, { color: palette.accent }]}>VIEW ALL</Text>
+          </Pressable>
         </View>
 
         {visibleHistory.map((entry) => (
-          <View
+          <Pressable
             key={entry.id}
+            onPress={() =>
+              router.push({ pathname: '/reflection/[id]' as never, params: { id: entry.id } } as never)
+            }
             style={[
               styles.historyItem,
               {
@@ -225,7 +241,7 @@ export default function ReflectionScreen() {
               size={18}
               tintColor={palette.mutedText}
             />
-          </View>
+          </Pressable>
         ))}
       </ScrollView>
     </View>

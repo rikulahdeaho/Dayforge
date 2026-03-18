@@ -24,8 +24,9 @@
  * - Session-only state: resets on app reload
  */
 import { SymbolView } from 'expo-symbols';
-import { useEffect, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
 import { DateHeader } from '@/components/dayforge/DateHeader';
@@ -92,11 +93,12 @@ function AnimatedCompleteCheck({ completed, tintColor }: { completed: boolean; t
 
 export default function TaskScreen() {
   const router = useRouter();
-  const { state, addTask, decrementGoalProgress, incrementGoalProgress, toggleTask } = useAppState();
+  const { state, decrementGoalProgress, incrementGoalProgress, removeTask, toggleTask } = useAppState();
   const palette = (state.preferences.darkMode ? Colors.dark : Colors.light) as DayforgePalette;
-  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
-  const [newTaskTitle, setNewTaskTitle] = useState('');
   const [selectedScheduleDay, setSelectedScheduleDay] = useState(getCurrentMondayBasedDayIndex);
+  const [pendingTaskDeletion, setPendingTaskDeletion] = useState<{ id: string; title: string } | null>(null);
+  const pendingTaskDeletionRef = useRef<{ id: string; title: string } | null>(null);
+  const pendingTaskDeletionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const selectedDateKey = getDateKeyForMondayBasedDayIndex(selectedScheduleDay);
   const selectedDateLabel = getDateForMondayBasedDayIndex(selectedScheduleDay).toLocaleDateString(undefined, {
     weekday: 'long',
@@ -118,22 +120,52 @@ export default function TaskScreen() {
   });
 
   const openTaskModal = () => {
-    setIsTaskModalOpen(true);
+    router.push({ pathname: '/add-task', params: { dayIndex: String(selectedScheduleDay) } });
   };
 
-  const closeTaskModal = () => {
-    setIsTaskModalOpen(false);
-    setNewTaskTitle('');
+  const clearPendingDeletionTimeout = () => {
+    if (pendingTaskDeletionTimeoutRef.current) {
+      clearTimeout(pendingTaskDeletionTimeoutRef.current);
+      pendingTaskDeletionTimeoutRef.current = null;
+    }
   };
 
-  const submitTask = () => {
-    if (!newTaskTitle.trim()) {
-      return;
+  const commitTaskDeletion = (taskId: string) => {
+    removeTask(taskId);
+    clearPendingDeletionTimeout();
+
+    if (pendingTaskDeletionRef.current?.id === taskId) {
+      pendingTaskDeletionRef.current = null;
+      setPendingTaskDeletion(null);
+    }
+  };
+
+  const queueTaskDeletion = (taskId: string, title: string) => {
+    const previousDeletion = pendingTaskDeletionRef.current;
+    if (previousDeletion) {
+      commitTaskDeletion(previousDeletion.id);
     }
 
-    addTask(newTaskTitle, selectedScheduleDay);
-    closeTaskModal();
+    const nextDeletion = { id: taskId, title };
+    pendingTaskDeletionRef.current = nextDeletion;
+    setPendingTaskDeletion(nextDeletion);
+    clearPendingDeletionTimeout();
+    pendingTaskDeletionTimeoutRef.current = setTimeout(() => {
+      commitTaskDeletion(taskId);
+    }, 4500);
   };
+
+  const undoTaskDeletion = () => {
+    clearPendingDeletionTimeout();
+    pendingTaskDeletionRef.current = null;
+    setPendingTaskDeletion(null);
+  };
+
+  useEffect(() => {
+    return () => {
+      clearPendingDeletionTimeout();
+    };
+  }, []);
 
   return (
     <View style={[styles.safe, { backgroundColor: palette.background }]}>
@@ -169,7 +201,9 @@ export default function TaskScreen() {
                 <Text style={styles.stepperText}>+</Text>
               </Pressable>
             </View>
-            <Pressable style={[styles.editButton, { borderColor: palette.accentStrong }]}> 
+            <Pressable
+              style={[styles.editButton, { borderColor: palette.accentStrong }]}
+              onPress={() => router.push('/edit-weekly-focus' as never)}>
               <SymbolView
                 name={resolveSymbolName({ ios: 'square.and.pencil', android: 'edit', web: 'edit' })}
                 size={18}
@@ -201,40 +235,58 @@ export default function TaskScreen() {
           </View>
           <Text style={[styles.sectionAction, { color: palette.accent }]}>{remainingTasks} REMAINING</Text>
         </View>
+        <Text style={[styles.swipeHint, { color: palette.mutedText }]}>Swipe left on a task to delete it.</Text>
         {state.tasks
           .filter((task) => task.dateKey === selectedDateKey)
+          .filter((task) => task.id !== pendingTaskDeletion?.id)
           .map((task) => (
-          <Pressable key={task.id} onPress={() => toggleTask(task.id, selectedScheduleDay)}>
-            <SurfaceCard
-              palette={palette}
-              style={[styles.taskCard, { opacity: task.completionByDate[selectedDateKey] ? 0.6 : 1 }]}>
-              <View style={styles.taskRow}>
-                <View
-                  style={[
-                    styles.taskCheck,
-                    {
-                      borderColor: task.completionByDate[selectedDateKey] ? successColor : palette.border,
-                      backgroundColor: 'transparent',
-                    },
-                  ]}>
-                  <AnimatedCompleteCheck
-                    completed={Boolean(task.completionByDate[selectedDateKey])}
-                    tintColor={successColor}
+            <Swipeable
+              key={task.id}
+              overshootRight={false}
+              renderRightActions={() => (
+                <Pressable
+                  onPress={() => queueTaskDeletion(task.id, task.title)}
+                  style={styles.deleteAction}>
+                  <SymbolView
+                    name={resolveSymbolName({ ios: 'trash.fill', android: 'delete', web: 'delete' })}
+                    size={18}
+                    tintColor="#fff"
                   />
-                </View>
-                <Text
-                  style={[
-                    styles.taskText,
-                    {
-                      color: task.completionByDate[selectedDateKey] ? palette.mutedText : palette.text,
-                      textDecorationLine: task.completionByDate[selectedDateKey] ? 'line-through' : 'none',
-                    },
-                  ]}>
-                  {task.title}
-                </Text>
-              </View>
-            </SurfaceCard>
-          </Pressable>
+                  <Text style={styles.deleteActionText}>Delete</Text>
+                </Pressable>
+              )}>
+              <Pressable onPress={() => toggleTask(task.id, selectedScheduleDay)}>
+                <SurfaceCard
+                  palette={palette}
+                  style={[styles.taskCard, { opacity: task.completionByDate[selectedDateKey] ? 0.6 : 1 }]}>
+                  <View style={styles.taskRow}>
+                    <View
+                      style={[
+                        styles.taskCheck,
+                        {
+                          borderColor: task.completionByDate[selectedDateKey] ? successColor : palette.border,
+                          backgroundColor: 'transparent',
+                        },
+                      ]}>
+                      <AnimatedCompleteCheck
+                        completed={Boolean(task.completionByDate[selectedDateKey])}
+                        tintColor={successColor}
+                      />
+                    </View>
+                    <Text
+                      style={[
+                        styles.taskText,
+                        {
+                          color: task.completionByDate[selectedDateKey] ? palette.mutedText : palette.text,
+                          textDecorationLine: task.completionByDate[selectedDateKey] ? 'line-through' : 'none',
+                        },
+                      ]}>
+                      {task.title}
+                    </Text>
+                  </View>
+                </SurfaceCard>
+              </Pressable>
+            </Swipeable>
         ))}
 
         <DashedAction
@@ -250,40 +302,17 @@ export default function TaskScreen() {
           style={styles.addTask}
           onPress={openTaskModal}
         />
-
-        <Modal visible={isTaskModalOpen} transparent animationType="fade" onRequestClose={closeTaskModal}>
-          <View style={styles.modalBackdrop}>
-            <View style={[styles.modalCard, { backgroundColor: palette.cardStrong, borderColor: palette.border }]}>
-              <Text style={[styles.modalTitle, { color: palette.text }]}>Add Task</Text>
-              <TextInput
-                value={newTaskTitle}
-                onChangeText={setNewTaskTitle}
-                placeholder="Task title"
-                placeholderTextColor={palette.mutedText}
-                style={[styles.modalInput, { color: palette.text, borderColor: palette.border }]}
-                autoFocus
-                returnKeyType="done"
-                onSubmitEditing={submitTask}
-              />
-              <View style={styles.modalActions}>
-                <Pressable style={[styles.modalButton, { borderColor: palette.border }]} onPress={closeTaskModal}>
-                  <Text style={[styles.modalButtonText, { color: palette.mutedText }]}>Cancel</Text>
-                </Pressable>
-                <Pressable
-                  style={[
-                    styles.modalButton,
-                    styles.modalButtonPrimary,
-                    { opacity: newTaskTitle.trim() ? 1 : 0.5, backgroundColor: palette.accent },
-                  ]}
-                  disabled={!newTaskTitle.trim()}
-                  onPress={submitTask}>
-                  <Text style={styles.modalButtonPrimaryText}>Add</Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        </Modal>
       </ScrollView>
+      {pendingTaskDeletion ? (
+        <View style={[styles.undoBar, { backgroundColor: palette.cardStrong, borderColor: palette.border }]}>
+          <Text style={[styles.undoText, { color: palette.text }]} numberOfLines={1}>
+            Deleted "{pendingTaskDeletion.title}"
+          </Text>
+          <Pressable onPress={undoTaskDeletion}>
+            <Text style={[styles.undoAction, { color: palette.accent }]}>UNDO</Text>
+          </Pressable>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -355,6 +384,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     letterSpacing: 0.6,
+  },
+  swipeHint: {
+    paddingHorizontal: 6,
+    marginTop: -2,
+    marginBottom: 10,
+    fontSize: 12,
+    fontWeight: '500',
   },
   focusCard: {
     marginBottom: 24,
@@ -487,55 +523,44 @@ const styles = StyleSheet.create({
     marginTop: 2,
     marginBottom: 20,
   },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+  deleteAction: {
+    width: 94,
+    marginBottom: 12,
+    borderRadius: 18,
+    backgroundColor: '#d1435b',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    gap: 4,
   },
-  modalCard: {
-    width: '100%',
-    borderWidth: 1,
-    borderRadius: 22,
-    padding: 16,
-  },
-  modalTitle: {
-    fontSize: 20,
+  deleteActionText: {
+    color: '#fff',
+    fontSize: 12,
     fontWeight: '700',
-    marginBottom: 12,
+    letterSpacing: 0.4,
   },
-  modalInput: {
+  undoBar: {
+    position: 'absolute',
+    left: 12,
+    right: 12,
+    bottom: 96,
     borderWidth: 1,
     borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 15,
-    marginBottom: 14,
-  },
-  modalActions: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     flexDirection: 'row',
-    gap: 10,
-  },
-  modalButton: {
-    flex: 1,
-    minHeight: 44,
-    borderRadius: 12,
-    borderWidth: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
   },
-  modalButtonPrimary: {
-    borderWidth: 0,
+  undoText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
   },
-  modalButtonText: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  modalButtonPrimaryText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '700',
+  undoAction: {
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.4,
   },
   reflectionCard: {
     alignItems: 'center',
