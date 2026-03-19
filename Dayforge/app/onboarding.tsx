@@ -2,6 +2,7 @@ import { Redirect, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -269,8 +270,12 @@ export default function OnboardingScreen() {
           {step === 0 ? (
             <SurfaceCard palette={palette} style={styles.card}>
               <View style={styles.step0Wrap}>
-                <View style={[styles.logoCircle, styles.step0Logo, { borderColor: palette.border, backgroundColor: '#C892FF' }]}>
-                  <Text style={[styles.logoText, styles.step0LogoText]}>DF</Text>
+                <View style={[styles.step0Logo, { borderColor: palette.border, backgroundColor: 'rgb(248, 248, 246)' }]}>
+                  <Image
+                    source={require('../assets/images/DayforgeLogo.png')}
+                    style={styles.step0LogoImage}
+                    resizeMode="contain"
+                  />
                 </View>
                 <Text style={[styles.step0Headline, { color: palette.text }]}>
                   Dayforge: Build better days, <Text style={{ color: '#C892FF' }}>one step at a time.</Text>
@@ -656,7 +661,10 @@ const styles = StyleSheet.create({
     width: 92,
     height: 92,
     borderRadius: 46,
+    borderWidth: 1,
     marginBottom: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: '#B87CFF',
     shadowOpacity: 0.25,
     shadowRadius: 18,
@@ -668,6 +676,10 @@ const styles = StyleSheet.create({
     fontSize: 34,
     fontWeight: '800',
     letterSpacing: 0.5,
+  },
+  step0LogoImage: {
+    width: 64,
+    height: 64,
   },
   step0Headline: {
     fontSize: 44,

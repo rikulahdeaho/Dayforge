@@ -33,7 +33,7 @@
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { SymbolView } from '@/components/dayforge/SymbolView';
-import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { DayforgePalette, SurfaceCard } from '@/components/dayforge/Primitives';
 import { TopGradientBackground } from '@/components/dayforge/TopGradientBackground';
@@ -241,6 +241,11 @@ export default function ProfileScreen() {
         <Pressable onPress={confirmLoadMockData}>
           <Text style={[styles.signOut, { color: palette.accent, marginTop: 8 }]}>Load Mock Data</Text>
         </Pressable>
+        <Image
+          source={require('../../assets/images/DayforgeLogo.png')}
+          style={styles.footerLogo}
+          resizeMode="contain"
+        />
         <Text style={[styles.version, { color: palette.mutedText }]}>Version 0.0.1 (Build 1 MVP)</Text>
       </ScrollView>
     </View>
@@ -385,5 +390,13 @@ const styles = StyleSheet.create({
   version: {
     textAlign: 'center',
     fontSize: 13,
+  },
+  footerLogo: {
+    width: 56,
+    height: 56,
+    alignSelf: 'center',
+    marginTop: 24,
+    marginBottom: 4,
+    opacity: 0.7,
   },
 });
