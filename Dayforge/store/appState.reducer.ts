@@ -231,6 +231,21 @@ export function appReducer(state: AppState, action: AppStateAction): AppState {
         habits: [action.habit, ...state.habits],
       };
 
+    case 'UPDATE_HABIT':
+      return {
+        ...state,
+        habits: state.habits.map((habit) =>
+          habit.id === action.habitId
+            ? {
+                ...habit,
+                title: action.title.trim() || habit.title,
+                subtitle: action.subtitle.trim() || habit.subtitle,
+                icon: action.icon,
+              }
+            : habit
+        ),
+      };
+
     case 'REMOVE_HABIT':
       return {
         ...state,

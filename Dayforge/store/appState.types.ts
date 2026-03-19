@@ -14,6 +14,7 @@ export type AppState = {
 export type AppStateAction =
   | { type: 'TOGGLE_HABIT'; habitId: string; dayIndex: number; dateKey: string }
   | { type: 'ADD_HABIT'; habit: Habit }
+  | { type: 'UPDATE_HABIT'; habitId: string; title: string; subtitle: string; icon: Habit['icon'] }
   | { type: 'REMOVE_HABIT'; habitId: string }
   | { type: 'TOGGLE_TASK'; taskId: string; dayIndex: number; dateKey: string }
   | { type: 'ADD_TASK'; task: Task }

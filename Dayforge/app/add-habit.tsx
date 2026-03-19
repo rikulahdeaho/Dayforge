@@ -1,6 +1,6 @@
 import { SymbolView } from '@/components/dayforge/SymbolView';
-import { useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { DayforgePalette, SurfaceCard } from '@/components/dayforge/Primitives';
@@ -45,13 +45,37 @@ const habitIconOptions = [
 ];
 
 export default function AddHabitScreen() {
+  const params = useLocalSearchParams<{
+    mode?: string;
+    habitId?: string;
+    title?: string;
+    subtitle?: string;
+    iconId?: string;
+  }>();
   const router = useRouter();
-  const { addHabit, state } = useAppState();
+  const { addHabit, state, updateHabit } = useAppState();
   const palette = (state.preferences.darkMode ? Colors.dark : Colors.light) as DayforgePalette;
   const [habitTitle, setHabitTitle] = useState('');
   const [habitSubtitle, setHabitSubtitle] = useState('');
   const [habitIcon, setHabitIcon] = useState(habitIconOptions[0].id);
   const scrollRef = useRef<ScrollView>(null);
+  const isEditing = params.mode === 'edit' && typeof params.habitId === 'string' && params.habitId.length > 0;
+
+  useEffect(() => {
+    if (!isEditing) {
+      return;
+    }
+
+    if (typeof params.title === 'string') {
+      setHabitTitle(params.title);
+    }
+    if (typeof params.subtitle === 'string') {
+      setHabitSubtitle(params.subtitle);
+    }
+    if (typeof params.iconId === 'string' && habitIconOptions.some((option) => option.id === params.iconId)) {
+      setHabitIcon(params.iconId);
+    }
+  }, [isEditing, params.iconId, params.subtitle, params.title]);
 
   const saveHabit = () => {
     if (!habitTitle.trim()) {
@@ -60,7 +84,16 @@ export default function AddHabitScreen() {
     }
 
     const selectedIcon = habitIconOptions.find((option) => option.id === habitIcon)?.icon ?? habitIconOptions[0].icon;
-    addHabit({ title: habitTitle, subtitle: habitSubtitle, icon: selectedIcon });
+    if (isEditing && typeof params.habitId === 'string') {
+      updateHabit({
+        habitId: params.habitId,
+        title: habitTitle,
+        subtitle: habitSubtitle,
+        icon: selectedIcon,
+      });
+    } else {
+      addHabit({ title: habitTitle, subtitle: habitSubtitle, icon: selectedIcon });
+    }
     router.back();
   };
 
@@ -70,8 +103,10 @@ export default function AddHabitScreen() {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.safe}>
         <ScrollView ref={scrollRef} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <View style={styles.headerRow}>
-            <Text style={[styles.title, { color: palette.text }]}>Create Habit</Text>
-            <Text style={[styles.subtitle, { color: palette.mutedText }]}>Set a name, subtitle and icon</Text>
+            <Text style={[styles.title, { color: palette.text }]}>{isEditing ? 'Edit Habit' : 'Create Habit'}</Text>
+            <Text style={[styles.subtitle, { color: palette.mutedText }]}>
+              {isEditing ? 'Update name, subtitle and icon' : 'Set a name, subtitle and icon'}
+            </Text>
           </View>
 
           <SurfaceCard palette={palette} style={styles.formCard}>
@@ -127,7 +162,7 @@ export default function AddHabitScreen() {
                 onPress={saveHabit}
                 disabled={!habitTitle.trim()}
                 style={[styles.primaryBtn, { backgroundColor: palette.accent, opacity: habitTitle.trim() ? 1 : 0.5 }]}>
-                <Text style={styles.primaryBtnText}>Save Habit</Text>
+                <Text style={styles.primaryBtnText}>{isEditing ? 'Save Changes' : 'Save Habit'}</Text>
               </Pressable>
             </View>
           </SurfaceCard>

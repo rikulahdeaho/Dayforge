@@ -9,6 +9,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import 'react-native-reanimated';
 
+import { Snackbar } from '@/components/dayforge/Snackbar';
+import Colors from '@/constants/Colors';
 import { AppStateProvider, useAppState } from '@/store/appState';
 
 export {
@@ -55,7 +57,8 @@ function RootLayoutNav() {
 }
 
 function RootNavigator() {
-  const { isHydrated, state } = useAppState();
+  const { isHydrated, setSuccessMessage, state, successMessage } = useAppState();
+  const palette = state.preferences.darkMode ? Colors.dark : Colors.light;
 
   if (!isHydrated) {
     return (
@@ -82,6 +85,12 @@ function RootNavigator() {
             <Stack.Screen name="reflections" options={{ presentation: 'modal', title: 'Past Reflections', headerShown: false }} />
             <Stack.Screen name="reflection/[id]" options={{ presentation: 'modal', title: 'Reflection Detail', headerShown: false }} />
           </Stack>
+          <Snackbar
+            message={successMessage}
+            visible={Boolean(successMessage)}
+            onDismiss={() => setSuccessMessage(null)}
+            palette={palette}
+          />
           <StatusBar style={state.preferences.darkMode ? 'light' : 'dark'} />
         </ThemeProvider>
       </SafeAreaProvider>

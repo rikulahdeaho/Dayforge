@@ -28,6 +28,7 @@ type AppStateContextValue = {
   setSuccessMessage: (message: string | null) => void;
   toggleHabit: (habitId: string, dayIndex: number) => void;
   addHabit: (habitInput: { title: string; subtitle: string; icon: PlatformIconName }) => void;
+  updateHabit: (habitInput: { habitId: string; title: string; subtitle: string; icon: PlatformIconName }) => void;
   removeHabit: (habitId: string) => void;
   toggleTask: (taskId: string, dayIndex?: number) => void;
   addTask: (title: string, dayIndex?: number) => void;
@@ -199,8 +200,19 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         });
         setSuccessMessage(`Added habit #${nextHabitNumber} for this session.`);
       },
+      updateHabit: ({ habitId, title, subtitle, icon }) => {
+        dispatch({
+          type: 'UPDATE_HABIT',
+          habitId,
+          title,
+          subtitle,
+          icon,
+        });
+        setSuccessMessage('Habit updated for this session.');
+      },
       removeHabit: (habitId) => {
         dispatch({ type: 'REMOVE_HABIT', habitId });
+        setSuccessMessage('Habit removed.');
       },
       toggleTask: (taskId, dayIndex = getCurrentMondayBasedDayIndex()) => {
         dispatch({
@@ -223,9 +235,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
             completionByDate: {},
           },
         });
+        setSuccessMessage('Task added for this day.');
       },
       removeTask: (taskId) => {
         dispatch({ type: 'REMOVE_TASK', taskId });
+        setSuccessMessage('Task removed.');
       },
       incrementGoalProgress: () => {
         dispatch({ type: 'INCREMENT_GOAL_PROGRESS' });
@@ -235,6 +249,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       },
       updateGoal: ({ title, target }) => {
         dispatch({ type: 'UPDATE_GOAL', title, target });
+        setSuccessMessage('Weekly focus updated.');
       },
       setMood: (mood) => {
         dispatch({ type: 'SET_MOOD', mood });
