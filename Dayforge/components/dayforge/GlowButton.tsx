@@ -41,8 +41,9 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   glowButtonText: {
-    fontSize: 20,
-    fontFamily: 'SpaceMono',
-    lineHeight: 24,
+    fontSize: 18,
+    lineHeight: 22,
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
 });

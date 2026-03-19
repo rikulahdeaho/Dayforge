@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, Text, View } from 'react-native';
 
 import type { DayforgePalette } from './types';
@@ -12,30 +13,53 @@ type WeeklyChartBar = {
 type WeeklyProgressChartProps = {
   bars: WeeklyChartBar[];
   palette: DayforgePalette;
+  todayIndex?: number;
 };
 
-export function WeeklyProgressChart({ bars, palette }: WeeklyProgressChartProps) {
+export function WeeklyProgressChart({ bars, palette, todayIndex }: WeeklyProgressChartProps) {
   return (
     <View style={styles.weeklyChartWrap}>
-      {bars.map((bar) => (
+      {bars.map((bar, index) => {
+        const isToday = typeof todayIndex === 'number' && todayIndex === index;
+        return (
         <View key={bar.id} style={styles.weeklyChartColumn}>
-          <View style={[styles.weeklyChartTrack, { backgroundColor: 'rgba(255,255,255,0.07)' }]}>
+          <View
+            style={[
+              styles.weeklyChartTrack,
+              {
+                backgroundColor: 'rgba(255,255,255,0.07)',
+                borderColor: isToday ? `${palette.accentSoft}AA` : 'transparent',
+                shadowColor: isToday ? palette.accent : 'transparent',
+                shadowOpacity: isToday ? 0.35 : 0,
+              },
+            ]}>
             {bar.totalCompleted > 0 ? (
-              <View
+              <LinearGradient
+                colors={[`${palette.accentSoft}D9`, `${palette.accent}F2`]}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
                 style={[
                   styles.weeklyChartFill,
                   {
-                    backgroundColor: palette.accent,
                     height: `${bar.value}%`,
-                    opacity: 0.84,
+                    opacity: isToday ? 1 : 0.88,
                   },
                 ]}
               />
             ) : null}
           </View>
-          <Text style={[styles.weekdayLabel, { color: palette.mutedText }]}>{bar.label}</Text>
+          <View style={styles.weekdayRow}>
+            <Text
+              style={[
+                styles.weekdayLabel,
+                { color: isToday ? palette.text : palette.mutedText, fontWeight: isToday ? '700' : '600' },
+              ]}>
+              {bar.label}
+            </Text>
+            {isToday ? <View style={[styles.todayDot, { backgroundColor: palette.accentSoft }]} /> : null}
+          </View>
         </View>
-      ))}
+      )})}
     </View>
   );
 }
@@ -53,20 +77,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   weeklyChartTrack: {
-    width: '100%',
+    width: '82%',
     height: 66,
     borderRadius: 10,
     justifyContent: 'flex-end',
     overflow: 'hidden',
+    borderWidth: 1,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 4,
   },
   weeklyChartFill: {
     width: '100%',
     borderRadius: 10,
     minHeight: 8,
   },
-  weekdayLabel: {
+  weekdayRow: {
     marginTop: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+  },
+  weekdayLabel: {
     fontSize: 10,
     fontWeight: '600',
+  },
+  todayDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 999,
   },
 });
