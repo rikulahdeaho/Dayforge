@@ -23,7 +23,7 @@
  * - Tap "Start Journaling" CTA → navigate to Reflect screen
  * - Session-only state: resets on app reload
  */
-import { SymbolView } from 'expo-symbols';
+import { SymbolView } from '@/components/dayforge/SymbolView';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Swipeable from 'react-native-gesture-handler/Swipeable';

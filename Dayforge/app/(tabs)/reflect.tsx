@@ -34,7 +34,6 @@
  * - Session-only state: all reflections reset on app reload to demo defaults
  */
 
-import { SymbolView } from 'expo-symbols';
 import { useRouter } from 'expo-router';
 import { useRef } from 'react';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -44,6 +43,7 @@ import { DateHeader } from '@/components/dayforge/DateHeader';
 import { feedbackSelection, feedbackSuccess, feedbackTap } from '@/components/dayforge/feedback';
 import { FlowStatusRow } from '@/components/dayforge/FlowCTA';
 import { scrollFocusedInputIntoView } from '@/components/dayforge/scrollFocusedInputIntoView';
+import { SymbolView } from '@/components/dayforge/SymbolView';
 import { TopGradientBackground } from '@/components/dayforge/TopGradientBackground';
 import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
 import { DayforgePalette, GlowButton } from '@/components/dayforge/Primitives';
@@ -209,7 +209,6 @@ export default function ReflectionScreen() {
           textStyle={styles.saveButtonText}
           onPress={handleSaveReflection}
         />
-        {successMessage ? <Text style={[styles.successText, { color: palette.accent }]}>{successMessage}</Text> : null}
 
         <View style={styles.historyHeader}>
           <Text style={[styles.historyHeading, { color: palette.text }]}>Past Entries</Text>
@@ -379,10 +378,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    shadowOpacity: 0.22,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 6,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowOpacity: 0.22,
+          shadowRadius: 14,
+          shadowOffset: { width: 0, height: 10 },
+        }
+      : {
+          elevation: 0,
+        }),
   },
   historyEmoji: {
     width: 44,

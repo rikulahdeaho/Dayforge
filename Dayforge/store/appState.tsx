@@ -9,7 +9,7 @@ import React, {
   useState,
 } from 'react';
 
-import { Habit, Mood, Task } from '../types';
+import { Habit, Mood, PlatformIconName, Task } from '../types';
 
 import { loadPersistedAppState, persistAppState } from './appState.persistence';
 import {
@@ -27,7 +27,7 @@ type AppStateContextValue = {
   successMessage: string | null;
   setSuccessMessage: (message: string | null) => void;
   toggleHabit: (habitId: string, dayIndex: number) => void;
-  addHabit: (habitInput: { title: string; subtitle: string; icon: string }) => void;
+  addHabit: (habitInput: { title: string; subtitle: string; icon: PlatformIconName }) => void;
   removeHabit: (habitId: string) => void;
   toggleTask: (taskId: string, dayIndex?: number) => void;
   addTask: (title: string, dayIndex?: number) => void;
@@ -74,7 +74,14 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     completionByDate: {},
   });
 
-  const habitIcons = ['figure.mind.and.body', 'book.fill', 'drop.fill', 'dumbbell.fill', 'moon.stars.fill', 'heart.fill'];
+  const habitIcons: PlatformIconName[] = [
+    { ios: 'figure.mind.and.body', android: 'self_improvement', web: 'self_improvement' },
+    { ios: 'book.fill', android: 'menu_book', web: 'menu_book' },
+    { ios: 'drop.fill', android: 'water_drop', web: 'water_drop' },
+    { ios: 'dumbbell.fill', android: 'fitness_center', web: 'fitness_center' },
+    { ios: 'moon.stars.fill', android: 'bedtime', web: 'bedtime' },
+    { ios: 'heart.fill', android: 'favorite', web: 'favorite' },
+  ];
 
   const buildHabitFromTitle = (title: string, index: number): Habit => ({
     id: createEntityId('habit'),

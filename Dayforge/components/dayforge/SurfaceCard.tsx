@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { Platform, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 
 import { DayforgePalette } from './types';
 
@@ -31,9 +31,14 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     borderWidth: 1,
     padding: 18,
-    shadowOpacity: 0.22,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowOpacity: 0.22,
+          shadowRadius: 16,
+          shadowOffset: { width: 0, height: 8 },
+        }
+      : {
+          elevation: 0,
+        }),
   },
 });

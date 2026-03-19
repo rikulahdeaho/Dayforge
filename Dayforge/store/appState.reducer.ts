@@ -7,7 +7,7 @@ import {
   DEMO_TASKS,
   DEMO_USER,
 } from '../data/mockData';
-import { Habit, Task } from '../types';
+import { Habit, PlatformIconName, Task } from '../types';
 
 import { AppState, AppStateAction } from './appState.types';
 import {
@@ -62,6 +62,27 @@ export function getEmptyAppState(): AppState {
 
 const initialState = getEmptyAppState();
 
+const legacyHabitIcons: Record<string, PlatformIconName> = {
+  'figure.mind.and.body': { ios: 'figure.mind.and.body', android: 'self_improvement', web: 'self_improvement' },
+  'book.fill': { ios: 'book.fill', android: 'menu_book', web: 'menu_book' },
+  'drop.fill': { ios: 'drop.fill', android: 'water_drop', web: 'water_drop' },
+  'dumbbell.fill': { ios: 'dumbbell.fill', android: 'fitness_center', web: 'fitness_center' },
+  'moon.stars.fill': { ios: 'moon.stars.fill', android: 'bedtime', web: 'bedtime' },
+  'heart.fill': { ios: 'heart.fill', android: 'favorite', web: 'favorite' },
+};
+
+function normalizeHabitIcon(icon: Habit['icon'] | string): PlatformIconName {
+  if (icon && typeof icon === 'object' && 'ios' in icon && 'android' in icon && 'web' in icon) {
+    return icon;
+  }
+
+  if (typeof icon === 'string' && legacyHabitIcons[icon]) {
+    return legacyHabitIcons[icon];
+  }
+
+  return { ios: 'heart.fill', android: 'favorite', web: 'favorite' };
+}
+
 function normalizeWeeklyProgress(progress: unknown, fallback = false): boolean[] {
   if (!Array.isArray(progress)) {
     return Array(7).fill(fallback);
@@ -113,6 +134,7 @@ function normalizePersistedHabit(habit: Habit): Habit {
 
   return {
     ...habit,
+    icon: normalizeHabitIcon((habit as Habit & { icon: Habit['icon'] | string }).icon),
     weeklyProgress: normalizedWeeklyProgress,
     completionByDate,
     completedToday: Boolean(normalizedWeeklyProgress[todayIndex]),

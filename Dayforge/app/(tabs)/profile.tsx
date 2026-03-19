@@ -32,7 +32,7 @@
  */
 
 import { LinearGradient } from 'expo-linear-gradient';
-import { SymbolView } from 'expo-symbols';
+import { SymbolView } from '@/components/dayforge/SymbolView';
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { DayforgePalette, SurfaceCard } from '@/components/dayforge/Primitives';

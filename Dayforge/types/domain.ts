@@ -1,3 +1,5 @@
+import { PlatformIconName } from './ui';
+
 export type Mood = 'sad' | 'neutral' | 'good' | 'happy';
 
 export type User = {
@@ -16,7 +18,7 @@ export type Habit = {
   id: string;
   title: string;
   subtitle: string;
-  icon: string;
+  icon: PlatformIconName;
   completedToday: boolean;
   weeklyProgress: boolean[];
   completionByDate: Record<string, boolean>;

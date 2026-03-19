@@ -29,10 +29,10 @@
  * - Session-only state: habit status resets on app reload to demo defaults
  */
 
-import { SymbolView } from 'expo-symbols';
+import { SymbolView } from '@/components/dayforge/SymbolView';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
 import { DateHeader } from '@/components/dayforge/DateHeader';
@@ -153,7 +153,7 @@ export default function HabitsScreen() {
         />
 
         {state.habits.map((habit) => {
-          const iconName = resolveSymbolName({ ios: habit.icon, android: 'task_alt', web: 'task_alt' });
+          const iconName = resolveSymbolName(habit.icon);
           const selectedDateKey = getDateKeyForMondayBasedDayIndex(selectedHabitDayIndex);
           const isCompletedForSelectedDay = Boolean(habit.completionByDate[selectedDateKey]);
 
@@ -303,10 +303,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          shadowOffset: { width: 0, height: 4 },
+        }
+      : {
+          elevation: 0,
+        }),
   },
   itemTop: {
     flexDirection: 'row',

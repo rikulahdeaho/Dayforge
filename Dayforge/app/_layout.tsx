@@ -6,6 +6,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import 'react-native-reanimated';
 
 import { AppStateProvider, useAppState } from '@/store/appState';
@@ -59,27 +60,31 @@ function RootNavigator() {
   if (!isHydrated) {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0f081b' }}>
-          <ActivityIndicator size="large" color="#a44cff" />
-        </View>
+        <SafeAreaProvider>
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0f081b' }}>
+            <ActivityIndicator size="large" color="#a44cff" />
+          </View>
+        </SafeAreaProvider>
       </GestureHandlerRootView>
     );
   }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider value={state.preferences.darkMode ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="add-task" options={{ presentation: 'modal', title: 'Add Task', headerShown: false }} />
-          <Stack.Screen name="add-habit" options={{ presentation: 'modal', title: 'Add Habit', headerShown: false }} />
-          <Stack.Screen name="edit-weekly-focus" options={{ presentation: 'modal', title: 'Edit Weekly Focus', headerShown: false }} />
-          <Stack.Screen name="reflections" options={{ presentation: 'modal', title: 'Past Reflections', headerShown: false }} />
-          <Stack.Screen name="reflection/[id]" options={{ presentation: 'modal', title: 'Reflection Detail', headerShown: false }} />
-        </Stack>
-        <StatusBar style={state.preferences.darkMode ? 'light' : 'dark'} />
-      </ThemeProvider>
+      <SafeAreaProvider>
+        <ThemeProvider value={state.preferences.darkMode ? DarkTheme : DefaultTheme}>
+          <Stack>
+            <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="add-task" options={{ presentation: 'modal', title: 'Add Task', headerShown: false }} />
+            <Stack.Screen name="add-habit" options={{ presentation: 'modal', title: 'Add Habit', headerShown: false }} />
+            <Stack.Screen name="edit-weekly-focus" options={{ presentation: 'modal', title: 'Edit Weekly Focus', headerShown: false }} />
+            <Stack.Screen name="reflections" options={{ presentation: 'modal', title: 'Past Reflections', headerShown: false }} />
+            <Stack.Screen name="reflection/[id]" options={{ presentation: 'modal', title: 'Reflection Detail', headerShown: false }} />
+          </Stack>
+          <StatusBar style={state.preferences.darkMode ? 'light' : 'dark'} />
+        </ThemeProvider>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }

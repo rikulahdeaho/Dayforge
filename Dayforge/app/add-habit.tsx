@@ -1,4 +1,4 @@
-import { SymbolView } from 'expo-symbols';
+import { SymbolView } from '@/components/dayforge/SymbolView';
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -9,6 +9,7 @@ import { TopGradientBackground } from '@/components/dayforge/TopGradientBackgrou
 import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
 import Colors from '@/constants/Colors';
 import { useAppState } from '@/store/appState';
+import { PlatformIconName } from '@/types';
 
 const habitIconOptions = [
   {
@@ -58,7 +59,8 @@ export default function AddHabitScreen() {
       return;
     }
 
-    addHabit({ title: habitTitle, subtitle: habitSubtitle, icon: habitIcon });
+    const selectedIcon = habitIconOptions.find((option) => option.id === habitIcon)?.icon ?? habitIconOptions[0].icon;
+    addHabit({ title: habitTitle, subtitle: habitSubtitle, icon: selectedIcon });
     router.back();
   };
 

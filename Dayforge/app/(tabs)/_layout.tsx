@@ -1,9 +1,10 @@
 import React from 'react';
-import { SymbolView } from 'expo-symbols';
 import { Redirect, Tabs } from 'expo-router';
 import { Platform, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Colors from '@/constants/Colors';
+import { SymbolView } from '@/components/dayforge/SymbolView';
 import { useAppState } from '@/store/appState';
 
 type PlatformIconName = {
@@ -54,7 +55,9 @@ function TabIcon({
 
 export default function TabLayout() {
   const { isHydrated, state } = useAppState();
+  const insets = useSafeAreaInsets();
   const palette = state.preferences.darkMode ? Colors.dark : Colors.light;
+  const bottomInset = Platform.OS === 'android' ? insets.bottom : 0;
 
   if (!isHydrated) {
     return null;
@@ -73,6 +76,8 @@ export default function TabLayout() {
         tabBarLabelStyle: styles.tabLabel,
         tabBarStyle: {
           ...styles.tabBar,
+          height: styles.tabBar.height + bottomInset,
+          paddingBottom: styles.tabBar.paddingBottom + bottomInset,
           backgroundColor: palette.tabBackground,
           borderTopColor: palette.border,
         },

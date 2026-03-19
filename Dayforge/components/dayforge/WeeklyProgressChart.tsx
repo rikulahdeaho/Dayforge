@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import type { DayforgePalette } from './types';
 
@@ -83,9 +83,14 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     overflow: 'hidden',
     borderWidth: 1,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 4,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowRadius: 10,
+          shadowOffset: { width: 0, height: 0 },
+        }
+      : {
+          elevation: 0,
+        }),
   },
   weeklyChartFill: {
     width: '100%',

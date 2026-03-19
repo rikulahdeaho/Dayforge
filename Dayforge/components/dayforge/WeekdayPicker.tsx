@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { SymbolView } from 'expo-symbols';
+import { SymbolView } from './SymbolView';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { DayforgePalette, SurfaceCard } from './Primitives';
@@ -38,31 +38,34 @@ export function WeekdayPicker({ palette, selectedIndex, onSelectDay }: WeekdayPi
       <View style={styles.weekRow}>
         {weekdayKeys.map((label, index) => {
           const selected = selectedIndex === index;
+          const isToday = todayIndex === index;
           const today = new Date();
           const date = new Date(today);
           const mondayBasedTodayIndex = (today.getDay() + 6) % 7;
           date.setDate(today.getDate() - mondayBasedTodayIndex + index);
           const dateNum = date.getDate();
           return (
-            <Pressable
-              key={`${label}-${index}`}
-              onPress={() => {
-                feedbackSelection();
-                onSelectDay(index);
-              }}
-              style={({ pressed }) => [
-                styles.dayCircle,
-                {
-                  backgroundColor: selected ? palette.accentStrong : palette.cardStrong,
-                  borderColor: selected ? palette.accentSoft : 'transparent',
-                  shadowColor: selected ? palette.accentStrong : 'transparent',
-                  shadowOpacity: selected ? 0.35 : 0,
-                  transform: [{ scale: pressed ? 0.96 : selected ? 1.02 : 1 }],
-                },
-              ]}>
-              <Text style={[styles.dayLabel, { color: selected ? '#fff' : palette.mutedText }]}>{label}</Text>
-              <Text style={[styles.dayDate, { color: selected ? '#fff' : palette.text }]}>{dateNum}</Text>
-            </Pressable>
+            <View key={`${label}-${index}`} style={styles.dayColumn}>
+              <Pressable
+                onPress={() => {
+                  feedbackSelection();
+                  onSelectDay(index);
+                }}
+                style={({ pressed }) => [
+                  styles.dayCircle,
+                  {
+                    backgroundColor: selected ? palette.accentStrong : palette.cardStrong,
+                    borderColor: selected ? palette.accentSoft : 'transparent',
+                    shadowColor: selected ? palette.accentStrong : 'transparent',
+                    shadowOpacity: selected ? 0.35 : 0,
+                    transform: [{ scale: pressed ? 0.96 : selected ? 1.02 : 1 }],
+                  },
+                ]}>
+                <Text style={[styles.dayLabel, { color: selected ? '#fff' : palette.mutedText }]}>{label}</Text>
+                <Text style={[styles.dayDate, { color: selected ? '#fff' : palette.text }]}>{dateNum}</Text>
+              </Pressable>
+              {isToday ? <View style={[styles.todayDot, { backgroundColor: palette.accentSoft }]} /> : <View style={styles.dotSpacer} />}
+            </View>
           );
         })}
       </View>
@@ -102,6 +105,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 12,
   },
+  dayColumn: {
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    gap: 4,
+  },
   dayCircle: {
     width: 40,
     height: 40,
@@ -121,5 +129,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     marginTop: 2,
+  },
+  todayDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 999,
+  },
+  dotSpacer: {
+    width: 5,
+    height: 5,
+    opacity: 0,
   },
 });
