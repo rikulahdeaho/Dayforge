@@ -30,15 +30,15 @@ import Swipeable from 'react-native-gesture-handler/Swipeable';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
 import { DateHeader } from '@/components/dayforge/DateHeader';
+import { feedbackComplete, feedbackSelection, feedbackTap } from '@/components/dayforge/feedback';
+import { FlowCTA, FlowStatusRow } from '@/components/dayforge/FlowCTA';
 import { TopGradientBackground } from '@/components/dayforge/TopGradientBackground';
 import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
 import {
   DashedAction,
   DayforgePalette,
-  GlowButton,
   GradientCard,
   ProgressTrack,
-  SectionTitle,
   SurfaceCard,
 } from '@/components/dayforge/Primitives';
 import { WeekdayPicker } from '@/components/dayforge/WeekdayPicker';
@@ -106,6 +106,11 @@ export default function TaskScreen() {
     month: 'long',
     year: 'numeric',
   });
+  const selectedSectionDate = getDateForMondayBasedDayIndex(selectedScheduleDay).toLocaleDateString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
 
   const goalProgress = selectGoalProgress(state);
   const completedTasks = selectCompletedTasksCount(state, selectedScheduleDay);
@@ -120,6 +125,7 @@ export default function TaskScreen() {
   });
 
   const openTaskModal = () => {
+    feedbackTap();
     router.push({ pathname: '/add-task', params: { dayIndex: String(selectedScheduleDay) } });
   };
 
@@ -141,6 +147,7 @@ export default function TaskScreen() {
   };
 
   const queueTaskDeletion = (taskId: string, title: string) => {
+    feedbackSelection();
     const previousDeletion = pendingTaskDeletionRef.current;
     if (previousDeletion) {
       commitTaskDeletion(previousDeletion.id);
@@ -156,6 +163,7 @@ export default function TaskScreen() {
   };
 
   const undoTaskDeletion = () => {
+    feedbackTap();
     clearPendingDeletionTimeout();
     pendingTaskDeletionRef.current = null;
     setPendingTaskDeletion(null);
@@ -171,7 +179,9 @@ export default function TaskScreen() {
     <View style={[styles.safe, { backgroundColor: palette.background }]}>
       <TopGradientBackground />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <DateHeader palette={palette} dateText={headerDate} title="Tasks" subtitle={selectedDateLabel} />
+        <DateHeader palette={palette} dateText={headerDate} title="Today's Tasks" />
+        <FlowStatusRow palette={palette} />
+        <FlowCTA palette={palette} />
 
         <GradientCard palette={palette} style={styles.focusCard}>
           <View style={styles.focusTop}>
@@ -191,19 +201,28 @@ export default function TaskScreen() {
               <Pressable
                 style={[styles.stepperButton, { opacity: state.goal.progress <= 0 ? 0.55 : 1 }]}
                 disabled={state.goal.progress <= 0}
-                onPress={decrementGoalProgress}>
+                onPress={() => {
+                  feedbackSelection();
+                  decrementGoalProgress();
+                }}>
                 <Text style={styles.stepperText}>-</Text>
               </Pressable>
               <Pressable
                 style={[styles.stepperButton, { opacity: isGoalComplete ? 0.55 : 1 }]}
                 disabled={isGoalComplete}
-                onPress={incrementGoalProgress}>
+                onPress={() => {
+                  feedbackSelection();
+                  incrementGoalProgress();
+                }}>
                 <Text style={styles.stepperText}>+</Text>
               </Pressable>
             </View>
             <Pressable
               style={[styles.editButton, { borderColor: palette.accentStrong }]}
-              onPress={() => router.push('/edit-weekly-focus' as never)}>
+              onPress={() => {
+                feedbackTap();
+                router.push('/edit-weekly-focus' as never);
+              }}>
               <SymbolView
                 name={resolveSymbolName({ ios: 'square.and.pencil', android: 'edit', web: 'edit' })}
                 size={18}
@@ -221,8 +240,13 @@ export default function TaskScreen() {
 
         <View style={styles.sectionRow}>
           <View style={styles.sectionLeftWrap}>
-            <Text style={[styles.sectionTitle, { color: palette.text }]}>Today's Tasks</Text>
-            <Pressable style={[styles.addTaskChip, { borderColor: palette.border }]} onPress={openTaskModal}>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>{selectedSectionDate}</Text>
+            <Pressable
+              style={({ pressed }) => [
+                styles.addTaskChip,
+                { borderColor: palette.border, transform: [{ scale: pressed ? 0.97 : 1 }] },
+              ]}
+              onPress={openTaskModal}>
               <View style={styles.addTaskChipInner}>
                 <SymbolView
                   name={resolveSymbolName({ ios: 'plus', android: 'add', web: 'add' })}
@@ -255,7 +279,12 @@ export default function TaskScreen() {
                   <Text style={styles.deleteActionText}>Delete</Text>
                 </Pressable>
               )}>
-              <Pressable onPress={() => toggleTask(task.id, selectedScheduleDay)}>
+              <Pressable
+                onPress={() => {
+                  feedbackComplete();
+                  toggleTask(task.id, selectedScheduleDay);
+                }}
+                style={({ pressed }) => [pressed && styles.scaleDown]}>
                 <SurfaceCard
                   palette={palette}
                   style={[styles.taskCard, { opacity: task.completionByDate[selectedDateKey] ? 0.6 : 1 }]}>
@@ -325,6 +354,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingTop: 65,
     paddingBottom: 132,
+  },
+  scaleDown: {
+    transform: [{ scale: 0.985 }],
   },
   progressCard: {
     marginBottom: 24,

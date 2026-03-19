@@ -13,10 +13,13 @@ import Animated, {
 
 import Colors from '@/constants/Colors';
 import { DateHeader } from '@/components/dayforge/DateHeader';
+import { FlowCTA, FlowStatusRow } from '@/components/dayforge/FlowCTA';
 import { TopGradientBackground } from '@/components/dayforge/TopGradientBackground';
 import { WeeklyProgressChart } from '@/components/dayforge/WeeklyProgressChart';
+import { getFlowCTA, type FlowStep } from '@/components/dayforge/flow';
 import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
-import { DayforgePalette, GlowButton, GradientCard, ProgressTrack, SurfaceCard } from '@/components/dayforge/Primitives';
+import { DayforgePalette, GradientCard, ProgressTrack, SurfaceCard } from '@/components/dayforge/Primitives';
+import { feedbackComplete, feedbackTap } from '@/components/dayforge/feedback';
 import { formatFullDateLabel, getCurrentMondayBasedDayIndex, getDateKeyForMondayBasedDayIndex } from '@/store/appState.helpers';
 import { useAppState } from '@/store/appState';
 import {
@@ -35,14 +38,12 @@ import {
 } from '@/store/appState.selectors';
 import type { Task } from '@/types';
 
-type NextActionKind = 'tasks' | 'habits' | 'reflect' | 'summary';
-
 export default function TodayScreen() {
   const router = useRouter();
   const { state, toggleTask } = useAppState();
   const palette = (state.preferences.darkMode ? Colors.dark : Colors.light) as DayforgePalette;
   const [animatingTaskIds, setAnimatingTaskIds] = useState<Set<string>>(new Set());
-  const [focusedSection, setFocusedSection] = useState<NextActionKind | null>(null);
+  const [focusedSection, setFocusedSection] = useState<FlowStep | null>(null);
   const [now, setNow] = useState(new Date());
 
   const todayIndex = getCurrentMondayBasedDayIndex();
@@ -53,12 +54,10 @@ export default function TodayScreen() {
   const totalHabits = selectTotalHabitsCount(state);
   const habitsLeft = Math.max(0, totalHabits - completedHabits);
   const habitProgress = selectHabitProgress(state);
-  const habitsDone = totalHabits === 0 || habitsLeft === 0;
 
   const totalTasks = selectTotalTasksCount(state);
   const remainingTasks = selectRemainingTasksCount(state);
   const completedTasks = selectCompletedTasksCount(state);
-  const tasksDone = remainingTasks === 0;
 
   const reflectionStreak = selectReflectionStreak(state);
   const reflectionDoneToday = state.reflectionHistory.some((entry) => entry.fullDate === todayFullDate);
@@ -86,44 +85,14 @@ export default function TodayScreen() {
 
   const firstIncompleteTaskId = incompleteTodayTasks[0]?.id;
 
-  const nextAction = useMemo(() => {
-    if (!tasksDone) {
-      return {
-        kind: 'tasks' as NextActionKind,
-        label: 'Continue tasks',
-        route: '/(tabs)/task',
-      };
-    }
-
-    if (!habitsDone) {
-      return {
-        kind: 'habits' as NextActionKind,
-        label: 'Continue habits',
-        route: '/(tabs)/habits',
-      };
-    }
-
-    if (!reflectionDoneToday) {
-      return {
-        kind: 'reflect' as NextActionKind,
-        label: 'Finish your day',
-        route: '/(tabs)/reflect',
-      };
-    }
-
-    return {
-      kind: 'summary' as NextActionKind,
-      label: 'View summary',
-      route: '/reflections',
-    };
-  }, [habitsDone, reflectionDoneToday, tasksDone]);
+  const flow = getFlowCTA(state);
 
   useEffect(() => {
-    setFocusedSection(nextAction.kind);
+    setFocusedSection(flow.step);
     const fadeTimer = setTimeout(() => setFocusedSection(null), 1800);
 
     return () => clearTimeout(fadeTimer);
-  }, [nextAction.kind]);
+  }, [flow.step]);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60_000);
@@ -131,6 +100,7 @@ export default function TodayScreen() {
   }, []);
 
   const handleTaskToggle = (taskId: string) => {
+    feedbackComplete();
     setAnimatingTaskIds((prev) => new Set(prev).add(taskId));
     toggleTask(taskId);
     setTimeout(() => {
@@ -160,8 +130,8 @@ export default function TodayScreen() {
     opacity: 0.88 + (firePulse.value - 1) * 0.5,
   }));
 
-  const heroKickoffText = resolveHeroKickoffText(habitProgress, totalHabits);
-  const heroSupportText = resolveHeroSupportText(habitsLeft, totalHabits);
+  const heroKickoffText = resolveHeroKickoffText(habitProgress, totalHabits, flow.step);
+  const heroSupportText = resolveHeroSupportText(habitsLeft, totalHabits, flow.step);
   const greeting = firstName ? `Welcome back, ${firstName}` : 'Welcome back';
 
   const weeklyStats = [
@@ -201,18 +171,20 @@ export default function TodayScreen() {
     ? 'Nice close-out. You can update it in Reflect.'
     : 'Capture today before it slips away.';
   const reflectionTimeMeta = reflectionDoneToday ? 'Saved' : getTimeUntilDayEndsLabel(now);
-
   return (
     <View style={[styles.safe, { backgroundColor: palette.background }]}>
       <TopGradientBackground />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <DateHeader palette={palette} dateText={todayDate} title="Today" subtitle={greeting} />
+        <FlowStatusRow palette={palette} />
+        <FlowCTA palette={palette} />
 
-        <View style={styles.ctaWrap}>
-          <GlowButton label={nextAction.label} palette={palette} onPress={() => router.push(nextAction.route as never)} />
-        </View>
-
-        <Pressable onPress={() => router.push('/(tabs)/habits')} style={styles.heroPressable}>
+        <Pressable
+          onPress={() => {
+            feedbackTap();
+            router.push('/(tabs)/habits');
+          }}
+          style={({ pressed }) => [styles.heroPressable, pressed && styles.scaleDown]}>
           <GradientCard
             palette={palette}
             style={[
@@ -251,7 +223,11 @@ export default function TodayScreen() {
         <View>
           <View style={styles.sectionRow}>
             <Text style={[styles.sectionTitle, { color: palette.text }]}>Task Preview</Text>
-            <Pressable onPress={() => router.push('/(tabs)/task')}>
+            <Pressable
+              onPress={() => {
+                feedbackTap();
+                router.push('/(tabs)/task');
+              }}>
               <Text style={[styles.sectionAction, { color: palette.accent }]}>{taskActionLabel}</Text>
             </Pressable>
           </View>
@@ -263,7 +239,7 @@ export default function TodayScreen() {
               totalTasks <= 1 && styles.previewCardCompact,
               focusedSection === 'tasks' && {
                 borderColor: `${palette.accentSoft}CC`,
-                borderWidth: 1,
+                borderWidth: 0.5,
               },
             ]}>
             {totalTasks === 0 ? (
@@ -339,7 +315,12 @@ export default function TodayScreen() {
         </SurfaceCard>
 
         <View>
-          <Pressable onPress={() => router.push('/(tabs)/reflect')}>
+          <Pressable
+            onPress={() => {
+              feedbackTap();
+              router.push('/(tabs)/reflect');
+            }}
+            style={({ pressed }) => [pressed && styles.scaleDown]}>
             <SurfaceCard
               palette={palette}
               style={[
@@ -377,9 +358,12 @@ export default function TodayScreen() {
   );
 }
 
-function resolveHeroKickoffText(progress: number, totalHabits: number) {
+function resolveHeroKickoffText(progress: number, totalHabits: number, flowStep: FlowStep) {
   if (totalHabits === 0 || progress <= 0) {
     return "Let's get started";
+  }
+  if (progress >= 1 && flowStep === 'summary') {
+    return "You're all set";
   }
   if (progress >= 1) {
     return 'Great job today';
@@ -390,14 +374,26 @@ function resolveHeroKickoffText(progress: number, totalHabits: number) {
   return 'Keep the momentum going';
 }
 
-function resolveHeroSupportText(habitsLeft: number, totalHabits: number) {
+function resolveHeroSupportText(habitsLeft: number, totalHabits: number, flowStep: FlowStep) {
   if (totalHabits === 0) {
     return 'Add your first habit to start your streak.';
   }
   if (habitsLeft === 0) {
+    if (flowStep === 'summary') {
+      return 'Your streak is alive and today is complete.';
+    }
     return 'You completed all habits for today.';
   }
-  return `${habitsLeft} left to keep your streak going.`;
+  if (habitsLeft === totalHabits) {
+    return 'Start with one small habit to keep your streak alive.';
+  }
+  if (habitsLeft === 2) {
+    return 'Two more habits to keep your streak going.';
+  }
+  if (habitsLeft === 1) {
+    return 'One more habit to keep your streak going.';
+  }
+  return `${habitsLeft} more habits to keep your streak going.`;
 }
 
 function resolveTrendCopy(trendDelta: number) {
@@ -523,11 +519,11 @@ const styles = StyleSheet.create({
     paddingTop: 65,
     paddingBottom: 128,
   },
-  ctaWrap: {
-    marginBottom: 12,
-  },
   heroPressable: {
     marginBottom: 22,
+  },
+  scaleDown: {
+    transform: [{ scale: 0.985 }],
   },
   heroCard: {
     borderRadius: 30,

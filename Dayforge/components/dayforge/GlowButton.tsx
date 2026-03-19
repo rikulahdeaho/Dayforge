@@ -17,7 +17,11 @@ export function GlowButton({
   onPress?: () => void;
 }) {
   return (
-    <Pressable onPress={onPress}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => ({
+        transform: [{ scale: pressed ? 0.98 : 1 }],
+      })}>
       <LinearGradient
         colors={[palette.accentStrong, palette.accent, '#9f4dff']}
         start={{ x: 0, y: 0 }}

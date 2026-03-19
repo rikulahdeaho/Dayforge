@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 
 import { DayforgePalette, SurfaceCard } from '@/components/dayforge/Primitives';
+import { feedbackSelection, feedbackSuccess, feedbackTap } from '@/components/dayforge/feedback';
 import { scrollFocusedInputIntoView } from '@/components/dayforge/scrollFocusedInputIntoView';
 import { TopGradientBackground } from '@/components/dayforge/TopGradientBackground';
 import Colors from '@/constants/Colors';
@@ -190,9 +191,11 @@ export default function OnboardingScreen() {
     }
 
     setStep((prev) => (prev < 3 ? ((prev + 1) as Step) : prev));
+    feedbackTap();
   };
 
   const goBack = () => {
+    feedbackSelection();
     setStep((prev) => (prev > 0 ? ((prev - 1) as Step) : prev));
   };
 
@@ -213,6 +216,7 @@ export default function OnboardingScreen() {
     });
 
     setSuccessMessage("You're all set \uD83D\uDE80");
+    feedbackSuccess();
     router.replace('/(tabs)');
   };
 
@@ -348,6 +352,7 @@ export default function OnboardingScreen() {
                         if (atLimit) {
                           return;
                         }
+                        feedbackSelection();
                         setSelectedPersonalGoals((prev) =>
                           toggleMultiSelectItem(goalOption, prev, MAX_PERSONAL_GOALS)
                         );
@@ -476,6 +481,7 @@ export default function OnboardingScreen() {
                         if (atLimit) {
                           return;
                         }
+                        feedbackSelection();
                         setSelectedStarterTasks((prev) =>
                           toggleMultiSelectItem(taskOption, prev, MAX_STARTER_TASKS)
                         );
@@ -515,6 +521,7 @@ export default function OnboardingScreen() {
                         if (atLimit) {
                           return;
                         }
+                        feedbackSelection();
                         setSelectedStarterHabits((prev) =>
                           toggleMultiSelectItem(habitOption, prev, MAX_STARTER_HABITS)
                         );

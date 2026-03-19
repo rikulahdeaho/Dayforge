@@ -41,6 +41,8 @@ import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, Vi
 
 
 import { DateHeader } from '@/components/dayforge/DateHeader';
+import { feedbackSelection, feedbackSuccess, feedbackTap } from '@/components/dayforge/feedback';
+import { FlowStatusRow } from '@/components/dayforge/FlowCTA';
 import { scrollFocusedInputIntoView } from '@/components/dayforge/scrollFocusedInputIntoView';
 import { TopGradientBackground } from '@/components/dayforge/TopGradientBackground';
 import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
@@ -89,7 +91,9 @@ export default function ReflectionScreen() {
 
     if (!result.ok) {
       Alert.alert('Mood required', 'Please select how you are feeling before saving.');
+      return;
     }
+    feedbackSuccess();
   };
 
   return (
@@ -109,6 +113,7 @@ export default function ReflectionScreen() {
               <Pressable
                 key={mood.id}
                 onPress={() => {
+                  feedbackSelection();
                   setMood(mood.id);
                   if (successMessage) {
                     setSuccessMessage(null);
@@ -208,7 +213,11 @@ export default function ReflectionScreen() {
 
         <View style={styles.historyHeader}>
           <Text style={[styles.historyHeading, { color: palette.text }]}>Past Entries</Text>
-          <Pressable onPress={() => router.push('/reflections' as never)}>
+          <Pressable
+            onPress={() => {
+              feedbackTap();
+              router.push('/reflections' as never);
+            }}>
             <Text style={[styles.historyAction, { color: palette.accent }]}>VIEW ALL</Text>
           </Pressable>
         </View>

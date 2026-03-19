@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { DayforgePalette, SurfaceCard } from './Primitives';
 import { resolveSymbolName } from './resolveSymbolName';
+import { feedbackSelection } from './feedback';
 
 interface WeekdayPickerProps {
   palette: DayforgePalette;
@@ -45,12 +46,18 @@ export function WeekdayPicker({ palette, selectedIndex, onSelectDay }: WeekdayPi
           return (
             <Pressable
               key={`${label}-${index}`}
-              onPress={() => onSelectDay(index)}
-              style={[
+              onPress={() => {
+                feedbackSelection();
+                onSelectDay(index);
+              }}
+              style={({ pressed }) => [
                 styles.dayCircle,
                 {
                   backgroundColor: selected ? palette.accentStrong : palette.cardStrong,
                   borderColor: selected ? palette.accentSoft : 'transparent',
+                  shadowColor: selected ? palette.accentStrong : 'transparent',
+                  shadowOpacity: selected ? 0.35 : 0,
+                  transform: [{ scale: pressed ? 0.96 : selected ? 1.02 : 1 }],
                 },
               ]}>
               <Text style={[styles.dayLabel, { color: selected ? '#fff' : palette.mutedText }]}>{label}</Text>
@@ -102,6 +109,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 2,
   },
   dayLabel: {
     fontSize: 11,

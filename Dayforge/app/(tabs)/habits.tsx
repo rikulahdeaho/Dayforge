@@ -36,6 +36,8 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
 import { DateHeader } from '@/components/dayforge/DateHeader';
+import { feedbackComplete, feedbackTap } from '@/components/dayforge/feedback';
+import { FlowCTA, FlowStatusRow } from '@/components/dayforge/FlowCTA';
 import { TopGradientBackground } from '@/components/dayforge/TopGradientBackground';
 import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
 import { DayforgePalette, DashedAction, ProgressTrack } from '@/components/dayforge/Primitives';
@@ -99,6 +101,7 @@ export default function HabitsScreen() {
   const progressValue = selectHabitProgress(state);
 
   const openHabitModal = () => {
+    feedbackTap();
     router.push('/add-habit');
   };
 
@@ -120,6 +123,8 @@ export default function HabitsScreen() {
       <TopGradientBackground />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <DateHeader palette={palette} dateText={headerDate} title="Today's Habits" />
+        <FlowStatusRow palette={palette} />
+        <FlowCTA palette={palette} />
 
         <LinearGradient
           colors={[palette.accentStrong, palette.accent, '#7f22ff']}
@@ -135,7 +140,7 @@ export default function HabitsScreen() {
             <Text style={styles.streakText}>STREAK ACTIVE</Text>
           </View>
           <Text style={styles.heroTitle}>
-            {completedCount}/{totalCount} completed today
+            {Math.max(0, totalCount - completedCount)} left - keep your streak alive
           </Text>
           <Text style={styles.heroBody}>Keep the chain alive. Every check-in builds your momentum.</Text>
           <ProgressTrack value={progressValue} palette={palette} style={styles.heroProgress} />
@@ -159,6 +164,7 @@ export default function HabitsScreen() {
                   if (longPressHabitIdRef.current === habit.id) {
                     return;
                   }
+                  feedbackComplete();
                   toggleHabit(habit.id, selectedHabitDayIndex);
                 }}
                 onLongPress={() => {
@@ -171,7 +177,15 @@ export default function HabitsScreen() {
                   }
                 }}
                 delayLongPress={280}>
-                <View style={[styles.itemCard, { backgroundColor: 'rgba(255,255,255,0.035)', borderColor: palette.border }]}>
+                <View
+                  style={[
+                    styles.itemCard,
+                    {
+                      backgroundColor: 'rgba(255,255,255,0.035)',
+                      borderColor: isCompletedForSelectedDay ? `${palette.accentSoft}88` : palette.border,
+                      shadowColor: isCompletedForSelectedDay ? palette.accentStrong : palette.shadow,
+                    },
+                  ]}>
                   <View style={styles.itemTop}>
                     <View style={[styles.itemIcon, { backgroundColor: 'rgba(255,255,255,0.04)' }]}>
                       <SymbolView name={iconName} size={48} tintColor={palette.accent} />
@@ -182,7 +196,10 @@ export default function HabitsScreen() {
                       <Text style={[styles.tapHint, { color: palette.mutedText }]}>Tap to complete • Hold to delete</Text>
                     </View>
                     <Pressable
-                      onPress={() => toggleHabit(habit.id, selectedHabitDayIndex)}
+                      onPress={() => {
+                        feedbackComplete();
+                        toggleHabit(habit.id, selectedHabitDayIndex);
+                      }}
                       style={[
                         styles.itemBadge,
                         {
