@@ -10,6 +10,13 @@ import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
 import Colors from '@/constants/Colors';
 import { useAppState } from '@/store/appState';
 import { getCurrentMondayBasedDayIndex, getDateForMondayBasedDayIndex } from '@/store/appState.helpers';
+import { TaskCategory } from '@/types';
+
+const categories: { id: TaskCategory; label: string }[] = [
+  { id: 'must-do', label: 'Must do' },
+  { id: 'good-to-do', label: 'Good to do' },
+  { id: 'wellbeing', label: 'Personal / wellbeing' },
+];
 
 export default function AddTaskScreen() {
   const router = useRouter();
@@ -17,6 +24,7 @@ export default function AddTaskScreen() {
   const { addTask, state } = useAppState();
   const palette = (state.preferences.darkMode ? Colors.dark : Colors.light) as DayforgePalette;
   const [taskTitle, setTaskTitle] = useState('');
+  const [category, setCategory] = useState<TaskCategory>('must-do');
   const scrollRef = useRef<ScrollView>(null);
 
   const selectedDayIndex = useMemo(() => {
@@ -39,7 +47,7 @@ export default function AddTaskScreen() {
       return;
     }
 
-    addTask(taskTitle, selectedDayIndex);
+    addTask({ title: taskTitle, dayIndex: selectedDayIndex, category });
     router.back();
   };
 
@@ -67,6 +75,29 @@ export default function AddTaskScreen() {
               onSubmitEditing={saveTask}
             />
             <Text style={[styles.hint, { color: palette.mutedText }]}>This task will be added to the selected day.</Text>
+
+            <Text style={[styles.label, { color: palette.text, marginTop: 14 }]}>Category</Text>
+            <View style={styles.categoryWrap}>
+              {categories.map((item) => {
+                const selected = category === item.id;
+                return (
+                  <Pressable
+                    key={item.id}
+                    onPress={() => setCategory(item.id)}
+                    style={[
+                      styles.categoryPill,
+                      {
+                        borderColor: selected ? palette.accent : palette.border,
+                        backgroundColor: selected ? palette.cardStrong : 'transparent',
+                      },
+                    ]}>
+                    <Text style={[styles.categoryText, { color: selected ? palette.text : palette.mutedText }]}>
+                      {item.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
 
             <View style={styles.actionRow}>
               <Pressable style={[styles.secondaryBtn, { borderColor: palette.border }]} onPress={() => router.back()}>
@@ -134,6 +165,21 @@ const styles = StyleSheet.create({
   },
   hint: {
     fontSize: 13,
+  },
+  categoryWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  categoryPill: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  categoryText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   actionRow: {
     flexDirection: 'row',

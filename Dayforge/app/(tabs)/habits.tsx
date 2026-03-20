@@ -169,10 +169,15 @@ export default function HabitsScreen() {
   );
   const progressValue = totalCount ? completedCount / totalCount : 0;
 
-  const nextIncompleteHabit = useMemo(
-    () => state.habits.find((habit) => !habit.completionByDate[selectedDateKey]),
-    [selectedDateKey, state.habits]
-  );
+  const nextIncompleteHabit = useMemo(() => {
+    const incompleteHabits = state.habits.filter((habit) => !habit.completionByDate[selectedDateKey]);
+    if (!incompleteHabits.length) {
+      return undefined;
+    }
+
+    const protectedHabitIds = new Set(state.weeklyPlan.protectedHabitIds);
+    return incompleteHabits.find((habit) => protectedHabitIds.has(habit.id)) ?? incompleteHabits[0];
+  }, [selectedDateKey, state.habits, state.weeklyPlan.protectedHabitIds]);
 
   const headerDate = new Date().toLocaleDateString(undefined, {
     weekday: 'long',
@@ -255,7 +260,7 @@ export default function HabitsScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <DateHeader palette={palette} dateText={headerDate} title="Today's Habits" />
         <FlowStatusRow palette={palette} />
-        <FlowCTA palette={palette} />
+        <FlowCTA palette={palette} currentStep="habits" />
 
         <Pressable onPress={completeNextHabit}>
           <LinearGradient
@@ -287,6 +292,9 @@ export default function HabitsScreen() {
           palette={palette}
           selectedIndex={selectedHabitDayIndex}
           onSelectDay={setSelectedHabitDayIndex}
+          onCalendarPress={() =>
+            router.push({ pathname: '/schedule-picker', params: { dateKey: selectedDateKey } } as never)
+          }
         />
         <Text style={[styles.dayContext, { color: palette.mutedText }]}>
           Showing {WEEKDAY_LABELS[selectedHabitDayIndex]} habits, {Math.max(0, totalCount - completedCount)} left.
@@ -297,6 +305,7 @@ export default function HabitsScreen() {
           const isCompletedForSelectedDay = Boolean(habit.completionByDate[selectedDateKey]);
           const isNextHabit = nextIncompleteHabit?.id === habit.id;
           const status = resolveHabitStatus(habit.weeklyProgress);
+          const isProtected = state.weeklyPlan.protectedHabitIds.includes(habit.id);
 
           return (
             <View key={habit.id}>
@@ -332,7 +341,6 @@ export default function HabitsScreen() {
                       <Text style={[styles.nextTagText, { color: palette.accent }]}>NEXT UP</Text>
                     </View>
                   ) : null}
-
                   <View style={styles.itemTop}>
                     <View style={[styles.itemIcon, { backgroundColor: 'rgba(255,255,255,0.04)' }]}>
                       <SymbolView name={iconName} size={48} tintColor={palette.accent} />
@@ -365,8 +373,19 @@ export default function HabitsScreen() {
                   </View>
 
                   <View style={styles.statusRow}>
+                    <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <SymbolView name={resolveSymbolName(status.icon)} size={13} tintColor={palette.accent} />
                     <Text style={[styles.statusLabel, { color: palette.accent }]}>{status.label}</Text>
+                    </View>
+                    {isProtected ? (
+                      <View
+                        style={[
+                          styles.protectedStatusTag,
+                          { backgroundColor: `${palette.success}22`, borderColor: `${palette.success}77` },
+                        ]}>
+                        <Text style={[styles.protectedStatusTagText, { color: palette.success }]}>PROTECTED</Text>
+                      </View>
+                    ) : null}
                   </View>
                 </View>
               </Pressable>
@@ -480,6 +499,18 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.5,
   },
+  protectedStatusTag: {
+    marginLeft: 6,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+  },
+  protectedStatusTagText: {
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.4,
+  },
   itemTop: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -531,6 +562,7 @@ const styles = StyleSheet.create({
   statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 6,
   },
   statusLabel: {

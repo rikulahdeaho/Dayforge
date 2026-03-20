@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   buildReflectionHistoryItem,
   getCurrentMondayBasedDayIndex,
+  getDailyReflectionPrompts,
   getDateKeyForMondayBasedDayIndex,
   getTodayDateKey,
 } from '../appState.helpers';
@@ -63,6 +64,23 @@ function runTests() {
     assert.equal(nextState.reflectionDraft.mood, null);
     assert.equal(nextState.reflectionDraft.wentWell, '');
     assert.equal(nextState.reflectionDraft.gratefulFor, '');
+  }
+
+  {
+    const reflectionDate = new Date('2026-03-20T10:00:00Z');
+    const prompts = getDailyReflectionPrompts(reflectionDate);
+    const historyItem = buildReflectionHistoryItem({
+      draft: {
+        mood: 'happy',
+        wentWell: 'Protected focus blocks and finished key tasks.',
+        gratefulFor: 'Supportive teammates and clear priorities.',
+      },
+      prompts,
+      now: reflectionDate,
+    });
+
+    assert.equal(historyItem.wentWellPrompt, prompts.wentWellPrompt.question);
+    assert.equal(historyItem.gratefulForPrompt, prompts.gratefulForPrompt.question);
   }
 
   {

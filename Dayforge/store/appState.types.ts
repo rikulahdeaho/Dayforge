@@ -1,4 +1,4 @@
-import { Goal, Habit, Mood, Preferences, ReflectionDraft, ReflectionHistoryItem, Task, User } from '../types';
+import { Goal, Habit, Mood, Preferences, ReflectionDraft, ReflectionHistoryItem, Task, User, WeeklyPlan } from '../types';
 
 export type AppState = {
   hasCompletedOnboarding: boolean;
@@ -9,6 +9,7 @@ export type AppState = {
   tasks: Task[];
   reflectionDraft: ReflectionDraft;
   reflectionHistory: ReflectionHistoryItem[];
+  weeklyPlan: WeeklyPlan;
 };
 
 export type AppStateAction =
@@ -19,6 +20,7 @@ export type AppStateAction =
   | { type: 'TOGGLE_TASK'; taskId: string; dayIndex: number; dateKey: string }
   | { type: 'ADD_TASK'; task: Task }
   | { type: 'REMOVE_TASK'; taskId: string }
+  | { type: 'MOVE_TASK_TO_DATE'; taskId: string; dateKey: string }
   | { type: 'INCREMENT_GOAL_PROGRESS' }
   | { type: 'DECREMENT_GOAL_PROGRESS' }
   | { type: 'UPDATE_GOAL'; title: string; target: number }
@@ -28,6 +30,15 @@ export type AppStateAction =
       type: 'SAVE_REFLECTION';
       historyItem: ReflectionHistoryItem;
       clearDraft: boolean;
+    }
+  | { type: 'UPDATE_REFLECTION'; reflectionId: string; changes: Partial<Pick<ReflectionHistoryItem, 'wentWell' | 'gratefulFor' | 'preview'>> }
+  | { type: 'REMOVE_REFLECTION'; reflectionId: string }
+  | {
+      type: 'SAVE_WEEKLY_PLAN';
+      weekStartDateKey: string;
+      beforeYouBegin: string;
+      pace: string;
+      protectedHabitIds: string[];
     }
   | { type: 'HYDRATE_STATE'; state: AppState }
   | { type: 'RESET_STATE' }

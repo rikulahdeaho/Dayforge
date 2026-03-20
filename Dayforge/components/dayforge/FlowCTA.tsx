@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useAppState } from '@/store/appState';
 
 import { feedbackTap } from './feedback';
-import { getFlowCTA, getFlowStatus } from './flow';
+import { getFlowCTA, getFlowStatus, type FlowStep } from './flow';
 import { GlowButton } from './GlowButton';
 import { DayforgePalette } from './types';
 
@@ -20,10 +20,15 @@ export function FlowStatusRow({ palette }: { palette: DayforgePalette }) {
   );
 }
 
-export function FlowCTA({ palette }: { palette: DayforgePalette }) {
+export function FlowCTA({ palette, currentStep }: { palette: DayforgePalette; currentStep?: FlowStep }) {
   const router = useRouter();
   const { state } = useAppState();
   const action = getFlowCTA(state);
+  const isAlreadyOnStep = currentStep === action.step;
+
+  if (isAlreadyOnStep) {
+    return null;
+  }
 
   return (
     <View style={styles.ctaWrap}>

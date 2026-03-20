@@ -10,11 +10,12 @@ interface WeekdayPickerProps {
   palette: DayforgePalette;
   selectedIndex: number;
   onSelectDay: (index: number) => void;
+  onCalendarPress?: () => void;
 }
 
 const weekdayKeys = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-export function WeekdayPicker({ palette, selectedIndex, onSelectDay }: WeekdayPickerProps) {
+export function WeekdayPicker({ palette, selectedIndex, onSelectDay, onCalendarPress }: WeekdayPickerProps) {
   const todayIndex = (new Date().getDay() + 6) % 7;
 
   useEffect(() => {
@@ -26,7 +27,10 @@ export function WeekdayPicker({ palette, selectedIndex, onSelectDay }: WeekdayPi
       <View style={styles.calendarHeader}>
         <Text style={[styles.calendarTitle, { color: palette.text }]}>Schedule</Text>
         <Pressable
-          onPress={() => {}}
+          testID="calendarIconButton"
+          accessibilityLabel="calendarIconButton"
+          onPress={onCalendarPress}
+          disabled={!onCalendarPress}
           style={[styles.calendarIconButton, { backgroundColor: palette.cardStrong, borderColor: palette.border }]}>
           <SymbolView
             name={resolveSymbolName({ ios: 'calendar', android: 'calendar_month', web: 'calendar_month' })}

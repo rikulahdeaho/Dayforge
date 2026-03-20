@@ -9,18 +9,22 @@ export function GlowButton({
   style,
   textStyle,
   onPress,
+  disabled = false,
 }: {
   label: string;
   palette: DayforgePalette;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
   onPress?: () => void;
+  disabled?: boolean;
 }) {
   return (
     <Pressable
+      disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => ({
-        transform: [{ scale: pressed ? 0.98 : 1 }],
+        transform: [{ scale: pressed && !disabled ? 0.98 : 1 }],
+        opacity: disabled ? 0.58 : 1,
       })}>
       <LinearGradient
         colors={[palette.accentStrong, palette.accent, '#9f4dff']}

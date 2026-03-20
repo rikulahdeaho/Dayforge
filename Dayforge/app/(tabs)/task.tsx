@@ -46,6 +46,7 @@ import Colors from '@/constants/Colors';
 import { useAppState } from '@/store/appState';
 import {
   getCurrentMondayBasedDayIndex,
+  getCurrentWeekStartDateKey,
   getDateForMondayBasedDayIndex,
   getDateKeyForMondayBasedDayIndex,
 } from '@/store/appState.helpers';
@@ -113,9 +114,11 @@ export default function TaskScreen() {
   });
 
   const goalProgress = selectGoalProgress(state);
+  const currentWeekStartDateKey = getCurrentWeekStartDateKey();
+  const currentWeekGoalProgress = state.goal.progressByWeek[currentWeekStartDateKey] ?? state.goal.progress;
   const completedTasks = selectCompletedTasksCount(state, selectedScheduleDay);
   const remainingTasks = selectRemainingTasksCount(state, selectedScheduleDay);
-  const isGoalComplete = state.goal.progress >= state.goal.target;
+  const isGoalComplete = currentWeekGoalProgress >= state.goal.target;
   const successColor = palette.success;
 
   const headerDate = new Date().toLocaleDateString(undefined, {
@@ -181,7 +184,7 @@ export default function TaskScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <DateHeader palette={palette} dateText={headerDate} title="Today's Tasks" />
         <FlowStatusRow palette={palette} />
-        <FlowCTA palette={palette} />
+        <FlowCTA palette={palette} currentStep="tasks" />
 
         <GradientCard palette={palette} style={styles.focusCard}>
           <View style={styles.focusTop}>
@@ -193,14 +196,14 @@ export default function TaskScreen() {
           <View style={styles.rowBetween}>
             <ProgressTrack value={goalProgress} palette={palette} style={styles.focusProgress} />
             <Text style={styles.focusValue}>
-              {state.goal.progress} / {state.goal.target}
+              {currentWeekGoalProgress} / {state.goal.target}
             </Text>
           </View>
           <View style={styles.ctaWrap}>
             <View style={styles.stepperGroup}>
               <Pressable
-                style={[styles.stepperButton, { opacity: state.goal.progress <= 0 ? 0.55 : 1 }]}
-                disabled={state.goal.progress <= 0}
+                style={[styles.stepperButton, { opacity: currentWeekGoalProgress <= 0 ? 0.55 : 1 }]}
+                disabled={currentWeekGoalProgress <= 0}
                 onPress={() => {
                   feedbackSelection();
                   decrementGoalProgress();
@@ -236,6 +239,7 @@ export default function TaskScreen() {
           palette={palette}
           selectedIndex={selectedScheduleDay}
           onSelectDay={setSelectedScheduleDay}
+          onCalendarPress={() => router.push({ pathname: '/schedule-picker', params: { dateKey: selectedDateKey } } as never)}
         />
 
         <View style={styles.sectionRow}>
@@ -312,6 +316,19 @@ export default function TaskScreen() {
                       ]}>
                       {task.title}
                     </Text>
+                    <View
+                      style={[
+                        styles.categoryBadge,
+                        { borderColor: palette.border, backgroundColor: palette.cardStrong },
+                      ]}>
+                      <Text style={[styles.categoryBadgeText, { color: palette.accent }]}>
+                        {task.category === 'must-do'
+                          ? 'Must do'
+                          : task.category === 'good-to-do'
+                            ? 'Good to do'
+                            : 'Personal / wellbeing'}
+                      </Text>
+                    </View>
                   </View>
                 </SurfaceCard>
               </Pressable>
@@ -550,6 +567,18 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     lineHeight: 20,
+    marginRight: 8,
+  },
+  categoryBadge: {
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  categoryBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   addTask: {
     marginTop: 2,

@@ -12,7 +12,7 @@ export type FlowStep = 'tasks' | 'habits' | 'reflect' | 'summary';
 
 type FlowCopy = {
   label: string;
-  route: '/(tabs)/task' | '/(tabs)/habits' | '/(tabs)/reflect' | '/reflections';
+  route: '/(tabs)/task' | '/(tabs)/habits' | '/(tabs)/reflect' | '/day-summary';
   nextLine: string;
 };
 
@@ -34,7 +34,7 @@ const FLOW_COPY: Record<FlowStep, FlowCopy> = {
   },
   summary: {
     label: "View today's summary",
-    route: '/reflections',
+    route: '/day-summary',
     nextLine: 'Take a moment to review your progress',
   },
 };

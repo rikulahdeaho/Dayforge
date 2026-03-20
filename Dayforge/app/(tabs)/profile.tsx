@@ -33,6 +33,7 @@
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { SymbolView } from '@/components/dayforge/SymbolView';
+import { useRouter } from 'expo-router';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { DayforgePalette, SurfaceCard } from '@/components/dayforge/Primitives';
@@ -59,9 +60,16 @@ function showPlaceholder(featureName: string) {
 }
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const { state, toggleDarkModeSession, resetAppData, loadMockData } = useAppState();
   const palette = (state.preferences.darkMode ? Colors.dark : Colors.light) as DayforgePalette;
   const accountRows = [
+    {
+      id: 'weekly-plan',
+      title: 'Weekly Plan',
+      subtitle: 'Set focus and review your weekly direction',
+      icon: { ios: 'calendar.badge.clock', android: 'calendar_month', web: 'calendar_month' },
+    },
     {
       id: 'goals',
       title: 'Personal Goals',
@@ -121,7 +129,7 @@ export default function ProfileScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.titleRow}>
           <View>
-            <Text style={[styles.title, { color: palette.text }]}>Settings</Text>
+            <Text style={[styles.title, { color: palette.text }]}>Profile</Text>
           </View>
         </View>
 
@@ -129,7 +137,15 @@ export default function ProfileScreen() {
         <SurfaceCard palette={palette} style={styles.groupCard}>
           {accountRows.map((row, idx) => (
             <View key={row.id}>
-              <Pressable style={styles.settingRow} onPress={() => showPlaceholder(row.title)}>
+              <Pressable
+                style={styles.settingRow}
+                onPress={() => {
+                  if (row.id === 'weekly-plan') {
+                    router.push('/weekly-plan' as never);
+                    return;
+                  }
+                  showPlaceholder(row.title);
+                }}>
                 <View style={[styles.settingIcon, { backgroundColor: palette.cardStrong }]}>
                   <SymbolView name={resolveSymbolName(row.icon)} size={20} tintColor={palette.accent} />
                 </View>

@@ -4,16 +4,27 @@ import {
   Mood,
   Preferences,
   ReflectionDraft,
+  TaskCategory,
   ReflectionHistoryItem,
   Task,
   User,
+  WeeklyPlan,
 } from '../types';
-import { formatFullDateLabel, getDateKeyForMondayBasedDayIndex, toDateKey } from '../store/appState.helpers';
+import {
+  getCurrentWeekStartDateKey,
+  formatFullDateLabel,
+  getDailyReflectionPrompts,
+  getDateKeyForMondayBasedDayIndex,
+  toDateKey,
+} from '../store/appState.helpers';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const today = new Date();
 today.setHours(0, 0, 0, 0);
 const todayKey = toDateKey(today);
+const currentWeekStartDateKey = getCurrentWeekStartDateKey(today);
+const previousWeekStartDateKey = getCurrentWeekStartDateKey(new Date(today.getTime() - 7 * MS_PER_DAY));
+const twoWeeksAgoStartDateKey = getCurrentWeekStartDateKey(new Date(today.getTime() - 14 * MS_PER_DAY));
 
 function dateFromOffset(daysFromToday: number) {
   return new Date(today.getTime() + daysFromToday * MS_PER_DAY);
@@ -37,11 +48,13 @@ function buildWeeklyProgressFromCompletionMap(completionByDate: Record<string, b
 function buildTask({
   id,
   title,
+  category,
   offset,
   completed,
 }: {
   id: string;
   title: string;
+  category: TaskCategory;
   offset: number;
   completed: boolean;
 }): Task {
@@ -52,6 +65,7 @@ function buildTask({
   return {
     id,
     title,
+    category,
     dateKey,
     completedToday: Boolean(completionByDate[todayKey]),
     weeklyProgress,
@@ -73,6 +87,7 @@ function buildReflectionHistoryItemFromOffset({
   gratefulFor: string;
 }): ReflectionHistoryItem {
   const entryDate = dateFromOffset(-daysAgo);
+  const prompts = getDailyReflectionPrompts(entryDate);
   const dateLabel = entryDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   const fullDate = formatFullDateLabel(entryDate);
   const previewSource = wentWell.trim() || gratefulFor.trim();
@@ -84,6 +99,8 @@ function buildReflectionHistoryItemFromOffset({
     fullDate,
     mood,
     preview,
+    wentWellPrompt: prompts.wentWellPrompt.question,
+    gratefulForPrompt: prompts.gratefulForPrompt.question,
     wentWell,
     gratefulFor,
   };
@@ -155,33 +172,45 @@ export const DEMO_GOAL: Goal = {
   label: 'Weekly Focus',
   progress: 6,
   target: 10,
+  progressByWeek: {
+    [twoWeeksAgoStartDateKey]: 4,
+    [previousWeekStartDateKey]: 8,
+    [currentWeekStartDateKey]: 6,
+  },
 };
 
 export const DEMO_TASKS: Task[] = [
-  buildTask({ id: 'task-1', title: 'Plan top 3 priorities', offset: -13, completed: true }),
-  buildTask({ id: 'task-02', title: 'Deep work sprint (90m)', offset: -12, completed: true }),
-  buildTask({ id: 'task-03', title: 'Send recruiter follow-up', offset: -11, completed: true }),
-  buildTask({ id: 'task-04', title: 'Update portfolio hero copy', offset: -10, completed: false }),
-  buildTask({ id: 'task-05', title: 'Apply to Product Designer role', offset: -9, completed: true }),
-  buildTask({ id: 'task-06', title: 'Gym session', offset: -8, completed: true }),
-  buildTask({ id: 'task-07', title: 'Review monthly budget', offset: -7, completed: false }),
-  buildTask({ id: 'task-08', title: 'Refactor case study visuals', offset: -6, completed: true }),
-  buildTask({ id: 'task-09', title: 'Message design mentor', offset: -5, completed: true }),
-  buildTask({ id: 'task-10', title: 'Weekly planning for next sprint', offset: -4, completed: false }),
-  buildTask({ id: 'task-11', title: 'Write reflection notes', offset: -3, completed: true }),
-  buildTask({ id: 'task-12', title: 'Prepare interview stories', offset: -2, completed: true }),
-  buildTask({ id: 'task-13', title: 'Organize file system', offset: -1, completed: true }),
-  buildTask({ id: 'task-14', title: 'Send proposal email', offset: 0, completed: false }),
-  buildTask({ id: 'task-15', title: 'Polish mobile layout details', offset: 0, completed: true }),
-  buildTask({ id: 'task-16', title: 'Draft LinkedIn post', offset: 1, completed: false }),
-  buildTask({ id: 'task-17', title: 'Research company shortlist', offset: 2, completed: false }),
-  buildTask({ id: 'task-18', title: 'Prepare weekly review', offset: 3, completed: false }),
+  buildTask({ id: 'task-1', title: 'Plan top 3 priorities', category: 'must-do', offset: -13, completed: true }),
+  buildTask({ id: 'task-02', title: 'Deep work sprint (90m)', category: 'must-do', offset: -12, completed: true }),
+  buildTask({ id: 'task-03', title: 'Send recruiter follow-up', category: 'good-to-do', offset: -11, completed: true }),
+  buildTask({ id: 'task-04', title: 'Update portfolio hero copy', category: 'must-do', offset: -10, completed: false }),
+  buildTask({ id: 'task-05', title: 'Apply to Product Designer role', category: 'must-do', offset: -9, completed: true }),
+  buildTask({ id: 'task-06', title: 'Gym session', category: 'wellbeing', offset: -8, completed: true }),
+  buildTask({ id: 'task-07', title: 'Review monthly budget', category: 'good-to-do', offset: -7, completed: false }),
+  buildTask({ id: 'task-08', title: 'Refactor case study visuals', category: 'must-do', offset: -6, completed: true }),
+  buildTask({ id: 'task-09', title: 'Message design mentor', category: 'good-to-do', offset: -5, completed: true }),
+  buildTask({ id: 'task-10', title: 'Weekly planning for next sprint', category: 'must-do', offset: -4, completed: false }),
+  buildTask({ id: 'task-11', title: 'Write reflection notes', category: 'wellbeing', offset: -3, completed: true }),
+  buildTask({ id: 'task-12', title: 'Prepare interview stories', category: 'must-do', offset: -2, completed: true }),
+  buildTask({ id: 'task-13', title: 'Organize file system', category: 'good-to-do', offset: -1, completed: true }),
+  buildTask({ id: 'task-14', title: 'Send proposal email', category: 'must-do', offset: 0, completed: false }),
+  buildTask({ id: 'task-15', title: 'Polish mobile layout details', category: 'good-to-do', offset: 0, completed: true }),
+  buildTask({ id: 'task-16', title: 'Draft LinkedIn post', category: 'good-to-do', offset: 1, completed: false }),
+  buildTask({ id: 'task-17', title: 'Research company shortlist', category: 'must-do', offset: 2, completed: false }),
+  buildTask({ id: 'task-18', title: 'Prepare weekly review', category: 'wellbeing', offset: 3, completed: false }),
 ];
 
 export const DEMO_REFLECTION_DRAFT: ReflectionDraft = {
   mood: null,
   wentWell: '',
   gratefulFor: '',
+};
+
+export const DEMO_WEEKLY_PLAN: WeeklyPlan = {
+  weekStartDateKey: currentWeekStartDateKey,
+  beforeYouBegin: 'Protect 2 x 90min deep work blocks before meetings.',
+  pace: 'Balanced',
+  protectedHabitIds: ['habit-meditation'],
 };
 
 export const DEMO_REFLECTION_HISTORY: ReflectionHistoryItem[] = [

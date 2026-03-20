@@ -24,6 +24,21 @@ function moodEmoji(mood: Mood) {
   }
 }
 
+function moodSummary(mood: Mood) {
+  switch (mood) {
+    case 'sad':
+      return 'Reset and recover day';
+    case 'neutral':
+      return 'Grounded day';
+    case 'good':
+      return 'Productive day';
+    case 'happy':
+      return 'High-energy day';
+    default:
+      return 'Steady day';
+  }
+}
+
 export default function ReflectionsScreen() {
   const router = useRouter();
   const { state } = useAppState();
@@ -47,19 +62,30 @@ export default function ReflectionsScreen() {
         </View>
 
         {state.reflectionHistory.length ? (
-          state.reflectionHistory.map((entry) => (
+          state.reflectionHistory.map((entry, index) => (
             <Pressable
               key={entry.id}
               onPress={() =>
                 router.push({ pathname: '/reflection/[id]' as never, params: { id: entry.id } } as never)
               }>
-              <SurfaceCard palette={palette} style={styles.entryCard}>
+              <SurfaceCard
+                palette={palette}
+                style={[
+                  styles.entryCard,
+                  index === 0 ? { borderColor: palette.accent, borderWidth: 1.6 } : null,
+                ]}>
                 <View style={styles.entryRow}>
                   <Text style={styles.emoji}>{moodEmoji(entry.mood)}</Text>
                   <View style={styles.entryCopy}>
-                    <Text style={[styles.entryDate, { color: palette.text }]}>{entry.fullDate}</Text>
+                    <Text style={[styles.entryDate, { color: palette.text }]}>
+                      {entry.fullDate}
+                      {index === 0 ? '  •  Latest' : ''}
+                    </Text>
                     <Text numberOfLines={2} style={[styles.entryPreview, { color: palette.mutedText }]}>
                       {entry.preview}
+                    </Text>
+                    <Text numberOfLines={1} style={[styles.entryMoodSummary, { color: palette.accentSoft }]}>
+                      {moodSummary(entry.mood)}
                     </Text>
                   </View>
                   <SymbolView
@@ -132,6 +158,11 @@ const styles = StyleSheet.create({
   entryPreview: {
     fontSize: 13,
     lineHeight: 18,
+  },
+  entryMoodSummary: {
+    marginTop: 3,
+    fontSize: 12,
+    fontWeight: '700',
   },
   emptyText: {
     fontSize: 15,

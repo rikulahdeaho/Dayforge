@@ -16,7 +16,7 @@ export function Snackbar({ message, visible, onDismiss, palette, durationMs = 50
   const insets = useSafeAreaInsets();
   const [mounted, setMounted] = useState(visible && Boolean(message));
   const opacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(16)).current;
+  const translateY = useRef(new Animated.Value(-16)).current;
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -63,7 +63,7 @@ export function Snackbar({ message, visible, onDismiss, palette, durationMs = 50
         useNativeDriver: true,
       }),
       Animated.timing(translateY, {
-        toValue: 16,
+        toValue: -16,
         duration: 200,
         useNativeDriver: true,
       }),
@@ -87,7 +87,7 @@ export function Snackbar({ message, visible, onDismiss, palette, durationMs = 50
             backgroundColor: palette.cardStrong,
             borderColor: palette.border,
             shadowColor: palette.shadow,
-            marginBottom: Math.max(12, insets.bottom + 8),
+            marginTop: Math.max(12, insets.top + 8),
             opacity,
             transform: [{ translateY }],
           },
@@ -104,7 +104,7 @@ export function Snackbar({ message, visible, onDismiss, palette, durationMs = 50
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
     paddingHorizontal: 12,
   },
   container: {

@@ -162,6 +162,7 @@ export default function TodayScreen() {
     month: 'long',
     day: 'numeric',
   });
+  const isSunday = new Date().getDay() === 0;
 
   const taskActionLabel =
     totalTasks === 0 ? 'OPEN TASKS' : remainingTasks > 0 ? `${remainingTasks} REMAINING` : 'VIEW ALL';
@@ -178,6 +179,25 @@ export default function TodayScreen() {
         <DateHeader palette={palette} dateText={todayDate} title="Today" subtitle={greeting} />
         <FlowStatusRow palette={palette} />
         <FlowCTA palette={palette} />
+        {isSunday ? (
+          <SurfaceCard palette={palette} style={styles.weeklyPlanPromptCard}>
+            <View style={styles.weeklyPlanPromptHeader}>
+              <Text style={[styles.weeklyPlanPromptTitle, { color: palette.text }]}>Sunday reset is ready</Text>
+              <Text style={[styles.weeklyPlanPromptBadge, { color: palette.accent }]}>WEEKLY</Text>
+            </View>
+            <Text style={[styles.weeklyPlanPromptBody, { color: palette.mutedText }]}>
+              Set your focus and lock in a realistic week.
+            </Text>
+            <Pressable
+              onPress={() => {
+                feedbackTap();
+                router.push('/weekly-plan' as never);
+              }}
+              style={({ pressed }) => [styles.weeklyPlanPromptButton, pressed && styles.scaleDown]}>
+              <Text style={[styles.weeklyPlanPromptButtonText, { color: palette.accentStrong }]}>Open weekly plan</Text>
+            </Pressable>
+          </SurfaceCard>
+        ) : null}
 
         <Pressable
           onPress={() => {
@@ -756,5 +776,45 @@ const styles = StyleSheet.create({
   reflectionStatusMeta: {
     fontSize: 12,
     fontWeight: '700',
+  },
+  weeklyPlanPromptCard: {
+    borderRadius: 24,
+    marginBottom: 16,
+    backgroundColor: 'rgba(255,255,255,0.035)',
+  },
+  weeklyPlanPromptHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  weeklyPlanPromptTitle: {
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '700',
+  },
+  weeklyPlanPromptBadge: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+  },
+  weeklyPlanPromptBody: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 10,
+  },
+  weeklyPlanPromptButton: {
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(124,58,237,0.28)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(124,58,237,0.08)',
+  },
+  weeklyPlanPromptButtonText: {
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
 });
