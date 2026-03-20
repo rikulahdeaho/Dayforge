@@ -71,7 +71,17 @@ function areTasksDoneForDate(state: AppState, dateKey: string) {
 }
 
 function areHabitsDoneForDate(state: AppState, dateKey: string) {
-  return state.habits.every((habit) => Boolean(habit.completionByDate[dateKey]));
+  const protectedHabitIds = new Set(state.weeklyPlan.protectedHabitIds);
+  if (protectedHabitIds.size === 0) {
+    return true;
+  }
+
+  const protectedHabits = state.habits.filter((habit) => protectedHabitIds.has(habit.id));
+  if (protectedHabits.length === 0) {
+    return true;
+  }
+
+  return protectedHabits.every((habit) => Boolean(habit.completionByDate[dateKey]));
 }
 
 export function selectIsDayClosed(state: AppState, dateKey: string) {
