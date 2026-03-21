@@ -9,6 +9,7 @@ import {
   Task,
   User,
   WeeklyPlan,
+  WeeklyPlansByWeek,
 } from '../types';
 import {
   getCurrentWeekStartDateKey,
@@ -207,10 +208,13 @@ export const DEMO_REFLECTION_DRAFT: ReflectionDraft = {
 };
 
 export const DEMO_WEEKLY_PLAN: WeeklyPlan = {
-  weekStartDateKey: currentWeekStartDateKey,
   beforeYouBegin: 'Protect 2 x 90min deep work blocks before meetings.',
   pace: 'Balanced',
   protectedHabitIds: ['habit-meditation'],
+};
+
+export const DEMO_WEEKLY_PLANS_BY_WEEK: WeeklyPlansByWeek = {
+  [currentWeekStartDateKey]: DEMO_WEEKLY_PLAN,
 };
 
 export const DEMO_REFLECTION_HISTORY: ReflectionHistoryItem[] = [

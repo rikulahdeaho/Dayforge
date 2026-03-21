@@ -4,12 +4,13 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Text, TextInput, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import 'react-native-reanimated';
 
 import { Snackbar } from '@/components/dayforge/Snackbar';
+import { Fonts } from '@/constants/Typography';
 import Colors from '@/constants/Colors';
 import { AppStateProvider, useAppState } from '@/store/appState';
 
@@ -27,6 +28,8 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
+    Inter: require('../assets/fonts/Inter-VariableFont_opsz,wght.ttf'),
+    Manrope: require('../assets/fonts/Manrope-VariableFont_wght.ttf'),
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
@@ -37,6 +40,14 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (loaded) {
+      const textStyle = { fontFamily: Fonts.body };
+      const inputStyle = { fontFamily: Fonts.body };
+      const textComponent = Text as typeof Text & { defaultProps?: { style?: unknown } };
+      const inputComponent = TextInput as typeof TextInput & { defaultProps?: { style?: unknown } };
+      textComponent.defaultProps = textComponent.defaultProps ?? {};
+      textComponent.defaultProps.style = textStyle;
+      inputComponent.defaultProps = inputComponent.defaultProps ?? {};
+      inputComponent.defaultProps.style = inputStyle;
       SplashScreen.hideAsync();
     }
   }, [loaded]);
@@ -64,8 +75,8 @@ function RootNavigator() {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
-          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0f081b' }}>
-            <ActivityIndicator size="large" color="#a44cff" />
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.dark.background }}>
+            <ActivityIndicator size="large" color={Colors.dark.accent} />
           </View>
         </SafeAreaProvider>
       </GestureHandlerRootView>

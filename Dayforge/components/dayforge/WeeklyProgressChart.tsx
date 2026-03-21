@@ -2,6 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import type { DayforgePalette } from './types';
+import { Type } from '@/constants/Typography';
 
 type WeeklyChartBar = {
   id: string;
@@ -27,15 +28,15 @@ export function WeeklyProgressChart({ bars, palette, todayIndex }: WeeklyProgres
             style={[
               styles.weeklyChartTrack,
               {
-                backgroundColor: 'rgba(255,255,255,0.07)',
-                borderColor: isToday ? `${palette.accentSoft}AA` : 'transparent',
+                backgroundColor: palette.progressTrack,
+                borderColor: isToday ? `${palette.accentSoft}55` : 'transparent',
                 shadowColor: isToday ? palette.accent : 'transparent',
-                shadowOpacity: isToday ? 0.35 : 0,
+                shadowOpacity: isToday ? 0.16 : 0,
               },
             ]}>
             {bar.totalCompleted > 0 ? (
               <LinearGradient
-                colors={[`${palette.accentSoft}D9`, `${palette.accent}F2`]}
+                colors={[`${palette.accentSoft}B8`, `${palette.accent}CC`]}
                 start={{ x: 0.5, y: 0 }}
                 end={{ x: 0.5, y: 1 }}
                 style={[
@@ -69,20 +70,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    gap: 6,
-    marginBottom: 10,
+    gap: 8,
+    marginBottom: 12,
   },
   weeklyChartColumn: {
     flex: 1,
     alignItems: 'center',
   },
   weeklyChartTrack: {
-    width: '82%',
+    width: '88%',
     height: 66,
-    borderRadius: 10,
+    borderRadius: 12,
     justifyContent: 'flex-end',
     overflow: 'hidden',
-    borderWidth: 1,
+    borderWidth: 0.75,
     ...(Platform.OS === 'ios'
       ? {
           shadowRadius: 10,
@@ -98,14 +99,13 @@ const styles = StyleSheet.create({
     minHeight: 8,
   },
   weekdayRow: {
-    marginTop: 6,
+    marginTop: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 3,
+    gap: 4,
   },
   weekdayLabel: {
-    fontSize: 10,
-    fontWeight: '600',
+    ...Type.meta,
   },
   todayDot: {
     width: 5,

@@ -14,13 +14,13 @@ type GradientCardProps = {
 export function GradientCard({ children, palette, style, colors }: GradientCardProps) {
   return (
     <LinearGradient
-      colors={colors ?? [palette.accentStrong, palette.accent, '#7f22ff']}
+      colors={colors ?? [palette.heroPrimaryStart, palette.heroPrimaryMid, palette.heroPrimaryEnd]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={[
         styles.card,
         {
-          borderColor: 'rgba(255,255,255,0.12)',
+          borderColor: palette.overlaySoft,
           shadowColor: palette.accentStrong,
         },
         style,
@@ -37,8 +37,8 @@ const styles = StyleSheet.create({
     padding: 18,
     ...(Platform.OS === 'ios'
       ? {
-          shadowOpacity: 0.22,
-          shadowRadius: 16,
+          shadowOpacity: 0.14,
+          shadowRadius: 12,
           shadowOffset: { width: 0, height: 8 },
         }
       : {

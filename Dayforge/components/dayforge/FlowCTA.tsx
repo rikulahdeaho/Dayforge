@@ -8,10 +8,17 @@ import { getFlowCTA, getFlowStatus, type FlowStep } from './flow';
 import { GlowButton } from './GlowButton';
 import { DayforgePalette } from './types';
 
-export function FlowStatusRow({ palette }: { palette: DayforgePalette }) {
+export function FlowStatusRow({
+  palette,
+  hideIntermediateStatus = false,
+}: {
+  palette: DayforgePalette;
+  hideIntermediateStatus?: boolean;
+}) {
   const { state } = useAppState();
   const status = getFlowStatus(state);
-  const inlineStatus = `${status.primary} · ${status.secondary}`;
+  const inlineStatus =
+    hideIntermediateStatus || !status.secondary ? status.primary : `${status.primary}  ${status.secondary}`;
 
   return (
     <View style={styles.statusWrap}>

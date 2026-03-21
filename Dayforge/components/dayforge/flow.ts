@@ -20,17 +20,17 @@ const FLOW_COPY: Record<FlowStep, FlowCopy> = {
   tasks: {
     label: 'Continue tasks',
     route: '/(tabs)/task',
-    nextLine: 'Next up: tasks',
+    nextLine: '',
   },
   habits: {
     label: 'Continue habits',
     route: '/(tabs)/habits',
-    nextLine: 'Next up: habits',
+    nextLine: ' ',
   },
   reflect: {
     label: 'Finish with reflection',
     route: '/(tabs)/reflect',
-    nextLine: 'Next up: reflection',
+    nextLine: ' ',
   },
   summary: {
     label: "View today's summary",
@@ -65,6 +65,27 @@ export function getFlowStep(state: AppState): FlowStep {
 
 export function getFlowCTA(state: AppState) {
   const step = getFlowStep(state);
+  const remainingTasks = selectRemainingTasksCount(state);
+  const totalHabits = selectTotalHabitsCount(state);
+  const completedHabits = selectCompletedHabitsCount(state);
+  const habitsLeft = Math.max(0, totalHabits - completedHabits);
+
+  if (step === 'tasks') {
+    return {
+      step,
+      ...FLOW_COPY[step],
+      label: remainingTasks === 1 ? 'Finish tasks' : 'Continue tasks',
+    };
+  }
+
+  if (step === 'habits') {
+    return {
+      step,
+      ...FLOW_COPY[step],
+      label: habitsLeft === 1 ? 'Finish habits' : 'Continue habits',
+    };
+  }
+
   return {
     step,
     ...FLOW_COPY[step],

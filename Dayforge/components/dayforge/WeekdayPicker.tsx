@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { DayforgePalette, SurfaceCard } from './Primitives';
 import { resolveSymbolName } from './resolveSymbolName';
 import { feedbackSelection } from './feedback';
+import { Type } from '@/constants/Typography';
 
 interface WeekdayPickerProps {
   palette: DayforgePalette;
@@ -65,8 +66,8 @@ export function WeekdayPicker({ palette, selectedIndex, onSelectDay, onCalendarP
                     transform: [{ scale: pressed ? 0.96 : selected ? 1.02 : 1 }],
                   },
                 ]}>
-                <Text style={[styles.dayLabel, { color: selected ? '#fff' : palette.mutedText }]}>{label}</Text>
-                <Text style={[styles.dayDate, { color: selected ? '#fff' : palette.text }]}>{dateNum}</Text>
+                <Text style={[styles.dayLabel, { color: selected ? palette.onAccent : palette.mutedText }]}>{label}</Text>
+                <Text style={[styles.dayDate, { color: selected ? palette.onAccent : palette.text }]}>{dateNum}</Text>
               </Pressable>
               {isToday ? <View style={[styles.todayDot, { backgroundColor: palette.accentSoft }]} /> : <View style={styles.dotSpacer} />}
             </View>
@@ -79,19 +80,17 @@ export function WeekdayPicker({ palette, selectedIndex, onSelectDay, onCalendarP
 
 const styles = StyleSheet.create({
   calendarCard: {
-    marginBottom: 16,
+    marginBottom: 24,
     borderRadius: 26,
-    paddingTop: 14,
-    paddingBottom: 14,
-    backgroundColor: 'rgba(255,255,255,0.035)',
+    paddingTop: 12,
+    paddingBottom: 12,
   },
   calendarTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    ...Type.sectionTitle,
   },
   calendarHeader: {
-    marginBottom: 10,
-    marginHorizontal: 12,
+    marginBottom: 12,
+    marginHorizontal: 4,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -107,31 +106,29 @@ const styles = StyleSheet.create({
   weekRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
+    paddingHorizontal: 2,
   },
   dayColumn: {
     alignItems: 'center',
     justifyContent: 'flex-start',
-    gap: 4,
+    gap: 6,
   },
   dayCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 0.75,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowRadius: 10,
+    shadowRadius: 8,
     shadowOffset: { width: 0, height: 0 },
-    elevation: 2,
+    elevation: 1,
   },
   dayLabel: {
-    fontSize: 11,
-    fontWeight: '700',
+    ...Type.meta,
   },
   dayDate: {
-    fontSize: 12,
-    fontWeight: '700',
+    ...Type.metaStrong,
     marginTop: 2,
   },
   todayDot: {

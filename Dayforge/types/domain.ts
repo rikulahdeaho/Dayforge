@@ -65,8 +65,9 @@ export type ReflectionHistoryItem = {
 };
 
 export type WeeklyPlan = {
-  weekStartDateKey: string;
   beforeYouBegin: string;
   pace: string;
   protectedHabitIds: string[];
 };
+
+export type WeeklyPlansByWeek = Record<string, WeeklyPlan>;

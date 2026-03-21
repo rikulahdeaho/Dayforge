@@ -29,12 +29,12 @@ export function SurfaceCard({ children, style, palette }: CardProps) {
 const styles = StyleSheet.create({
   card: {
     borderRadius: 28,
-    borderWidth: 1,
-    padding: 18,
+    borderWidth: 0.75,
+    padding: 20,
     ...(Platform.OS === 'ios'
       ? {
-          shadowOpacity: 0.22,
-          shadowRadius: 16,
+          shadowOpacity: 0.12,
+          shadowRadius: 12,
           shadowOffset: { width: 0, height: 8 },
         }
       : {
