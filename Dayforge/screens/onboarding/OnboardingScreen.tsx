@@ -2,7 +2,6 @@ import { Redirect, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
-  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -14,13 +13,13 @@ import {
   View,
 } from 'react-native';
 
-import { DayforgePalette, SurfaceCard } from '@/components/dayforge/Primitives';
 import { feedbackSelection, feedbackSuccess, feedbackTap } from '@/components/dayforge/feedback';
-import { scrollFocusedInputIntoView } from '@/components/dayforge/scrollFocusedInputIntoView';
+import { SurfaceCard } from '@/components/dayforge/Primitives';
 import { TopGradientBackground } from '@/components/dayforge/TopGradientBackground';
+import { DayforgePalette } from '@/components/dayforge/types';
 import Colors from '@/constants/Colors';
 import { Fonts } from '@/constants/Typography';
-import { parsePositiveNumber, toggleMultiSelectItem } from '@/screens/onboarding/utils';
+import { toggleMultiSelectItem } from '@/screens/onboarding/utils';
 import { useAppState } from '@/store/appState';
 
 import { OnboardingProgress } from './components/OnboardingProgress';
@@ -29,77 +28,370 @@ import { StarterSelectionStep } from './components/StarterSelectionStep';
 import { WeeklyGoalStep } from './components/WeeklyGoalStep';
 import { WelcomeStep } from './components/WelcomeStep';
 
-type Step = 0 | 1 | 2 | 3;
+type Step = 0 | 1 | 2 | 3 | 4;
+type ReminderPickerTarget = 'morning' | 'evening' | 'weekly' | null;
 
-const MAX_PERSONAL_GOALS = 2;
+const MAX_FOCUS_AREAS = 2;
 const MAX_STARTER_TASKS = 2;
 const MAX_STARTER_HABITS = 2;
-const CHECKMARK = '\u2713';
-
-const personalGoalOptions = ['Get healthier', 'Build better routines', 'Improve focus', 'Reduce stress'];
-const starterTaskOptions = [
-  'Plan tomorrow in 10 minutes',
-  'Review top 3 priorities',
-  'Clear inbox to zero',
-  'Take a 20-minute focus sprint',
+const focusOptions = [
+  'More focus',
+  'Better routines',
+  'Less stress',
+  'More energy',
+  'More clarity',
+  'More consistency',
 ];
-const starterHabitOptions = ['Drink water', 'Read 10 pages', '10-minute walk', 'Evening reflection'];
+const weeklyGoalSuggestions = ['Apply to jobs', 'Exercise', 'Deep work hours', 'Read daily', 'Sleep earlier'];
+const starterTaskOptions = ['Plan tomorrow', '20-minute focus sprint', 'Clear one task', 'Inbox reset'];
+const starterHabitOptions = ['Drink water', '10-minute walk', 'Evening reflection', 'Stretch for 5 minutes'];
+const targetOptions = [3, 5, 7, 10, 15];
+const MIN_TARGET = 1;
+const MAX_TARGET = 20;
+const hourOptions = Array.from({ length: 24 }, (_, index) => index);
+const minuteOptions = [0, 15, 30, 45];
+const weeklyReminderDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+function padTime(value: number) {
+  return String(value).padStart(2, '0');
+}
+
+function parseTimeParts(value: string) {
+  const match = value.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) {
+    return { hour: 20, minute: 30 };
+  }
+
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+
+  return {
+    hour: Number.isFinite(hour) && hour >= 0 && hour <= 23 ? hour : 20,
+    minute: minuteOptions.includes(minute) ? minute : 30,
+  };
+}
+
+function buildTime(hour: number, minute: number) {
+  return `${padTime(hour)}:${padTime(minute)}`;
+}
+
+function ReminderRow({
+  palette,
+  title,
+  description,
+  enabled,
+  onToggle,
+  valueLabel,
+  onOpenPicker,
+  dayLabel,
+  onSelectDay,
+}: {
+  palette: DayforgePalette;
+  title: string;
+  description: string;
+  enabled: boolean;
+  onToggle: (value: boolean) => void;
+  valueLabel: string;
+  onOpenPicker: () => void;
+  dayLabel?: string;
+  onSelectDay?: (value: string) => void;
+}) {
+  return (
+    <SurfaceCard palette={palette} style={styles.reminderCard}>
+      <View style={styles.reminderToggleCard}>
+        <View style={styles.reminderHeaderCopy}>
+          <Text style={[styles.reminderLabel, { color: palette.text }]}>{title}</Text>
+          <Text style={[styles.reminderAssist, { color: palette.mutedText }]}>{description}</Text>
+        </View>
+        <Switch
+          value={enabled}
+          onValueChange={onToggle}
+          trackColor={{ false: 'rgba(255,255,255,0.14)', true: palette.accent }}
+          thumbColor="#F8F5FF"
+        />
+      </View>
+
+      {enabled ? (
+        <View style={styles.reminderControls}>
+          <Pressable
+            onPress={onOpenPicker}
+            style={({ pressed }) => [
+              styles.timeField,
+              {
+                borderColor: palette.border,
+                backgroundColor: pressed ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.025)',
+              },
+            ]}>
+            <Text style={[styles.timeFieldLabel, { color: palette.mutedText }]}>Time</Text>
+            <Text style={[styles.timeFieldValue, { color: palette.text }]}>{valueLabel}</Text>
+          </Pressable>
+
+          {dayLabel && onSelectDay ? (
+            <View style={styles.weekdayWrap}>
+              {weeklyReminderDays.map((day) => {
+                const selected = dayLabel === day;
+                return (
+                  <Pressable
+                    key={day}
+                    onPress={() => {
+                      feedbackSelection();
+                      onSelectDay(day);
+                    }}
+                    style={({ pressed }) => [
+                      styles.weekdayChip,
+                      {
+                        borderColor: selected ? 'rgba(141,99,219,0.2)' : palette.border,
+                        backgroundColor: selected ? 'rgba(141,99,219,0.2)' : 'rgba(255,255,255,0.025)',
+                        transform: [{ scale: pressed ? 0.97 : 1 }],
+                      },
+                    ]}>
+                    <Text style={[styles.weekdayText, { color: selected ? palette.text : palette.mutedText }]}>
+                      {day.slice(0, 3)}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : null}
+        </View>
+      ) : null}
+    </SurfaceCard>
+  );
+}
+
+function TimePickerSheet({
+  visible,
+  palette,
+  title,
+  time,
+  onClose,
+  onSelectHour,
+  onSelectMinute,
+}: {
+  visible: boolean;
+  palette: DayforgePalette;
+  title: string;
+  time: string;
+  onClose: () => void;
+  onSelectHour: (value: number) => void;
+  onSelectMinute: (value: number) => void;
+}) {
+  if (!visible) {
+    return null;
+  }
+
+  const { hour, minute } = parseTimeParts(time);
+
+  return (
+    <View style={styles.sheetOverlay}>
+      <Pressable style={styles.sheetBackdrop} onPress={onClose} />
+      <View style={[styles.sheetCard, { backgroundColor: palette.cardStrong, borderColor: palette.border }]}>
+        <Text style={[styles.sheetTitle, { color: palette.text }]}>{title}</Text>
+        <Text style={[styles.sheetTimePreview, { color: palette.text }]}>{buildTime(hour, minute)}</Text>
+
+        <Text style={[styles.sheetLabel, { color: palette.mutedText }]}>Hour</Text>
+        <View style={styles.sheetOptionsWrap}>
+          {hourOptions.map((value) => {
+            const selected = hour === value;
+            return (
+              <Pressable
+                key={value}
+                onPress={() => {
+                  feedbackSelection();
+                  onSelectHour(value);
+                }}
+                style={({ pressed }) => [
+                  styles.sheetChip,
+                  {
+                    borderColor: selected ? 'rgba(141,99,219,0.24)' : palette.border,
+                    backgroundColor: selected ? 'rgba(141,99,219,0.22)' : 'rgba(255,255,255,0.025)',
+                    transform: [{ scale: pressed ? 0.97 : 1 }],
+                  },
+                ]}>
+                <Text style={[styles.sheetChipText, { color: selected ? palette.text : palette.mutedText }]}>
+                  {padTime(value)}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <Text style={[styles.sheetLabel, { color: palette.mutedText }]}>Minute</Text>
+        <View style={styles.sheetOptionsWrap}>
+          {minuteOptions.map((value) => {
+            const selected = minute === value;
+            return (
+              <Pressable
+                key={value}
+                onPress={() => {
+                  feedbackSelection();
+                  onSelectMinute(value);
+                }}
+                style={({ pressed }) => [
+                  styles.sheetChip,
+                  {
+                    borderColor: selected ? 'rgba(141,99,219,0.24)' : palette.border,
+                    backgroundColor: selected ? 'rgba(141,99,219,0.22)' : 'rgba(255,255,255,0.025)',
+                    transform: [{ scale: pressed ? 0.97 : 1 }],
+                  },
+                ]}>
+                <Text style={[styles.sheetChipText, { color: selected ? palette.text : palette.mutedText }]}>
+                  {padTime(value)}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <Pressable style={[styles.sheetDoneButton, { backgroundColor: palette.accent }]} onPress={onClose}>
+          <Text style={styles.primaryButtonText}>Done</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+function ReminderStep({
+  palette,
+  morningEnabled,
+  setMorningEnabled,
+  morningTime,
+  onOpenMorningPicker,
+  eveningEnabled,
+  setEveningEnabled,
+  eveningTime,
+  onOpenEveningPicker,
+  weeklyPlanEnabled,
+  setWeeklyPlanEnabled,
+  weeklyPlanTime,
+  weeklyPlanDay,
+  onSelectWeeklyPlanDay,
+  onOpenWeeklyPlanPicker,
+}: {
+  palette: DayforgePalette;
+  morningEnabled: boolean;
+  setMorningEnabled: (value: boolean) => void;
+  morningTime: string;
+  onOpenMorningPicker: () => void;
+  eveningEnabled: boolean;
+  setEveningEnabled: (value: boolean) => void;
+  eveningTime: string;
+  onOpenEveningPicker: () => void;
+  weeklyPlanEnabled: boolean;
+  setWeeklyPlanEnabled: (value: boolean) => void;
+  weeklyPlanTime: string;
+  weeklyPlanDay: string;
+  onSelectWeeklyPlanDay: (value: string) => void;
+  onOpenWeeklyPlanPicker: () => void;
+}) {
+  return (
+    <View style={styles.stepWrap}>
+      <View style={styles.headerBlock}>
+        <Text style={[styles.stepTitle, { color: palette.text }]}>Stay on track</Text>
+        <Text style={[styles.stepSubtitle, { color: palette.mutedText }]}>
+          Add any reminders you want for mornings, evenings, or weekly planning.
+        </Text>
+      </View>
+
+      <Text style={[styles.microcopy, { color: palette.mutedText }]}>Every reminder here is optional.</Text>
+
+      <ReminderRow
+        palette={palette}
+        title="Morning reminder"
+        description="A gentle start for your day."
+        enabled={morningEnabled}
+        onToggle={setMorningEnabled}
+        valueLabel={morningTime}
+        onOpenPicker={onOpenMorningPicker}
+      />
+
+      <ReminderRow
+        palette={palette}
+        title="Evening reminder"
+        description="A check-in for your close-out."
+        enabled={eveningEnabled}
+        onToggle={setEveningEnabled}
+        valueLabel={eveningTime}
+        onOpenPicker={onOpenEveningPicker}
+      />
+
+      <ReminderRow
+        palette={palette}
+        title="Weekly plan reminder"
+        description="A prompt to set direction for the week ahead."
+        enabled={weeklyPlanEnabled}
+        onToggle={setWeeklyPlanEnabled}
+        valueLabel={weeklyPlanTime}
+        dayLabel={weeklyPlanDay}
+        onSelectDay={onSelectWeeklyPlanDay}
+        onOpenPicker={onOpenWeeklyPlanPicker}
+      />
+    </View>
+  );
+}
+
+function ReadyState({ palette }: { palette: DayforgePalette }) {
+  return (
+    <View style={styles.readyStateWrap}>
+      <View style={[styles.readyStateCard, { borderColor: palette.border, backgroundColor: 'rgba(17,12,29,0.76)' }]}>
+        <Text style={[styles.readyHeadline, { color: palette.text }]}>You’re ready.</Text>
+        <Text style={[styles.readySubheadline, { color: palette.mutedText }]}>Let’s begin.</Text>
+      </View>
+    </View>
+  );
+}
 
 export default function OnboardingScreen() {
   const router = useRouter();
   const { completeOnboarding, isHydrated, setSuccessMessage, skipOnboarding, state } = useAppState();
 
   const [step, setStep] = useState<Step>(0);
+  const [darkMode, setDarkMode] = useState(true);
   const [name, setName] = useState('');
-  const [nameTouched, setNameTouched] = useState(false);
+  const [selectedFocuses, setSelectedFocuses] = useState<string[]>([]);
 
-  const [selectedPersonalGoals, setSelectedPersonalGoals] = useState<string[]>([]);
-  const [customPersonalGoalInput, setCustomPersonalGoalInput] = useState('');
-  const [customPersonalGoalChip, setCustomPersonalGoalChip] = useState('');
-
-  const [remindersEnabled, setRemindersEnabled] = useState(false);
-  const [reminderTime, setReminderTime] = useState('08:30');
-
-  const [darkMode, setDarkMode] = useState(state.preferences.darkMode);
-  const [weeklyGoalTitle, setWeeklyGoalTitle] = useState('');
-  const [weeklyGoalTarget, setWeeklyGoalTarget] = useState('');
+  const [selectedGoal, setSelectedGoal] = useState('Apply to jobs');
+  const [customGoalValue, setCustomGoalValue] = useState('');
+  const [selectedTarget, setSelectedTarget] = useState(5);
 
   const [selectedStarterTasks, setSelectedStarterTasks] = useState<string[]>([starterTaskOptions[0]]);
-  const [selectedStarterHabits, setSelectedStarterHabits] = useState<string[]>([starterHabitOptions[0]]);
-
-  const [showStep2Errors, setShowStep2Errors] = useState(false);
+  const [selectedStarterHabits, setSelectedStarterHabits] = useState<string[]>(['Drink water']);
+  const [morningReminderEnabled, setMorningReminderEnabled] = useState(false);
+  const [morningReminderTime, setMorningReminderTime] = useState('08:00');
+  const [eveningReminderEnabled, setEveningReminderEnabled] = useState(false);
+  const [eveningReminderTime, setEveningReminderTime] = useState('20:30');
+  const [weeklyPlanReminderEnabled, setWeeklyPlanReminderEnabled] = useState(false);
+  const [weeklyPlanReminderTime, setWeeklyPlanReminderTime] = useState('17:00');
+  const [weeklyPlanReminderDay, setWeeklyPlanReminderDay] = useState('Sunday');
+  const [pickerTarget, setPickerTarget] = useState<ReminderPickerTarget>(null);
+  const [isFinishing, setIsFinishing] = useState(false);
 
   const scrollRef = useRef<ScrollView>(null);
   const nameInputRef = useRef<TextInput>(null);
 
   const palette = (darkMode ? Colors.dark : Colors.light) as DayforgePalette;
-
-  const trimmedName = name.trim();
-  const parsedWeeklyGoalTarget = parsePositiveNumber(weeklyGoalTarget);
-
-  const profileStepValid = trimmedName.length >= 2;
-  const preferencesStepValid = weeklyGoalTitle.trim().length > 0 && parsedWeeklyGoalTarget !== null;
+  const isCustomGoal = customGoalValue.trim().length > 0 && selectedGoal === customGoalValue.trim();
+  const progressStep = step === 0 ? 1 : step;
 
   const canContinue = useMemo(() => {
     if (step === 0) {
       return true;
     }
     if (step === 1) {
-      return profileStepValid;
+      return selectedFocuses.length > 0;
     }
     if (step === 2) {
-      return preferencesStepValid;
+      return selectedGoal.trim().length > 0;
+    }
+    if (step === 3) {
+      return selectedStarterTasks.length > 0 || selectedStarterHabits.length > 0;
     }
     return true;
-  }, [preferencesStepValid, profileStepValid, step]);
+  }, [selectedFocuses.length, selectedGoal, selectedStarterHabits.length, selectedStarterTasks.length, step]);
 
-  const personalGoals = useMemo(() => {
-    const options = [...personalGoalOptions];
-    if (customPersonalGoalChip) {
-      options.push(customPersonalGoalChip);
-    }
-    return options;
-  }, [customPersonalGoalChip]);
+  useEffect(() => {
+    setDarkMode(state.preferences.darkMode);
+  }, [state.preferences.darkMode]);
 
   useEffect(() => {
     if (step === 1) {
@@ -108,151 +400,171 @@ export default function OnboardingScreen() {
       }, 120);
       return () => clearTimeout(timeout);
     }
+
     return undefined;
   }, [step]);
 
-  const setCustomGoalAsChip = (text: string) => {
-    const trimmed = text.trim();
-    const previousChip = customPersonalGoalChip;
-
-    setCustomPersonalGoalInput(text);
-    setCustomPersonalGoalChip(trimmed);
-    setSelectedPersonalGoals((prev) => {
-      const withoutPrevious = previousChip ? prev.filter((goal) => goal !== previousChip) : prev;
-
-      if (!trimmed) {
-        return withoutPrevious;
-      }
-
-      if (withoutPrevious.includes(trimmed)) {
-        return withoutPrevious;
-      }
-
-      if (withoutPrevious.length >= MAX_PERSONAL_GOALS) {
-        return withoutPrevious;
-      }
-
-      return [...withoutPrevious, trimmed];
-    });
-  };
-
   const goNext = () => {
-    if (step === 1) {
-      setNameTouched(true);
-      if (!profileStepValid) {
-        return;
-      }
+    if (!canContinue || isFinishing) {
+      return;
     }
 
-    if (step === 2) {
-      setShowStep2Errors(true);
-      if (!preferencesStepValid) {
-        return;
-      }
-    }
-
-    setStep((prev) => (prev < 3 ? ((prev + 1) as Step) : prev));
     feedbackTap();
+    setStep((prev) => (prev < 4 ? ((prev + 1) as Step) : prev));
   };
 
   const goBack = () => {
+    if (isFinishing) {
+      return;
+    }
+
     feedbackSelection();
     setStep((prev) => (prev > 0 ? ((prev - 1) as Step) : prev));
-  };
-
-  const finish = () => {
-    const reminders = remindersEnabled
-      ? `Daily reminder at ${reminderTime.trim() || '08:30'}`
-      : 'Reminders are off for now.';
-
-    completeOnboarding({
-      name: trimmedName,
-      personalGoals: selectedPersonalGoals.join(', '),
-      reminders,
-      darkMode,
-      weeklyGoalTitle: weeklyGoalTitle.trim(),
-      weeklyGoalTarget: parsedWeeklyGoalTarget ?? 1,
-      tasks: selectedStarterTasks,
-      habits: selectedStarterHabits,
-    });
-
-    setSuccessMessage("You're all set \uD83D\uDE80");
-    feedbackSuccess();
-    router.replace('/(tabs)');
   };
 
   const skipAll = () => {
     skipOnboarding();
     router.replace('/(tabs)');
   };
+
   const confirmSkipSetup = () => {
-    Alert.alert(
-      'Skip setup?',
-      "We'll start you with default habits and tasks you can edit later.",
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Skip setup', style: 'destructive', onPress: skipAll },
-      ]
-    );
+    Alert.alert('Skip setup?', "We'll start you with a simple default setup you can refine later.", [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Skip setup', style: 'destructive', onPress: skipAll },
+    ]);
+  };
+
+  const handleSelectGoal = (value: string) => {
+    setSelectedGoal(value);
+  };
+
+  const handleChangeCustomGoal = (value: string) => {
+    setCustomGoalValue(value);
+    const trimmed = value.trim();
+    if (trimmed.length > 0) {
+      setSelectedGoal(trimmed);
+    } else if (selectedGoal === customGoalValue.trim()) {
+      setSelectedGoal(weeklyGoalSuggestions[0]);
+    }
+  };
+
+  const decreaseTarget = () => {
+    setSelectedTarget((prev) => Math.max(MIN_TARGET, prev - 1));
+  };
+
+  const increaseTarget = () => {
+    setSelectedTarget((prev) => Math.min(MAX_TARGET, prev + 1));
+  };
+
+  const updateTimeHour = (target: Exclude<ReminderPickerTarget, null>, hour: number) => {
+    const currentTime =
+      target === 'morning' ? morningReminderTime : target === 'evening' ? eveningReminderTime : weeklyPlanReminderTime;
+    const parts = parseTimeParts(currentTime);
+    const nextValue = buildTime(hour, parts.minute);
+
+    if (target === 'morning') {
+      setMorningReminderTime(nextValue);
+    } else if (target === 'evening') {
+      setEveningReminderTime(nextValue);
+    } else {
+      setWeeklyPlanReminderTime(nextValue);
+    }
+  };
+
+  const updateTimeMinute = (target: Exclude<ReminderPickerTarget, null>, minute: number) => {
+    const currentTime =
+      target === 'morning' ? morningReminderTime : target === 'evening' ? eveningReminderTime : weeklyPlanReminderTime;
+    const parts = parseTimeParts(currentTime);
+    const nextValue = buildTime(parts.hour, minute);
+
+    if (target === 'morning') {
+      setMorningReminderTime(nextValue);
+    } else if (target === 'evening') {
+      setEveningReminderTime(nextValue);
+    } else {
+      setWeeklyPlanReminderTime(nextValue);
+    }
+  };
+
+  const finish = (options?: { remindersEnabled?: boolean }) => {
+    if (isFinishing) {
+      return;
+    }
+
+    const reminderParts: string[] = [];
+    if (morningReminderEnabled) {
+      reminderParts.push(`Morning at ${morningReminderTime}`);
+    }
+    if (eveningReminderEnabled) {
+      reminderParts.push(`Evening at ${eveningReminderTime}`);
+    }
+    if (weeklyPlanReminderEnabled) {
+      reminderParts.push(`Weekly plan on ${weeklyPlanReminderDay} at ${weeklyPlanReminderTime}`);
+    }
+    const reminders = reminderParts.length > 0 ? reminderParts.join(' | ') : 'Reminders are off for now.';
+
+    completeOnboarding({
+      name: name.trim(),
+      personalGoals: selectedFocuses.join(', '),
+      reminders,
+      darkMode,
+      weeklyGoalTitle: selectedGoal.trim(),
+      weeklyGoalTarget: selectedTarget,
+      tasks: selectedStarterTasks,
+      habits: selectedStarterHabits,
+    });
+
+    setSuccessMessage("You're ready.");
+    feedbackSuccess();
+    setIsFinishing(true);
+
+    setTimeout(() => {
+      router.replace('/(tabs)');
+    }, 1250);
+  };
+
+  const finishWithoutReminder = () => {
+    setMorningReminderEnabled(false);
+    setEveningReminderEnabled(false);
+    setWeeklyPlanReminderEnabled(false);
+    finish({ remindersEnabled: false });
   };
 
   if (isHydrated && state.hasCompletedOnboarding) {
     return <Redirect href="/(tabs)" />;
   }
 
-  const nameError =
-    nameTouched && trimmedName.length === 0
-      ? 'Name is required'
-      : nameTouched && trimmedName.length > 0 && trimmedName.length < 2
-        ? 'Name should be at least 2 characters'
-        : null;
-
-  const weeklyGoalNameError =
-    showStep2Errors && weeklyGoalTitle.trim().length === 0 ? 'Goal name is required' : null;
-  const weeklyTargetError =
-    showStep2Errors && parsedWeeklyGoalTarget === null ? 'Target per week must be a number above 0' : null;
-
-  const headerTitle = 'Dayforge';
-  const headerSubtitle = `Step ${step} of 3`;
-
   return (
     <View style={[styles.safe, { backgroundColor: palette.background }]}>
       <TopGradientBackground />
+      <View pointerEvents="none" style={styles.radialGlowWrap}>
+        <View style={[styles.radialGlowLarge, step === 4 ? styles.radialGlowLargeMuted : null]} />
+        <View style={[styles.radialGlowSmall, step === 4 ? styles.radialGlowSmallMuted : null]} />
+      </View>
+
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.safe}>
-        <ScrollView ref={scrollRef} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <View style={styles.headerRow}>
-            <Text style={[styles.title, { color: palette.text }]}>{headerTitle}</Text>
-            <Text style={[styles.subtitle, { color: palette.mutedText }]}>{headerSubtitle}</Text>
-          </View>
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={[styles.content, step === 0 ? styles.contentWelcome : null]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}>
+          {step > 0 ? <OnboardingProgress step={progressStep as 1 | 2 | 3 | 4} palette={palette} /> : null}
 
-          <OnboardingProgress step={step} palette={palette} />
-
-          {step === 0 ? (
-            <WelcomeStep palette={palette} darkMode={darkMode} onSetDarkMode={setDarkMode} />
-          ) : null}
+          {step === 0 ? <WelcomeStep palette={palette} darkMode={darkMode} onSetDarkMode={setDarkMode} /> : null}
 
           {step === 1 ? (
             <ProfileStep
               palette={palette}
               name={name}
               setName={setName}
-              nameTouched={nameTouched}
-              nameError={nameError}
               nameInputRef={nameInputRef}
               scrollRef={scrollRef}
-              personalGoals={personalGoals}
-              selectedPersonalGoals={selectedPersonalGoals}
-              maxPersonalGoals={MAX_PERSONAL_GOALS}
-              checkmark={CHECKMARK}
+              focusOptions={focusOptions}
+              selectedFocuses={selectedFocuses}
+              maxPersonalGoals={MAX_FOCUS_AREAS}
               onToggleGoal={(goalOption) =>
-                setSelectedPersonalGoals((prev) => toggleMultiSelectItem(goalOption, prev, MAX_PERSONAL_GOALS))
+                setSelectedFocuses((prev) => toggleMultiSelectItem(goalOption, prev, MAX_FOCUS_AREAS))
               }
-              customPersonalGoalInput={customPersonalGoalInput}
-              setCustomGoalAsChip={setCustomGoalAsChip}
-              remindersEnabled={remindersEnabled}
-              setRemindersEnabled={setRemindersEnabled}
-              reminderTime={reminderTime}
-              setReminderTime={setReminderTime}
             />
           ) : null}
 
@@ -260,13 +572,17 @@ export default function OnboardingScreen() {
             <WeeklyGoalStep
               palette={palette}
               scrollRef={scrollRef}
-              weeklyGoalTitle={weeklyGoalTitle}
-              setWeeklyGoalTitle={setWeeklyGoalTitle}
-              weeklyGoalTarget={weeklyGoalTarget}
-              setWeeklyGoalTarget={setWeeklyGoalTarget}
-              weeklyGoalNameError={weeklyGoalNameError}
-              weeklyTargetError={weeklyTargetError}
-              parsedWeeklyGoalTarget={parsedWeeklyGoalTarget}
+              suggestions={weeklyGoalSuggestions}
+              selectedGoal={selectedGoal}
+              onSelectGoal={handleSelectGoal}
+              isCustomGoal={isCustomGoal}
+              customGoalValue={customGoalValue}
+              onChangeCustomGoal={handleChangeCustomGoal}
+              targetOptions={targetOptions}
+              selectedTarget={selectedTarget}
+              onSelectTarget={setSelectedTarget}
+              onDecreaseTarget={decreaseTarget}
+              onIncreaseTarget={increaseTarget}
             />
           ) : null}
 
@@ -279,7 +595,6 @@ export default function OnboardingScreen() {
               selectedStarterHabits={selectedStarterHabits}
               maxStarterTasks={MAX_STARTER_TASKS}
               maxStarterHabits={MAX_STARTER_HABITS}
-              checkmark={CHECKMARK}
               onToggleTask={(taskOption) =>
                 setSelectedStarterTasks((prev) => toggleMultiSelectItem(taskOption, prev, MAX_STARTER_TASKS))
               }
@@ -289,38 +604,95 @@ export default function OnboardingScreen() {
             />
           ) : null}
 
-          <View style={styles.actions}>
+          {step === 4 ? (
+            <ReminderStep
+              palette={palette}
+              morningEnabled={morningReminderEnabled}
+              setMorningEnabled={setMorningReminderEnabled}
+              morningTime={morningReminderTime}
+              onOpenMorningPicker={() => setPickerTarget('morning')}
+              eveningEnabled={eveningReminderEnabled}
+              setEveningEnabled={setEveningReminderEnabled}
+              eveningTime={eveningReminderTime}
+              onOpenEveningPicker={() => setPickerTarget('evening')}
+              weeklyPlanEnabled={weeklyPlanReminderEnabled}
+              setWeeklyPlanEnabled={setWeeklyPlanReminderEnabled}
+              weeklyPlanTime={weeklyPlanReminderTime}
+              weeklyPlanDay={weeklyPlanReminderDay}
+              onSelectWeeklyPlanDay={setWeeklyPlanReminderDay}
+              onOpenWeeklyPlanPicker={() => setPickerTarget('weekly')}
+            />
+          ) : null}
+          <View style={styles.ctaDock}>
             {step === 0 ? (
-              <Pressable style={[styles.secondaryButton, { borderColor: palette.border }]} onPress={confirmSkipSetup}>
-                <Text style={[styles.secondaryButtonText, styles.skipActionText, { color: palette.mutedText }]}>
-                  Skip setup
+              <>
+                <Text style={[styles.welcomeNote, { color: palette.mutedText }]}>No account needed. Data stays on this device.</Text>
+                <Pressable style={[styles.primaryButton, styles.dockButton, { backgroundColor: palette.accent }]} onPress={goNext}>
+                  <Text style={styles.primaryButtonText}>Get started</Text>
+                </Pressable>
+                <Pressable style={[styles.secondaryButton, styles.dockButton, { borderColor: palette.border }]} onPress={confirmSkipSetup}>
+                  <Text style={[styles.secondaryButtonText, { color: palette.mutedText }]}>Skip setup</Text>
+                </Pressable>
+              </>
+            ) : (
+              <>
+                <Pressable
+                  style={[
+                    styles.primaryButton,
+                    styles.inlineButton,
+                    { backgroundColor: palette.accent, opacity: canContinue ? 1 : 0.74 },
+                  ]}
+                  onPress={step === 4 ? () => finish() : goNext}
+                  disabled={!canContinue || isFinishing}>
+                <Text style={styles.primaryButtonText}>
+                  {step === 3 ? 'Start my day' : step === 4 ? 'Finish setup' : 'Continue'}
                 </Text>
               </Pressable>
-            ) : step > 0 ? (
-              <Pressable style={[styles.secondaryButton, { borderColor: palette.border }]} onPress={goBack}>
-                <Text style={[styles.secondaryButtonText, { color: palette.text }]}>Back</Text>
-              </Pressable>
-            ) : (
-              <View style={styles.actionSpacer} />
-            )}
 
-            {step < 3 ? (
-              <Pressable
-                style={[styles.primaryButton, { backgroundColor: palette.accent, opacity: canContinue ? 1 : 0.5 }]}
-                onPress={goNext}
-                disabled={!canContinue}>
-                <Text style={styles.primaryButtonText}>{step === 0 ? 'Continue' : 'Next'}</Text>
-              </Pressable>
-            ) : (
-              <Pressable
-                style={[styles.primaryButton, styles.finishPrimaryButton, { backgroundColor: '#A66BFF' }]}
-                onPress={finish}>
-                <Text style={styles.primaryButtonText}>Start my day</Text>
-              </Pressable>
+                <Pressable
+                  style={[styles.secondaryButton, styles.inlineButton, { borderColor: palette.border }]}
+                  onPress={step === 4 ? finishWithoutReminder : goBack}>
+                  <Text style={[styles.secondaryButtonText, { color: step === 4 ? palette.mutedText : palette.text }]}>
+                    {step === 4 ? 'Not now' : 'Back'}
+                  </Text>
+                </Pressable>
+              </>
             )}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <TimePickerSheet
+        visible={pickerTarget !== null}
+        palette={palette}
+        title={
+          pickerTarget === 'morning'
+            ? 'Morning reminder'
+            : pickerTarget === 'evening'
+              ? 'Evening reminder'
+              : 'Weekly plan reminder'
+        }
+        time={
+          pickerTarget === 'morning'
+            ? morningReminderTime
+            : pickerTarget === 'evening'
+              ? eveningReminderTime
+              : weeklyPlanReminderTime
+        }
+        onClose={() => setPickerTarget(null)}
+        onSelectHour={(value) => {
+          if (pickerTarget) {
+            updateTimeHour(pickerTarget, value);
+          }
+        }}
+        onSelectMinute={(value) => {
+          if (pickerTarget) {
+            updateTimeMinute(pickerTarget, value);
+          }
+        }}
+      />
+
+      {isFinishing ? <ReadyState palette={palette} /> : null}
     </View>
   );
 }
@@ -330,306 +702,255 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: 16,
-    paddingTop: 48,
-    paddingBottom: 60,
+    paddingHorizontal: 22,
+    paddingTop: 46,
+    paddingBottom: 32,
   },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-    gap: 12,
+  contentWelcome: {
+    paddingTop: 32,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
+  radialGlowWrap: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  radialGlowLarge: {
+    position: 'absolute',
+    top: 60,
+    left: '15%',
+    width: 320,
+    height: 320,
+    borderRadius: 999,
+    backgroundColor: 'rgba(111,75,184,0.08)',
+  },
+  radialGlowSmall: {
+    position: 'absolute',
+    top: 170,
+    right: -30,
+    width: 220,
+    height: 220,
+    borderRadius: 999,
+    backgroundColor: 'rgba(141,99,219,0.04)',
+  },
+  radialGlowLargeMuted: {
+    backgroundColor: 'rgba(111,75,184,0.045)',
+  },
+  radialGlowSmallMuted: {
+    backgroundColor: 'rgba(141,99,219,0.022)',
+  },
+  stepWrap: {
+    gap: 14,
+  },
+  headerBlock: {
+    gap: 8,
+  },
+  stepTitle: {
+    fontSize: 34,
+    lineHeight: 40,
+    fontWeight: '800',
     fontFamily: Fonts.heading,
   },
-  subtitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    opacity: 0.85,
+  stepSubtitle: {
+    fontSize: 16,
+    lineHeight: 24,
   },
-  progressDots: {
+  microcopy: {
+    fontSize: 14,
+    lineHeight: 21,
+  },
+  reminderCard: {
+    paddingVertical: 16,
+    gap: 14,
+  },
+  reminderToggleCard: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
-    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 16,
   },
-  progressDot: {
+  reminderHeaderCopy: {
     flex: 1,
-    height: 6,
-    borderRadius: 999,
-    borderWidth: 1,
+    gap: 4,
   },
-  progressDotActive: {
-    flex: 1.35,
-  },
-  card: {
-    borderRadius: 24,
-    marginBottom: 16,
-    backgroundColor: 'rgba(255,255,255,0.035)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
-  },
-  logoCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'center',
-    marginBottom: 12,
-  },
-  logoText: {
-    fontSize: 24,
-    fontWeight: '800',
-  },
-  step0Wrap: {
-    paddingTop: 20,
-    paddingBottom: 18,
-    alignItems: 'center',
-  },
-  step0Logo: {
-    width: 92,
-    height: 92,
-    borderRadius: 46,
-    borderWidth: 1,
-    marginBottom: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#B87CFF',
-    shadowOpacity: 0.25,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 4,
-  },
-  step0LogoText: {
-    color: '#3F0E73',
-    fontSize: 34,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  step0LogoImage: {
-    width: 64,
-    height: 64,
-  },
-  step0Headline: {
-    fontSize: 44,
-    lineHeight: 52,
-    textAlign: 'center',
-    fontWeight: '800',
-    marginBottom: 20,
-    maxWidth: 520,
-  },
-  step0AppearanceLabel: {
-    alignSelf: 'stretch',
-    marginTop: 0,
-    marginBottom: 8,
-  },
-  step0AppearanceWrap: {
-    alignSelf: 'stretch',
-  },
-  step0SupportLine: {
-    marginTop: 12,
-    alignSelf: 'center',
-    fontSize: 12,
-    lineHeight: 18,
-    opacity: 0.82,
-    marginBottom: 2,
-  },
-  heroTagline: {
-    marginTop: 2,
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  localFirst: {
-    marginTop: 10,
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '700',
-  },
-  bulletWrap: {
-    marginTop: 12,
-    marginBottom: 14,
-    gap: 8,
-  },
-  bulletText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  sectionTitle: {
-    fontSize: 23,
-    fontWeight: '700',
-    marginBottom: 6,
-  },
-  stepContext: {
-    fontSize: 14,
-    marginBottom: 12,
-  },
-  fieldLabel: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 8,
-    marginTop: 6,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
+  reminderLabel: {
     fontSize: 17,
-    marginBottom: 4,
+    fontWeight: '700',
   },
-  helperText: {
-    marginBottom: 10,
+  reminderAssist: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  timePickerCard: {
+    gap: 12,
+  },
+  reminderControls: {
+    gap: 12,
+  },
+  timeField: {
+    borderWidth: 1,
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 4,
+  },
+  timeFieldLabel: {
     fontSize: 12,
+    fontWeight: '600',
   },
-  errorText: {
-    color: '#FF6B6B',
+  timeFieldValue: {
+    fontSize: 20,
+    lineHeight: 24,
+    fontWeight: '800',
+    fontFamily: Fonts.heading,
   },
-  chipWrap: {
+  weekdayWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 12,
   },
-  multiChip: {
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    shadowColor: '#7F22FF',
-    shadowOpacity: 0.16,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
-  },
-  multiChipText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  appearanceWrap: {
-    borderWidth: 1,
-    borderRadius: 12,
-    flexDirection: 'row',
-    gap: 8,
-    padding: 6,
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  appearanceOption: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingVertical: 8,
+  weekdayChip: {
+    minWidth: 48,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  appearanceText: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  switchRow: {
+    borderRadius: 999,
     borderWidth: 1,
-    borderRadius: 12,
     paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    paddingVertical: 8,
   },
-  switchLabel: {
-    fontSize: 17,
-    fontWeight: '600',
-  },
-  previewText: {
-    marginTop: 4,
-    fontSize: 14,
+  weekdayText: {
+    fontSize: 12,
     fontWeight: '700',
   },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 10,
-    marginTop: 8,
+  ctaDock: {
+    marginTop: 20,
+    borderRadius: 30,
+    padding: 8,
+    gap: 8,
+    backgroundColor: 'rgba(14,10,24,0.84)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    marginBottom: Platform.OS === 'android' ? 28 : 16,
   },
-  actionSpacer: {
+  dockButton: {
+    minHeight: 50,
+  },
+  welcomeNote: {
+    textAlign: 'center',
+    fontSize: 13,
+    fontWeight: '500',
+    marginBottom: 2,
+  },
+  inlineButton: {
     flex: 1,
+    minHeight: 44,
+  },
+  primaryButton: {
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#8D63DB',
+    shadowOpacity: 0.3,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 3,
   },
   secondaryButton: {
-    flex: 1,
     borderWidth: 1,
-    borderRadius: 12,
-    minHeight: 48,
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.018)',
   },
   secondaryButtonText: {
     fontSize: 15,
-    fontWeight: '700',
-  },
-  primaryButton: {
-    flex: 1,
-    borderRadius: 12,
-    minHeight: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  finishPrimaryButton: {
-    shadowColor: '#9B5BFF',
-    shadowOpacity: 0.42,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 4,
-    minHeight: 52,
-  },
-  primaryButtonText: {
-    color: '#ffffff',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  skipActionText: {
     fontWeight: '600',
   },
-  inlineInputWrap: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    flexDirection: 'row',
+  primaryButtonText: {
+    color: '#F7F4FC',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  readyStateWrap: {
+    ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
-    marginBottom: 8,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(7,5,12,0.34)',
+    paddingHorizontal: 24,
   },
-  inlineInputIcon: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginRight: 8,
+  readyStateCard: {
+    width: '100%',
+    borderWidth: 1,
+    borderRadius: 32,
+    paddingVertical: 32,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    gap: 8,
   },
-  inlineInput: {
-    flex: 1,
+  readyHeadline: {
+    fontSize: 36,
+    lineHeight: 42,
+    fontWeight: '800',
+    fontFamily: Fonts.heading,
+  },
+  readySubheadline: {
     fontSize: 17,
-    paddingVertical: 14,
+    lineHeight: 24,
   },
-  captionText: {
-    marginTop: -2,
-    marginBottom: 2,
+  sheetOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'flex-end',
   },
-  selectionCount: {
-    marginTop: -4,
-    fontSize: 11,
-    opacity: 0.7,
+  sheetBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.35)',
   },
-  sectionSpacerTop: {
-    marginTop: 14,
+  sheetCard: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderWidth: 1,
+    borderBottomWidth: 0,
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: Platform.OS === 'ios' ? 32 : 20,
+    gap: 12,
   },
-  step3BrandMoment: {
-    marginTop: 6,
+  sheetTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    fontFamily: Fonts.heading,
+  },
+  sheetTimePreview: {
+    fontSize: 28,
+    lineHeight: 32,
+    fontWeight: '800',
+    fontFamily: Fonts.heading,
+  },
+  sheetLabel: {
     fontSize: 12,
-    opacity: 0.78,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  sheetOptionsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  sheetChip: {
+    minWidth: 54,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  sheetChipText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  sheetDoneButton: {
+    marginTop: 6,
+    minHeight: 48,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

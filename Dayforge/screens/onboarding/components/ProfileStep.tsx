@@ -1,81 +1,69 @@
-import { RefObject } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { RefObject, useState } from 'react';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { DayforgePalette, SurfaceCard } from '@/components/dayforge/Primitives';
-import { Fonts } from '@/constants/Typography';
 import { feedbackSelection } from '@/components/dayforge/feedback';
+import { SurfaceCard } from '@/components/dayforge/Primitives';
 import { scrollFocusedInputIntoView } from '@/components/dayforge/scrollFocusedInputIntoView';
+import { DayforgePalette } from '@/components/dayforge/types';
+import { Fonts } from '@/constants/Typography';
 
 export function ProfileStep({
   palette,
   name,
   setName,
-  nameTouched,
-  nameError,
   nameInputRef,
   scrollRef,
-  personalGoals,
-  selectedPersonalGoals,
+  focusOptions,
+  selectedFocuses,
   maxPersonalGoals,
-  checkmark,
   onToggleGoal,
-  customPersonalGoalInput,
-  setCustomGoalAsChip,
-  remindersEnabled,
-  setRemindersEnabled,
-  reminderTime,
-  setReminderTime,
 }: {
   palette: DayforgePalette;
   name: string;
   setName: (value: string) => void;
-  nameTouched: boolean;
-  nameError: string | null;
   nameInputRef: RefObject<TextInput | null>;
   scrollRef: RefObject<ScrollView | null>;
-  personalGoals: string[];
-  selectedPersonalGoals: string[];
+  focusOptions: string[];
+  selectedFocuses: string[];
   maxPersonalGoals: number;
-  checkmark: string;
   onToggleGoal: (goal: string) => void;
-  customPersonalGoalInput: string;
-  setCustomGoalAsChip: (text: string) => void;
-  remindersEnabled: boolean;
-  setRemindersEnabled: (value: boolean) => void;
-  reminderTime: string;
-  setReminderTime: (value: string) => void;
 }) {
+  const [inputFocused, setInputFocused] = useState(false);
+
   return (
-    <SurfaceCard palette={palette} style={styles.card}>
-      <Text style={[styles.sectionTitle, { color: palette.text }]}>Profile</Text>
-      <Text style={[styles.stepContext, { color: palette.mutedText }]}>Let's personalize your daily flow</Text>
+    <View style={styles.wrap}>
+      <View style={styles.headerBlock}>
+        <Text style={[styles.sectionTitle, { color: palette.text }]}>What do you want more of?</Text>
+        <Text style={[styles.stepContext, { color: palette.mutedText }]}>Choose up to two things to shape your start.</Text>
+      </View>
 
-      <Text style={[styles.fieldLabel, { color: palette.text }]}>Name</Text>
-      <TextInput
-        ref={nameInputRef}
-        value={name}
-        onChangeText={setName}
-        onFocus={(event) => scrollFocusedInputIntoView(scrollRef, event.nativeEvent.target)}
-        placeholder="e.g. Riku"
-        placeholderTextColor={palette.mutedText}
-        style={[
-          styles.input,
-          {
-            color: palette.text,
-            borderColor: nameError ? 'rgba(255,107,107,0.45)' : palette.border,
-          },
-        ]}
-      />
-      <Text style={[styles.helperText, { color: nameError ? '#FF6B6B' : palette.mutedText }]}>
-        {nameTouched && nameError ? nameError : 'What should we call you?'}
-      </Text>
+      <SurfaceCard palette={palette} style={styles.inputCard}>
+        <TextInput
+          ref={nameInputRef}
+          value={name}
+          onChangeText={setName}
+          onFocus={(event) => {
+            setInputFocused(true);
+            scrollFocusedInputIntoView(scrollRef, event.nativeEvent.target);
+          }}
+          onBlur={() => setInputFocused(false)}
+          placeholder="What should we call you?"
+          placeholderTextColor={palette.mutedText}
+          style={[
+            styles.input,
+            {
+              color: palette.text,
+              borderColor: inputFocused ? 'rgba(141,99,219,0.34)' : 'transparent',
+              backgroundColor: inputFocused ? 'rgba(141,99,219,0.08)' : 'rgba(255,255,255,0.02)',
+            },
+          ]}
+        />
+      </SurfaceCard>
 
-      <Text style={[styles.fieldLabel, { color: palette.text }]}>Personal goals</Text>
-      <Text style={[styles.helperText, { color: palette.mutedText }]}>Pick up to 2</Text>
-      <View style={styles.chipWrap}>
-        {personalGoals.map((goalOption) => {
-          const selected = selectedPersonalGoals.includes(goalOption);
-          const atLimit = !selected && selectedPersonalGoals.length >= maxPersonalGoals;
+      <View style={styles.goalGrid}>
+        {focusOptions.map((goalOption) => {
+          const selected = selectedFocuses.includes(goalOption);
+          const atLimit = !selected && selectedFocuses.length >= maxPersonalGoals;
 
           return (
             <Pressable
@@ -88,141 +76,105 @@ export function ProfileStep({
                 onToggleGoal(goalOption);
               }}
               style={({ pressed }) => [
-                styles.multiChip,
+                styles.optionCard,
                 {
-                  borderColor: selected ? palette.accent : palette.border,
-                  backgroundColor: selected ? 'rgba(127,34,255,0.24)' : 'transparent',
-                  opacity: atLimit ? 0.72 : 1,
-                  transform: [{ scale: pressed ? 0.98 : selected ? 1.02 : 1 }],
+                  borderColor: selected ? 'rgba(141,99,219,0.24)' : palette.border,
+                  backgroundColor: selected ? 'rgba(141,99,219,0.22)' : 'rgba(255,255,255,0.035)',
+                  shadowColor: '#8D63DB',
+                  shadowOpacity: Platform.OS === 'ios' && selected ? 0.18 : 0,
+                  opacity: atLimit ? 0.55 : 1,
+                  transform: [{ scale: pressed ? 0.985 : 1 }],
                 },
               ]}>
-              <Text style={[styles.multiChipText, { color: selected ? '#fff' : palette.text }]}>
-                {selected ? `${checkmark} ` : ''}
-                {goalOption}
-              </Text>
+              <View style={styles.optionTopRow}>
+                <Text style={[styles.optionLabel, { color: palette.text }]}>{goalOption}</Text>
+                <View
+                  style={[
+                    styles.checkDot,
+                    {
+                      borderColor: selected ? 'rgba(194,170,243,0.46)' : 'rgba(255,255,255,0.12)',
+                      backgroundColor: selected ? 'rgba(194,170,243,0.18)' : 'rgba(255,255,255,0.03)',
+                    },
+                  ]}>
+                  {selected ? <View style={styles.checkDotInner} /> : null}
+                </View>
+              </View>
             </Pressable>
           );
         })}
       </View>
-
-      <View style={[styles.inlineInputWrap, { borderColor: palette.border }]}>
-        <Text style={[styles.inlineInputIcon, { color: palette.mutedText }]}>+</Text>
-        <TextInput
-          value={customPersonalGoalInput}
-          onChangeText={setCustomGoalAsChip}
-          onFocus={(event) => scrollFocusedInputIntoView(scrollRef, event.nativeEvent.target)}
-          placeholder="Add your own goal"
-          placeholderTextColor={palette.mutedText}
-          style={[styles.inlineInput, { color: palette.text }]}
-        />
-      </View>
-
-      <Text style={[styles.fieldLabel, { color: palette.text }]}>Reminders</Text>
-      <View style={[styles.switchRow, { borderColor: palette.border }]}>
-        <Text style={[styles.switchLabel, { color: palette.text }]}>Enable reminders</Text>
-        <Switch
-          value={remindersEnabled}
-          onValueChange={setRemindersEnabled}
-          trackColor={{ false: palette.border, true: palette.accent }}
-          thumbColor="#ffffff"
-        />
-      </View>
-      {remindersEnabled ? (
-        <TextInput
-          value={reminderTime}
-          onChangeText={setReminderTime}
-          onFocus={(event) => scrollFocusedInputIntoView(scrollRef, event.nativeEvent.target)}
-          placeholder="08:30"
-          placeholderTextColor={palette.mutedText}
-          style={[styles.input, { color: palette.text, borderColor: palette.border }]}
-        />
-      ) : null}
-    </SurfaceCard>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: 24,
-    marginBottom: 16,
-    backgroundColor: 'rgba(255,255,255,0.035)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+  wrap: {
+    gap: 18,
+  },
+  headerBlock: {
+    gap: 8,
   },
   sectionTitle: {
-    fontSize: 23,
-    fontWeight: '700',
+    fontSize: 34,
+    lineHeight: 40,
+    fontWeight: '800',
     fontFamily: Fonts.heading,
-    marginBottom: 6,
   },
   stepContext: {
-    fontSize: 14,
-    marginBottom: 12,
-  },
-  fieldLabel: {
     fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 8,
-    marginTop: 6,
+    lineHeight: 24,
   },
   input: {
     borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    fontSize: 17,
-    marginBottom: 4,
+    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 15,
+    fontSize: 16,
   },
-  helperText: {
-    marginBottom: 10,
-    fontSize: 12,
+  inputCard: {
+    padding: 0,
+    backgroundColor: 'transparent',
   },
-  chipWrap: {
+  goalGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 12,
+    gap: 12,
   },
-  multiChip: {
+  optionCard: {
+    width: '48%',
+    minHeight: 74,
     borderWidth: 1,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  multiChipText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  inlineInputWrap: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  inlineInputIcon: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginRight: 8,
-  },
-  inlineInput: {
-    flex: 1,
-    fontSize: 17,
+    borderRadius: 22,
+    paddingHorizontal: 16,
     paddingVertical: 14,
-  },
-  switchRow: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 0,
   },
-  switchLabel: {
-    fontSize: 17,
-    fontWeight: '600',
+  optionTopRow: {
+    flex: 1,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  optionLabel: {
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: '700',
+  },
+  checkDot: {
+    width: 22,
+    height: 22,
+    borderRadius: 999,
+    borderWidth: 1,
+    marginTop: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkDotInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 999,
+    backgroundColor: '#E8DFFF',
   },
 });

@@ -101,34 +101,6 @@ export function getFlowStatus(state: AppState) {
   const habitsLeft = Math.max(0, totalHabits - completedHabits);
   const action = getFlowCTA(state);
 
-  if (action.step === 'tasks') {
-    if (remainingTasks === 0) {
-      return {
-        primary: 'All done for today',
-        secondary: '',
-      };
-    }
-
-    return {
-      primary: `${completedTasks} of ${totalTasks} done · ${remainingTasks} left`,
-      secondary: '',
-    };
-  }
-
-  if (action.step === 'habits') {
-    if (habitsLeft === 0) {
-      return {
-        primary: 'All done for today',
-        secondary: '',
-      };
-    }
-
-    return {
-      primary: `${completedHabits} of ${totalHabits} done · ${habitsLeft} left`,
-      secondary: '',
-    };
-  }
-
   const done = completedTasks + completedHabits;
   const total = totalTasks + totalHabits;
   const left = remainingTasks + habitsLeft;

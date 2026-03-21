@@ -1,8 +1,78 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { DayforgePalette, SurfaceCard } from '@/components/dayforge/Primitives';
-import { Fonts } from '@/constants/Typography';
 import { feedbackSelection } from '@/components/dayforge/feedback';
+import { SurfaceCard } from '@/components/dayforge/Primitives';
+import { DayforgePalette } from '@/components/dayforge/types';
+import { Fonts } from '@/constants/Typography';
+
+type SelectionGroupProps = {
+  title: string;
+  subtitle?: string;
+  options: string[];
+  selectedItems: string[];
+  maxSelections: number;
+  palette: DayforgePalette;
+  onToggle: (value: string) => void;
+};
+
+function SelectionGroup({
+  title,
+  subtitle,
+  options,
+  selectedItems,
+  maxSelections,
+  palette,
+  onToggle,
+}: SelectionGroupProps) {
+  return (
+    <SurfaceCard palette={palette} style={styles.groupCard}>
+      <View style={styles.groupHeader}>
+        <Text style={[styles.groupTitle, { color: palette.text }]}>{title}</Text>
+        {subtitle ? <Text style={[styles.groupSubtitle, { color: palette.mutedText }]}>{subtitle}</Text> : null}
+      </View>
+
+      <View style={styles.optionStack}>
+        {options.map((option) => {
+          const selected = selectedItems.includes(option);
+          const atLimit = !selected && selectedItems.length >= maxSelections;
+
+          return (
+            <Pressable
+              key={option}
+              onPress={() => {
+                if (atLimit) {
+                  return;
+                }
+                feedbackSelection();
+                onToggle(option);
+              }}
+              style={({ pressed }) => [
+                styles.selectionRow,
+                {
+                  borderColor: selected ? 'rgba(141,99,219,0.22)' : palette.border,
+                  backgroundColor: selected ? 'rgba(141,99,219,0.22)' : 'rgba(255,255,255,0.025)',
+                  opacity: atLimit ? 0.55 : 1,
+                  transform: [{ scale: pressed ? 0.987 : 1 }],
+                },
+              ]}>
+              <Text style={[styles.selectionLabel, { color: palette.text }]}>{option}</Text>
+              <View
+                style={[
+                  styles.checkWrap,
+                  {
+                    borderColor: selected ? 'rgba(194,170,243,0.4)' : palette.border,
+                    backgroundColor: selected ? 'rgba(194,170,243,0.15)' : 'transparent',
+                  },
+                ]}>
+                {selected ? <Text style={styles.checkText}>✓</Text> : null}
+              </View>
+            </Pressable>
+          );
+        })}
+      </View>
+    </SurfaceCard>
+  );
+}
 
 export function StarterSelectionStep({
   palette,
@@ -12,7 +82,6 @@ export function StarterSelectionStep({
   selectedStarterHabits,
   maxStarterTasks,
   maxStarterHabits,
-  checkmark,
   onToggleTask,
   onToggleHabit,
 }: {
@@ -23,150 +92,100 @@ export function StarterSelectionStep({
   selectedStarterHabits: string[];
   maxStarterTasks: number;
   maxStarterHabits: number;
-  checkmark: string;
   onToggleTask: (value: string) => void;
   onToggleHabit: (value: string) => void;
 }) {
   return (
-    <SurfaceCard palette={palette} style={styles.card}>
-      <Text style={[styles.sectionTitle, { color: palette.text }]}>Your first day</Text>
-      <Text style={[styles.stepContext, { color: palette.mutedText }]}>Start with a few simple wins</Text>
-
-      <Text style={[styles.fieldLabel, { color: palette.text }]}>Starter tasks</Text>
-      <Text style={[styles.helperText, { color: palette.mutedText }]}>Pick up to 2 to start</Text>
-      <View style={styles.chipWrap}>
-        {starterTaskOptions.map((taskOption) => {
-          const selected = selectedStarterTasks.includes(taskOption);
-          const atLimit = !selected && selectedStarterTasks.length >= maxStarterTasks;
-
-          return (
-            <Pressable
-              key={taskOption}
-              onPress={() => {
-                if (atLimit) {
-                  return;
-                }
-                feedbackSelection();
-                onToggleTask(taskOption);
-              }}
-              style={({ pressed }) => [
-                styles.multiChip,
-                {
-                  borderColor: selected ? palette.accent : palette.border,
-                  backgroundColor: selected ? 'rgba(127,34,255,0.18)' : 'transparent',
-                  opacity: atLimit ? 0.82 : 1,
-                  transform: [{ scale: pressed ? 0.98 : selected ? 1.02 : 1 }],
-                },
-              ]}>
-              <Text style={[styles.multiChipText, { color: selected ? '#fff' : palette.text }]}>
-                {selected ? `${checkmark} ` : ''}
-                {taskOption}
-              </Text>
-            </Pressable>
-          );
-        })}
+    <View style={styles.wrap}>
+      <View style={styles.headerBlock}>
+        <Text style={[styles.sectionTitle, { color: palette.text }]}>Choose your first small wins</Text>
+        <Text style={[styles.stepContext, { color: palette.mutedText }]}>Start small. Build momentum.</Text>
       </View>
-      <Text style={[styles.helperText, styles.selectionCount, { color: palette.mutedText }]}>
-        {selectedStarterTasks.length} selected
-      </Text>
 
-      <Text style={[styles.fieldLabel, styles.sectionSpacerTop, { color: palette.text }]}>Starter habits</Text>
-      <Text style={[styles.helperText, { color: palette.mutedText }]}>Pick up to 2 to start</Text>
-      <View style={styles.chipWrap}>
-        {starterHabitOptions.map((habitOption) => {
-          const selected = selectedStarterHabits.includes(habitOption);
-          const atLimit = !selected && selectedStarterHabits.length >= maxStarterHabits;
+      <SelectionGroup
+        title="Today’s starter task"
+        subtitle="Choose up to two."
+        options={starterTaskOptions}
+        selectedItems={selectedStarterTasks}
+        maxSelections={maxStarterTasks}
+        palette={palette}
+        onToggle={onToggleTask}
+      />
 
-          return (
-            <Pressable
-              key={habitOption}
-              onPress={() => {
-                if (atLimit) {
-                  return;
-                }
-                feedbackSelection();
-                onToggleHabit(habitOption);
-              }}
-              style={({ pressed }) => [
-                styles.multiChip,
-                {
-                  borderColor: selected ? palette.accent : palette.border,
-                  backgroundColor: selected ? 'rgba(127,34,255,0.18)' : 'transparent',
-                  opacity: atLimit ? 0.82 : 1,
-                  transform: [{ scale: pressed ? 0.98 : selected ? 1.02 : 1 }],
-                },
-              ]}>
-              <Text style={[styles.multiChipText, { color: selected ? '#fff' : palette.text }]}>
-                {selected ? `${checkmark} ` : ''}
-                {habitOption}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-      <Text style={[styles.helperText, styles.selectionCount, { color: palette.mutedText }]}>
-        {selectedStarterHabits.length} selected
-      </Text>
-      <Text style={[styles.brandMoment, { color: palette.mutedText }]}>A simple start builds momentum.</Text>
-    </SurfaceCard>
+      <SelectionGroup
+        title="Starter habits"
+        subtitle="Choose up to two."
+        options={starterHabitOptions}
+        selectedItems={selectedStarterHabits}
+        maxSelections={maxStarterHabits}
+        palette={palette}
+        onToggle={onToggleHabit}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: 24,
-    marginBottom: 16,
-    backgroundColor: 'rgba(255,255,255,0.035)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+  wrap: {
+    gap: 18,
+  },
+  headerBlock: {
+    gap: 8,
   },
   sectionTitle: {
-    fontSize: 23,
-    fontWeight: '700',
+    fontSize: 34,
+    lineHeight: 40,
+    fontWeight: '800',
     fontFamily: Fonts.heading,
-    marginBottom: 6,
   },
   stepContext: {
-    fontSize: 14,
-    marginBottom: 12,
-  },
-  fieldLabel: {
     fontSize: 16,
+    lineHeight: 24,
+  },
+  groupCard: {
+    gap: 18,
+  },
+  groupHeader: {
+    gap: 6,
+  },
+  groupTitle: {
+    fontSize: 18,
     fontWeight: '700',
-    marginBottom: 8,
-    marginTop: 6,
   },
-  helperText: {
-    marginBottom: 10,
+  groupSubtitle: {
     fontSize: 12,
+    lineHeight: 16,
   },
-  chipWrap: {
+  optionStack: {
+    gap: 10,
+  },
+  selectionRow: {
+    minHeight: 58,
+    borderRadius: 20,
+    borderWidth: 1,
+    paddingHorizontal: 16,
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 12,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
   },
-  multiChip: {
+  selectionLabel: {
+    flex: 1,
+    fontSize: 15,
+    lineHeight: 21,
+    fontWeight: '700',
+  },
+  checkWrap: {
+    width: 24,
+    height: 24,
     borderWidth: 1,
     borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  multiChipText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  selectionCount: {
-    marginTop: -4,
-    fontSize: 11,
-    opacity: 0.7,
-  },
-  sectionSpacerTop: {
-    marginTop: 14,
-  },
-  brandMoment: {
-    marginTop: 6,
+  checkText: {
+    color: '#F3EEFC',
     fontSize: 12,
-    opacity: 0.78,
+    fontWeight: '800',
   },
 });

@@ -1,6 +1,6 @@
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Switch, Text, View } from 'react-native';
 
-import { DayforgePalette, SurfaceCard } from '@/components/dayforge/Primitives';
+import { DayforgePalette } from '@/components/dayforge/types';
 import { Fonts } from '@/constants/Typography';
 
 export function WelcomeStep({
@@ -13,122 +13,100 @@ export function WelcomeStep({
   onSetDarkMode: (value: boolean) => void;
 }) {
   return (
-    <SurfaceCard palette={palette} style={styles.card}>
-      <View style={styles.wrap}>
-        <View style={[styles.logo, { borderColor: palette.border, backgroundColor: 'rgb(248, 248, 246)' }]}>
+    <View style={styles.wrap}>
+      <View style={styles.topRow}>
+        <View />
+
+        <View style={[styles.modeToggle, { borderColor: 'rgba(255,255,255,0.07)', backgroundColor: 'rgba(255,255,255,0.025)' }]}>
+          <Text style={[styles.modeLabel, { color: palette.mutedText }]}>Dark mode</Text>
+          <Switch
+            value={darkMode}
+            onValueChange={onSetDarkMode}
+            trackColor={{ false: 'rgba(255,255,255,0.1)', true: 'rgba(141,99,219,0.72)' }}
+            thumbColor="#F8F5FF"
+          />
+        </View>
+      </View>
+
+      <View style={styles.hero}>
+        <View style={[styles.brandBadge, { borderColor: 'rgba(141,99,219,0.36)', backgroundColor: '#F6F3FB' }]}>
           <Image source={require('../../../assets/images/DayforgeLogo.png')} style={styles.logoImage} resizeMode="contain" />
         </View>
-        <Text style={[styles.headline, { color: palette.text }]}>
-          Dayforge: Build better days, <Text style={{ color: '#C892FF' }}>one step at a time.</Text>
-        </Text>
-
-        <Text style={[styles.fieldLabel, { color: palette.text }]}>Appearance</Text>
-        <View style={[styles.appearanceWrap, { borderColor: palette.border }]}>
-          <Pressable
-            onPress={() => onSetDarkMode(false)}
-            style={({ pressed }) => [
-              styles.appearanceOption,
-              {
-                borderColor: !darkMode ? palette.accent : 'transparent',
-                backgroundColor: !darkMode ? 'rgba(127,34,255,0.14)' : 'transparent',
-                transform: [{ scale: pressed ? 0.98 : 1 }],
-              },
-            ]}>
-            <Text style={[styles.appearanceText, { color: !darkMode ? '#fff' : palette.text }]}>Light</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => onSetDarkMode(true)}
-            style={({ pressed }) => [
-              styles.appearanceOption,
-              {
-                borderColor: darkMode ? palette.accent : 'transparent',
-                backgroundColor: darkMode ? 'rgba(127,34,255,0.14)' : 'transparent',
-                transform: [{ scale: pressed ? 0.98 : 1 }],
-              },
-            ]}>
-            <Text style={[styles.appearanceText, { color: darkMode ? '#fff' : palette.text }]}>Dark</Text>
-          </Pressable>
-        </View>
-        <Text style={[styles.supportLine, { color: palette.mutedText }]}>No account needed. Data stays on this device.</Text>
+        <Text style={[styles.eyebrow, { color: palette.mutedText }]}>DAYFORGE</Text>
+        <Text style={[styles.headline, { color: palette.text }]}>Build better days.</Text>
+        <Text style={[styles.subheadline, { color: palette.mutedText }]}>Small steps. Clear direction.</Text>
       </View>
-    </SurfaceCard>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: 24,
-    marginBottom: 16,
-    backgroundColor: 'rgba(255,255,255,0.035)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
-  },
   wrap: {
-    paddingTop: 20,
-    paddingBottom: 18,
-    alignItems: 'center',
+    minHeight: 560,
+    justifyContent: 'space-between',
+    paddingTop: 10,
   },
-  logo: {
-    width: 92,
-    height: 92,
-    borderRadius: 46,
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  brandBadge: {
+    width: 104,
+    height: 104,
+    borderRadius: 999,
     borderWidth: 1,
-    marginBottom: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#B87CFF',
-    shadowOpacity: 0.25,
-    shadowRadius: 18,
+    marginBottom: 16,
+    shadowColor: '#8D63DB',
+    shadowOpacity: 0.32,
+    shadowRadius: 26,
     shadowOffset: { width: 0, height: 8 },
-    elevation: 4,
+    elevation: 6,
   },
   logoImage: {
-    width: 64,
-    height: 64,
+    width: 54,
+    height: 54,
+  },
+  modeToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+  modeLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  hero: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 56,
+    paddingBottom: 120,
+  },
+  eyebrow: {
+    fontSize: 12,
+    letterSpacing: 2.8,
+    fontWeight: '700',
+    marginBottom: 14,
   },
   headline: {
-    fontSize: 44,
-    lineHeight: 52,
+    fontSize: 48,
+    lineHeight: 54,
     textAlign: 'center',
     fontWeight: '800',
     fontFamily: Fonts.heading,
-    marginBottom: 20,
-    maxWidth: 520,
+    marginBottom: 14,
   },
-  fieldLabel: {
-    alignSelf: 'stretch',
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  appearanceWrap: {
-    alignSelf: 'stretch',
-    borderWidth: 1,
-    borderRadius: 12,
-    flexDirection: 'row',
-    gap: 8,
-    padding: 6,
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  appearanceOption: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingVertical: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  appearanceText: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  supportLine: {
-    marginTop: 12,
-    alignSelf: 'center',
-    fontSize: 12,
-    lineHeight: 18,
-    opacity: 0.82,
-    marginBottom: 2,
+  subheadline: {
+    fontSize: 17,
+    lineHeight: 24,
+    textAlign: 'center',
+    fontWeight: '500',
   },
 });

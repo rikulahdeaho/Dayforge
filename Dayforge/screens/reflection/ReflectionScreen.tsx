@@ -51,7 +51,7 @@ import Colors from '@/constants/Colors';
 import { Fonts, Type } from '@/constants/Typography';
 import { moods, moodEmoji, moodSummary, moodVisuals } from '@/screens/reflection/utils';
 import { useAppState } from '@/store/appState';
-import { getDailyReflectionPrompts } from '@/store/appState.helpers';
+import { formatFullDateLabel, getDailyReflectionPrompts } from '@/store/appState.helpers';
 
 export default function ReflectionScreen() {
   const router = useRouter();
@@ -65,12 +65,15 @@ export default function ReflectionScreen() {
   const orbDScale = useRef(new Animated.Value(1)).current;
   const dailyPrompts = getDailyReflectionPrompts();
   const visual = moodVisuals(state.reflectionDraft.mood);
+  const todayFullDate = formatFullDateLabel(new Date());
   const headerDate = new Date().toLocaleDateString(undefined, {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
   });
   const visibleHistory = state.reflectionHistory.slice(0, 3);
+  const todayEntry = state.reflectionHistory.find((entry) => entry.fullDate === todayFullDate);
+  const reflectionDoneToday = Boolean(todayEntry);
   const hasReflectionText = Boolean(state.reflectionDraft.wentWell.trim() || state.reflectionDraft.gratefulFor.trim());
   const canSaveReflection = Boolean(state.reflectionDraft.mood && hasReflectionText);
   const solidCardSurface = state.preferences.darkMode ? 'rgba(18,12,29,0.94)' : 'rgba(248,245,255,0.97)';
@@ -213,82 +216,113 @@ export default function ReflectionScreen() {
           </View>
         </LinearGradient>
 
-        {!state.reflectionDraft.mood ? (
+        {!state.reflectionDraft.mood && !reflectionDoneToday ? (
           <Text style={[styles.hintText, { color: palette.mutedText }]}>Choose your mood to begin.</Text>
         ) : null}
 
-        <View style={styles.entrySection}>
-          <Text style={[styles.stepBadge, { color: palette.mutedText }]}>Step 2</Text>
-          <Text style={[styles.entryHeading, { color: palette.text }]}>{dailyPrompts.wentWellPrompt.question}</Text>
+        {reflectionDoneToday ? (
           <View
             style={[
-              styles.textAreaShell,
+              styles.completedCard,
               {
-                backgroundColor: solidInputSurface,
+                backgroundColor: solidCardSurface,
                 borderColor: palette.border,
+                shadowColor: palette.shadow,
               },
             ]}>
-            <TextInput
-              multiline
-              numberOfLines={4}
-              onFocus={(event) => scrollFocusedInputIntoView(scrollRef, event.nativeEvent.target)}
-              value={state.reflectionDraft.wentWell}
-              onChangeText={(text) => {
-                setReflectionField('wentWell', text);
-                if (successMessage) {
-                  setSuccessMessage(null);
+            <Text style={[styles.completedEyebrow, { color: palette.accentSoft }]}>Today complete</Text>
+            <Text style={[styles.completedTitle, { color: palette.text }]}>You already answered today’s reflection.</Text>
+            <Text style={[styles.completedBody, { color: palette.mutedText }]}>
+              Come back tomorrow for a new prompt, or open today’s entry from your history below.
+            </Text>
+            {todayEntry ? (
+              <Pressable
+                onPress={() =>
+                  router.push({ pathname: '/reflection/[id]' as never, params: { id: todayEntry.id } } as never)
                 }
-              }}
-              placeholder={dailyPrompts.wentWellPrompt.placeholder}
-              placeholderTextColor={palette.mutedText}
-              style={[styles.textArea, { color: palette.text }]}
-            />
+                style={[styles.completedAction, { backgroundColor: palette.accent }]}>
+                <Text style={[styles.completedActionText, { color: palette.onAccent }]}>Edit today&apos;s reflection</Text>
+              </Pressable>
+            ) : null}
           </View>
-        </View>
+        ) : (
+          <>
+            <View style={styles.entrySection}>
+              <Text style={[styles.stepBadge, { color: palette.mutedText }]}>Step 2</Text>
+              <Text style={[styles.entryHeading, { color: palette.text }]}>{dailyPrompts.wentWellPrompt.question}</Text>
+              <View
+                style={[
+                  styles.textAreaShell,
+                  {
+                    backgroundColor: solidInputSurface,
+                    borderColor: palette.border,
+                  },
+                ]}>
+                <TextInput
+                  multiline
+                  numberOfLines={4}
+                  onFocus={(event) => scrollFocusedInputIntoView(scrollRef, event.nativeEvent.target)}
+                  value={state.reflectionDraft.wentWell}
+                  onChangeText={(text) => {
+                    setReflectionField('wentWell', text);
+                    if (successMessage) {
+                      setSuccessMessage(null);
+                    }
+                  }}
+                  placeholder={dailyPrompts.wentWellPrompt.placeholder}
+                  placeholderTextColor={palette.mutedText}
+                  style={[styles.textArea, { color: palette.text }]}
+                />
+              </View>
+            </View>
 
-        <View style={styles.entrySection}>
-          <Text style={[styles.stepBadge, { color: palette.mutedText }]}>Step 3</Text>
-          <Text style={[styles.entryHeading, { color: palette.text }]}>{dailyPrompts.gratefulForPrompt.question}</Text>
-          <View
-            style={[
-              styles.textAreaShell,
-              {
-                backgroundColor: solidInputSurface,
-                borderColor: palette.border,
-              },
-            ]}>
-            <TextInput
-              multiline
-              numberOfLines={4}
-              onFocus={(event) => scrollFocusedInputIntoView(scrollRef, event.nativeEvent.target, 220)}
-              value={state.reflectionDraft.gratefulFor}
-              onChangeText={(text) => {
-                setReflectionField('gratefulFor', text);
-                if (successMessage) {
-                  setSuccessMessage(null);
-                }
-              }}
-              placeholder={dailyPrompts.gratefulForPrompt.placeholder}
-              placeholderTextColor={palette.mutedText}
-              style={[styles.textArea, { color: palette.text }]}
-            />
-          </View>
-        </View>
+            <View style={styles.entrySection}>
+              <Text style={[styles.stepBadge, { color: palette.mutedText }]}>Step 3</Text>
+              <Text style={[styles.entryHeading, { color: palette.text }]}>{dailyPrompts.gratefulForPrompt.question}</Text>
+              <View
+                style={[
+                  styles.textAreaShell,
+                  {
+                    backgroundColor: solidInputSurface,
+                    borderColor: palette.border,
+                  },
+                ]}>
+                <TextInput
+                  multiline
+                  numberOfLines={4}
+                  onFocus={(event) => scrollFocusedInputIntoView(scrollRef, event.nativeEvent.target, 220)}
+                  value={state.reflectionDraft.gratefulFor}
+                  onChangeText={(text) => {
+                    setReflectionField('gratefulFor', text);
+                    if (successMessage) {
+                      setSuccessMessage(null);
+                    }
+                  }}
+                  placeholder={dailyPrompts.gratefulForPrompt.placeholder}
+                  placeholderTextColor={palette.mutedText}
+                  style={[styles.textArea, { color: palette.text }]}
+                />
+              </View>
+            </View>
 
-        {!hasReflectionText ? (
-          <Text style={[styles.motivationText, { color: palette.mutedText }]}>Take two minutes. Capture one small win from today.</Text>
-        ) : null}
+            {!hasReflectionText ? (
+              <Text style={[styles.motivationText, { color: palette.mutedText }]}>
+                Take two minutes. Capture one small win from today.
+              </Text>
+            ) : null}
 
-        <Animated.View style={{ transform: [{ scale: rewardScale }] }}>
-          <GlowButton
-            label="Save Reflection"
-            palette={palette}
-            style={styles.saveButton}
-            textStyle={styles.saveButtonText}
-            onPress={handleSaveReflection}
-            disabled={!canSaveReflection}
-          />
-        </Animated.View>
+            <Animated.View style={{ transform: [{ scale: rewardScale }] }}>
+              <GlowButton
+                label="Save Reflection"
+                palette={palette}
+                style={styles.saveButton}
+                textStyle={styles.saveButtonText}
+                onPress={handleSaveReflection}
+                disabled={!canSaveReflection}
+              />
+            </Animated.View>
+          </>
+        )}
 
         <View style={styles.historyHeader}>
           <Text style={[styles.historyHeading, { color: palette.text }]}>Past Entries</Text>
@@ -512,6 +546,47 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 8,
     ...Type.bodySmall,
+  },
+  completedCard: {
+    marginBottom: 28,
+    borderRadius: 26,
+    borderWidth: 0.75,
+    paddingHorizontal: 18,
+    paddingVertical: 18,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowOpacity: 0.18,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: 8 },
+        }
+      : {
+          elevation: 0,
+        }),
+  },
+  completedEyebrow: {
+    marginBottom: 6,
+    ...Type.metaStrong,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  completedTitle: {
+    marginBottom: 6,
+    ...Type.cardTitle,
+  },
+  completedBody: {
+    ...Type.bodySmall,
+  },
+  completedAction: {
+    marginTop: 14,
+    alignSelf: 'flex-start',
+    minHeight: 42,
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  completedActionText: {
+    ...Type.metaStrong,
   },
   saveButtonText: {
     fontFamily: Fonts.body,
