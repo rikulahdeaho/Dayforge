@@ -1,4 +1,4 @@
-import { SymbolView } from 'expo-symbols';
+import { SymbolView } from './SymbolView';
 import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -32,8 +32,10 @@ export function DateHeader({ palette, dateText, title, subtitle }: DateHeaderPro
             />
             <Text style={[styles.dateText, { color: palette.accent }]}>{dateText}</Text>
           </View>
-          <Text style={[styles.title, { color: palette.text }]}>{title}</Text>
-          {subtitle ? <Text style={[styles.subtitle, { color: palette.mutedText }]}>{subtitle}</Text> : null}
+          <View style={styles.titleRow}>
+            <Text style={[styles.title, { color: palette.text }]}>{title}</Text>
+            {subtitle ? <Text style={[styles.subtitle, { color: palette.mutedText }]}>{subtitle}</Text> : null}
+          </View>
         </View>
         <Pressable
           onPress={() => setIsNotificationsOpen(true)}
@@ -89,10 +91,15 @@ const styles = StyleSheet.create({
     lineHeight: 30,
     fontWeight: '700',
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
   subtitle: {
-    marginTop: 2,
-    fontSize: 18,
-    lineHeight: 24,
+    fontSize: 16,
+    lineHeight: 22,
     fontWeight: '500',
   },
   bellWrap: {

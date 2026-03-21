@@ -1,5 +1,13 @@
 import { AppState } from './appState.types';
-import { getCurrentMondayBasedDayIndex, getDateKeyForMondayBasedDayIndex, getTodayDateKey } from './appState.helpers';
+import {
+  formatFullDateLabel,
+  getCurrentMondayBasedDayIndex,
+  getCurrentWeekStartDateKey,
+  getDateKeyForMondayBasedDayIndex,
+  getTodayDateKey,
+  parseDateKeyToDate,
+  toDateKey,
+} from './appState.helpers';
 
 const weekdayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -37,7 +45,9 @@ export function selectHabitProgress(state: AppState) {
 }
 
 export function selectGoalProgress(state: AppState) {
-  return state.goal.target > 0 ? state.goal.progress / state.goal.target : 0;
+  const weekStartDateKey = getCurrentWeekStartDateKey();
+  const weekProgress = state.goal.progressByWeek[weekStartDateKey] ?? state.goal.progress;
+  return state.goal.target > 0 ? weekProgress / state.goal.target : 0;
 }
 
 export function selectTaskProgress(state: AppState, dayIndex = getCurrentMondayBasedDayIndex()) {
@@ -48,6 +58,64 @@ export function selectTaskProgress(state: AppState, dayIndex = getCurrentMondayB
 
 export function selectReflectionStreak(state: AppState) {
   return Math.min(7, state.reflectionHistory.length + (state.reflectionDraft.mood ? 1 : 0));
+}
+
+function hasReflectionForDate(state: AppState, dateKey: string) {
+  const fullDate = formatFullDateLabel(parseDateKeyToDate(dateKey));
+  return state.reflectionHistory.some((entry) => entry.fullDate === fullDate);
+}
+
+function areTasksDoneForDate(state: AppState, dateKey: string) {
+  const tasksForDate = state.tasks.filter((task) => task.dateKey === dateKey);
+  return tasksForDate.every((task) => Boolean(task.completionByDate[dateKey]));
+}
+
+function areHabitsDoneForDate(state: AppState, dateKey: string) {
+  const protectedHabitIds = new Set(state.weeklyPlan.protectedHabitIds);
+  if (protectedHabitIds.size === 0) {
+    return true;
+  }
+
+  const protectedHabits = state.habits.filter((habit) => protectedHabitIds.has(habit.id));
+  if (protectedHabits.length === 0) {
+    return true;
+  }
+
+  return protectedHabits.every((habit) => Boolean(habit.completionByDate[dateKey]));
+}
+
+export function selectIsDayClosed(state: AppState, dateKey: string) {
+  return areTasksDoneForDate(state, dateKey) && areHabitsDoneForDate(state, dateKey) && hasReflectionForDate(state, dateKey);
+}
+
+export function selectDayClosureStreak(state: AppState) {
+  const cursor = new Date();
+  cursor.setHours(0, 0, 0, 0);
+
+  let streak = 0;
+
+  for (let dayOffset = 0; dayOffset < 365; dayOffset += 1) {
+    const dateKey = toDateKey(cursor);
+    if (!selectIsDayClosed(state, dateKey)) {
+      break;
+    }
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  return streak;
+}
+
+export function selectWeeklyDayClosures(state: AppState) {
+  return weekdayLabels.map((label, dayIndex) => {
+    const dateKey = getDateKeyForMondayBasedDayIndex(dayIndex);
+    return {
+      id: `weekly-closure-${dayIndex}`,
+      label,
+      dateKey,
+      closed: selectIsDayClosed(state, dateKey),
+    };
+  });
 }
 
 export function selectDailyHabitCounts(state: AppState) {

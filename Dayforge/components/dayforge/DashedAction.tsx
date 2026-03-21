@@ -19,11 +19,12 @@ export function DashedAction({
   return (
     <Pressable
       onPress={onPress}
-      style={[
+      style={({ pressed }) => [
         styles.dashed,
         {
           borderColor: palette.border,
           backgroundColor: 'rgba(27, 16, 48, 0.35)',
+          transform: [{ scale: pressed ? 0.98 : 1 }],
         },
         style,
       ]}>

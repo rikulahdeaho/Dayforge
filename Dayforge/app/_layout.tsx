@@ -6,8 +6,11 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import 'react-native-reanimated';
 
+import { Snackbar } from '@/components/dayforge/Snackbar';
+import Colors from '@/constants/Colors';
 import { AppStateProvider, useAppState } from '@/store/appState';
 
 export {
@@ -54,32 +57,47 @@ function RootLayoutNav() {
 }
 
 function RootNavigator() {
-  const { isHydrated, state } = useAppState();
+  const { isHydrated, setSuccessMessage, state, successMessage } = useAppState();
+  const palette = state.preferences.darkMode ? Colors.dark : Colors.light;
 
   if (!isHydrated) {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0f081b' }}>
-          <ActivityIndicator size="large" color="#a44cff" />
-        </View>
+        <SafeAreaProvider>
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0f081b' }}>
+            <ActivityIndicator size="large" color="#a44cff" />
+          </View>
+        </SafeAreaProvider>
       </GestureHandlerRootView>
     );
   }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider value={state.preferences.darkMode ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="add-task" options={{ presentation: 'modal', title: 'Add Task', headerShown: false }} />
-          <Stack.Screen name="add-habit" options={{ presentation: 'modal', title: 'Add Habit', headerShown: false }} />
-          <Stack.Screen name="edit-weekly-focus" options={{ presentation: 'modal', title: 'Edit Weekly Focus', headerShown: false }} />
-          <Stack.Screen name="reflections" options={{ presentation: 'modal', title: 'Past Reflections', headerShown: false }} />
-          <Stack.Screen name="reflection/[id]" options={{ presentation: 'modal', title: 'Reflection Detail', headerShown: false }} />
-        </Stack>
-        <StatusBar style={state.preferences.darkMode ? 'light' : 'dark'} />
-      </ThemeProvider>
+      <SafeAreaProvider>
+        <ThemeProvider value={state.preferences.darkMode ? DarkTheme : DefaultTheme}>
+          <Stack>
+            <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="add-task" options={{ presentation: 'modal', title: 'Add Task', headerShown: false }} />
+            <Stack.Screen name="add-habit" options={{ presentation: 'modal', title: 'Add Habit', headerShown: false }} />
+            <Stack.Screen name="edit-weekly-focus" options={{ presentation: 'modal', title: 'Edit Weekly Focus', headerShown: false }} />
+            <Stack.Screen name="day-summary" options={{ presentation: 'modal', title: 'Day Summary', headerShown: false }} />
+            <Stack.Screen name="schedule-picker" options={{ presentation: 'modal', title: 'Schedule', headerShown: false }} />
+            <Stack.Screen name="schedule-day" options={{ presentation: 'modal', title: 'Schedule Day', headerShown: false }} />
+            <Stack.Screen name="weekly-plan" options={{ presentation: 'modal', title: 'Weekly Plan', headerShown: false }} />
+            <Stack.Screen name="reflections" options={{ presentation: 'modal', title: 'Past Reflections', headerShown: false }} />
+            <Stack.Screen name="reflection/[id]" options={{ presentation: 'modal', title: 'Reflection Detail', headerShown: false }} />
+          </Stack>
+          <Snackbar
+            message={successMessage}
+            visible={Boolean(successMessage)}
+            onDismiss={() => setSuccessMessage(null)}
+            palette={palette}
+          />
+          <StatusBar style={state.preferences.darkMode ? 'light' : 'dark'} />
+        </ThemeProvider>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }

@@ -1,3 +1,5 @@
+import { PlatformIconName } from './ui';
+
 export type Mood = 'sad' | 'neutral' | 'good' | 'happy';
 
 export type User = {
@@ -16,7 +18,7 @@ export type Habit = {
   id: string;
   title: string;
   subtitle: string;
-  icon: string;
+  icon: PlatformIconName;
   completedToday: boolean;
   weeklyProgress: boolean[];
   completionByDate: Record<string, boolean>;
@@ -29,11 +31,15 @@ export type Goal = {
   label: string;
   progress: number;
   target: number;
+  progressByWeek: Record<string, number>;
 };
+
+export type TaskCategory = 'must-do' | 'good-to-do' | 'wellbeing';
 
 export type Task = {
   id: string;
   title: string;
+  category: TaskCategory;
   dateKey: string;
   completedToday: boolean;
   weeklyProgress: boolean[];
@@ -52,6 +58,15 @@ export type ReflectionHistoryItem = {
   fullDate: string;
   mood: Mood;
   preview: string;
+  wentWellPrompt?: string;
+  gratefulForPrompt?: string;
   wentWell?: string;
   gratefulFor?: string;
+};
+
+export type WeeklyPlan = {
+  weekStartDateKey: string;
+  beforeYouBegin: string;
+  pace: string;
+  protectedHabitIds: string[];
 };

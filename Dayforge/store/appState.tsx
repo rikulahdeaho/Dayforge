@@ -9,13 +9,16 @@ import React, {
   useState,
 } from 'react';
 
-import { Habit, Mood, Task } from '../types';
+import { Habit, Mood, PlatformIconName, Task, TaskCategory } from '../types';
 
 import { loadPersistedAppState, persistAppState } from './appState.persistence';
 import {
   buildReflectionHistoryItem,
   createEntityId,
   getCurrentMondayBasedDayIndex,
+  getCurrentWeekStartDateKey,
+  getDailyReflectionPrompts,
+  getDateForMondayBasedDayIndex,
   getDateKeyForMondayBasedDayIndex,
 } from './appState.helpers';
 import { appReducer, getEmptyAppState, getInitialAppState } from './appState.reducer';
@@ -27,17 +30,22 @@ type AppStateContextValue = {
   successMessage: string | null;
   setSuccessMessage: (message: string | null) => void;
   toggleHabit: (habitId: string, dayIndex: number) => void;
-  addHabit: (habitInput: { title: string; subtitle: string; icon: string }) => void;
+  addHabit: (habitInput: { title: string; subtitle: string; icon: PlatformIconName }) => void;
+  updateHabit: (habitInput: { habitId: string; title: string; subtitle: string; icon: PlatformIconName }) => void;
   removeHabit: (habitId: string) => void;
   toggleTask: (taskId: string, dayIndex?: number) => void;
-  addTask: (title: string, dayIndex?: number) => void;
+  addTask: (input: { title: string; dayIndex?: number; category: TaskCategory }) => void;
   removeTask: (taskId: string) => void;
+  moveTaskToDate: (input: { taskId: string; dateKey: string }) => void;
   incrementGoalProgress: () => void;
   decrementGoalProgress: () => void;
   updateGoal: (input: { title: string; target: number }) => void;
   setMood: (mood: Mood) => void;
   setReflectionField: (field: 'wentWell' | 'gratefulFor', value: string) => void;
-  saveReflection: () => { ok: true } | { ok: false; reason: 'mood-required' };
+  saveReflection: () => { ok: true; streakDays: number } | { ok: false; reason: 'mood-required' | 'entry-required' };
+  updateReflection: (input: { reflectionId: string; wentWell: string; gratefulFor: string }) => void;
+  removeReflection: (reflectionId: string) => void;
+  saveWeeklyPlan: (input: { beforeYouBegin: string; pace: string; protectedHabitIds: string[] }) => void;
   toggleDarkModeSession: () => void;
   completeOnboarding: (input: OnboardingInput) => void;
   skipOnboarding: () => void;
@@ -68,13 +76,21 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const buildTaskFromTitle = (title: string): Task => ({
     id: createEntityId('task'),
     title,
+    category: 'must-do',
     dateKey: getDateKeyForMondayBasedDayIndex(getCurrentMondayBasedDayIndex()),
     completedToday: false,
     weeklyProgress: [false, false, false, false, false, false, false],
     completionByDate: {},
   });
 
-  const habitIcons = ['figure.mind.and.body', 'book.fill', 'drop.fill', 'dumbbell.fill', 'moon.stars.fill', 'heart.fill'];
+  const habitIcons: PlatformIconName[] = [
+    { ios: 'figure.mind.and.body', android: 'self_improvement', web: 'self_improvement' },
+    { ios: 'book.fill', android: 'menu_book', web: 'menu_book' },
+    { ios: 'drop.fill', android: 'water_drop', web: 'water_drop' },
+    { ios: 'dumbbell.fill', android: 'fitness_center', web: 'fitness_center' },
+    { ios: 'moon.stars.fill', android: 'bedtime', web: 'bedtime' },
+    { ios: 'heart.fill', android: 'favorite', web: 'favorite' },
+  ];
 
   const buildHabitFromTitle = (title: string, index: number): Habit => ({
     id: createEntityId('habit'),
@@ -97,6 +113,26 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       `AsyncStorage unavailable during ${phase}; data will be session-only until app restart.`,
       error
     );
+  };
+
+  const formatTaskDayLabel = (dayIndex: number) => {
+    const now = new Date();
+    const todayIndex = getCurrentMondayBasedDayIndex(now);
+    const tomorrowIndex = (todayIndex + 1) % 7;
+    const date = getDateForMondayBasedDayIndex(dayIndex, now);
+    const compactDate = date.toLocaleDateString(undefined, {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+    });
+
+    if (dayIndex === todayIndex) {
+      return 'today';
+    }
+    if (dayIndex === tomorrowIndex) {
+      return `tomorrow (${compactDate})`;
+    }
+    return compactDate;
   };
 
   useEffect(() => {
@@ -166,12 +202,25 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       successMessage,
       setSuccessMessage,
       toggleHabit: (habitId, dayIndex) => {
+        const dateKey = getDateKeyForMondayBasedDayIndex(dayIndex);
+        const habitsForDay = state.habits;
+        const habit = habitsForDay.find((item) => item.id === habitId);
+        const wasCompleted = Boolean(habit?.completionByDate[dateKey]);
         dispatch({
           type: 'TOGGLE_HABIT',
           habitId,
           dayIndex,
-          dateKey: getDateKeyForMondayBasedDayIndex(dayIndex),
+          dateKey,
         });
+
+        if (!habit || wasCompleted || habitsForDay.length === 0) {
+          return;
+        }
+
+        const completedAfter = habitsForDay.filter((item) => Boolean(item.completionByDate[dateKey])).length + 1;
+        if (completedAfter === habitsForDay.length) {
+          setSuccessMessage(`All habits done for ${formatTaskDayLabel(dayIndex)}.`);
+        }
       },
       addHabit: ({ title, subtitle, icon }) => {
         const normalizedTitle = title.trim();
@@ -192,42 +241,87 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         });
         setSuccessMessage(`Added habit #${nextHabitNumber} for this session.`);
       },
+      updateHabit: ({ habitId, title, subtitle, icon }) => {
+        dispatch({
+          type: 'UPDATE_HABIT',
+          habitId,
+          title,
+          subtitle,
+          icon,
+        });
+        setSuccessMessage('Habit updated for this session.');
+      },
       removeHabit: (habitId) => {
         dispatch({ type: 'REMOVE_HABIT', habitId });
+        setSuccessMessage('Habit removed.');
       },
       toggleTask: (taskId, dayIndex = getCurrentMondayBasedDayIndex()) => {
+        const dateKey = getDateKeyForMondayBasedDayIndex(dayIndex);
+        const tasksForDay = state.tasks.filter((task) => task.dateKey === dateKey);
+        const targetTask = tasksForDay.find((task) => task.id === taskId);
+        const wasCompleted = Boolean(targetTask?.completionByDate[dateKey]);
         dispatch({
           type: 'TOGGLE_TASK',
           taskId,
           dayIndex,
-          dateKey: getDateKeyForMondayBasedDayIndex(dayIndex),
+          dateKey,
         });
+
+        if (!targetTask || wasCompleted || tasksForDay.length === 0) {
+          return;
+        }
+
+        const completedAfter = tasksForDay.filter((task) => Boolean(task.completionByDate[dateKey])).length + 1;
+        if (completedAfter === tasksForDay.length) {
+          setSuccessMessage(`All tasks done for ${formatTaskDayLabel(dayIndex)}.`);
+        }
       },
-      addTask: (title, dayIndex = getCurrentMondayBasedDayIndex()) => {
+      addTask: ({ title, dayIndex = getCurrentMondayBasedDayIndex(), category }) => {
         const normalizedTitle = title.trim();
         dispatch({
           type: 'ADD_TASK',
           task: {
             id: createEntityId('task'),
             title: normalizedTitle || 'New task',
+            category,
             dateKey: getDateKeyForMondayBasedDayIndex(dayIndex),
             completedToday: false,
             weeklyProgress: [false, false, false, false, false, false, false],
             completionByDate: {},
           },
         });
+        setSuccessMessage(`Task added for ${formatTaskDayLabel(dayIndex)}.`);
       },
       removeTask: (taskId) => {
         dispatch({ type: 'REMOVE_TASK', taskId });
+        setSuccessMessage('Task removed.');
+      },
+      moveTaskToDate: ({ taskId, dateKey }) => {
+        dispatch({ type: 'MOVE_TASK_TO_DATE', taskId, dateKey });
+        setSuccessMessage('Task moved.');
       },
       incrementGoalProgress: () => {
+        const currentWeekStartDateKey = getCurrentWeekStartDateKey();
+        const currentProgress = state.goal.progressByWeek[currentWeekStartDateKey] ?? state.goal.progress;
+        const nextValue = Math.min(state.goal.target, currentProgress + 1);
         dispatch({ type: 'INCREMENT_GOAL_PROGRESS' });
+        if (nextValue >= state.goal.target) {
+          setSuccessMessage('Weekly focus completed.');
+        }
       },
       decrementGoalProgress: () => {
         dispatch({ type: 'DECREMENT_GOAL_PROGRESS' });
       },
       updateGoal: ({ title, target }) => {
+        const currentWeekStartDateKey = getCurrentWeekStartDateKey();
+        const currentProgress = state.goal.progressByWeek[currentWeekStartDateKey] ?? state.goal.progress;
+        const normalizedTarget = Math.max(1, Math.trunc(target || 1));
         dispatch({ type: 'UPDATE_GOAL', title, target });
+        if (currentProgress >= normalizedTarget) {
+          setSuccessMessage('Weekly focus completed.');
+          return;
+        }
+        setSuccessMessage('Weekly focus updated.');
       },
       setMood: (mood) => {
         dispatch({ type: 'SET_MOOD', mood });
@@ -236,20 +330,64 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         dispatch({ type: 'SET_REFLECTION_FIELD', field, value });
       },
       saveReflection: () => {
-        const { mood } = state.reflectionDraft;
+        const { mood, wentWell, gratefulFor } = state.reflectionDraft;
 
         if (!mood) {
           return { ok: false, reason: 'mood-required' as const };
         }
 
+        if (!wentWell.trim() && !gratefulFor.trim()) {
+          return { ok: false, reason: 'entry-required' as const };
+        }
+
+        const now = new Date();
+
+        const historyItem = buildReflectionHistoryItem({
+          draft: state.reflectionDraft,
+          prompts: getDailyReflectionPrompts(),
+          now,
+        });
         dispatch({
           type: 'SAVE_REFLECTION',
-          historyItem: buildReflectionHistoryItem({ draft: state.reflectionDraft }),
+          historyItem,
           clearDraft: true,
         });
 
-        setSuccessMessage('Reflection saved for this session.');
-        return { ok: true };
+        const streakDays = 1;
+        setSuccessMessage(`Reflection saved. +${streakDays} day streak.`);
+        return { ok: true, streakDays };
+      },
+      updateReflection: ({ reflectionId, wentWell, gratefulFor }) => {
+        const normalizedWentWell = wentWell.trim();
+        const normalizedGratefulFor = gratefulFor.trim();
+        const fallbackPreview = 'A calm and focused day with steady progress.';
+        const previewSource = normalizedWentWell || normalizedGratefulFor || fallbackPreview;
+        const preview = previewSource.length > 84 ? `${previewSource.slice(0, 84)}...` : previewSource;
+
+        dispatch({
+          type: 'UPDATE_REFLECTION',
+          reflectionId,
+          changes: {
+            wentWell,
+            gratefulFor,
+            preview,
+          },
+        });
+        setSuccessMessage('Reflection updated.');
+      },
+      removeReflection: (reflectionId) => {
+        dispatch({ type: 'REMOVE_REFLECTION', reflectionId });
+        setSuccessMessage('Reflection deleted.');
+      },
+      saveWeeklyPlan: ({ beforeYouBegin, pace, protectedHabitIds }) => {
+        dispatch({
+          type: 'SAVE_WEEKLY_PLAN',
+          weekStartDateKey: getCurrentWeekStartDateKey(),
+          beforeYouBegin: beforeYouBegin.trim(),
+          pace,
+          protectedHabitIds,
+        });
+        setSuccessMessage('Weekly plan saved.');
       },
       toggleDarkModeSession: () => {
         dispatch({ type: 'TOGGLE_DARK_MODE_SESSION' });
@@ -283,9 +421,18 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
             label: 'Weekly Focus',
             progress: 0,
             target: Math.max(1, Math.trunc(input.weeklyGoalTarget || 1)),
+            progressByWeek: {
+              [getCurrentWeekStartDateKey()]: 0,
+            },
           },
           tasks: (normalizedTasks.length ? normalizedTasks : ['First task placeholder']).map(buildTaskFromTitle),
           habits: (normalizedHabits.length ? normalizedHabits : ['First habit placeholder']).map(buildHabitFromTitle),
+          weeklyPlan: {
+            weekStartDateKey: getCurrentWeekStartDateKey(),
+            beforeYouBegin: '',
+            pace: 'Balanced',
+            protectedHabitIds: [],
+          },
         };
         dispatch({ type: 'HYDRATE_STATE', state: nextState });
       },

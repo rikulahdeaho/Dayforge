@@ -6,12 +6,14 @@ import {
   DEMO_REFLECTION_HISTORY,
   DEMO_TASKS,
   DEMO_USER,
+  DEMO_WEEKLY_PLAN,
 } from '../data/mockData';
-import { Habit, Task } from '../types';
+import { Habit, PlatformIconName, Task } from '../types';
 
 import { AppState, AppStateAction } from './appState.types';
 import {
   getCurrentMondayBasedDayIndex,
+  getCurrentWeekStartDateKey,
   getDateKeyForMondayBasedDayIndex,
   getTodayDateKey,
 } from './appState.helpers';
@@ -26,6 +28,7 @@ export function getInitialAppState(): AppState {
     tasks: DEMO_TASKS,
     reflectionDraft: DEMO_REFLECTION_DRAFT,
     reflectionHistory: DEMO_REFLECTION_HISTORY,
+    weeklyPlan: DEMO_WEEKLY_PLAN,
   };
 }
 
@@ -49,6 +52,9 @@ export function getEmptyAppState(): AppState {
       label: 'Weekly Focus',
       progress: 0,
       target: 1,
+      progressByWeek: {
+        [getCurrentWeekStartDateKey()]: 0,
+      },
     },
     tasks: [],
     reflectionDraft: {
@@ -57,10 +63,37 @@ export function getEmptyAppState(): AppState {
       gratefulFor: '',
     },
     reflectionHistory: [],
+    weeklyPlan: {
+      weekStartDateKey: getCurrentWeekStartDateKey(),
+      beforeYouBegin: '',
+      pace: 'Balanced',
+      protectedHabitIds: [],
+    },
   };
 }
 
 const initialState = getEmptyAppState();
+
+const legacyHabitIcons: Record<string, PlatformIconName> = {
+  'figure.mind.and.body': { ios: 'figure.mind.and.body', android: 'self_improvement', web: 'self_improvement' },
+  'book.fill': { ios: 'book.fill', android: 'menu_book', web: 'menu_book' },
+  'drop.fill': { ios: 'drop.fill', android: 'water_drop', web: 'water_drop' },
+  'dumbbell.fill': { ios: 'dumbbell.fill', android: 'fitness_center', web: 'fitness_center' },
+  'moon.stars.fill': { ios: 'moon.stars.fill', android: 'bedtime', web: 'bedtime' },
+  'heart.fill': { ios: 'heart.fill', android: 'favorite', web: 'favorite' },
+};
+
+function normalizeHabitIcon(icon: Habit['icon'] | string): PlatformIconName {
+  if (icon && typeof icon === 'object' && 'ios' in icon && 'android' in icon && 'web' in icon) {
+    return icon;
+  }
+
+  if (typeof icon === 'string' && legacyHabitIcons[icon]) {
+    return legacyHabitIcons[icon];
+  }
+
+  return { ios: 'heart.fill', android: 'favorite', web: 'favorite' };
+}
 
 function normalizeWeeklyProgress(progress: unknown, fallback = false): boolean[] {
   if (!Array.isArray(progress)) {
@@ -113,6 +146,7 @@ function normalizePersistedHabit(habit: Habit): Habit {
 
   return {
     ...habit,
+    icon: normalizeHabitIcon((habit as Habit & { icon: Habit['icon'] | string }).icon),
     weeklyProgress: normalizedWeeklyProgress,
     completionByDate,
     completedToday: Boolean(normalizedWeeklyProgress[todayIndex]),
@@ -141,6 +175,10 @@ function normalizePersistedTask(task: Task | (Omit<Task, 'completedToday' | 'wee
   return {
     id: task.id,
     title: task.title,
+    category:
+      legacyTask.category === 'must-do' || legacyTask.category === 'good-to-do' || legacyTask.category === 'wellbeing'
+        ? legacyTask.category
+        : 'must-do',
     dateKey: normalizedDateKey,
     completedToday: Boolean(normalizedWeeklyProgress[todayIndex]),
     weeklyProgress: normalizedWeeklyProgress,
@@ -148,7 +186,55 @@ function normalizePersistedTask(task: Task | (Omit<Task, 'completedToday' | 'wee
   };
 }
 
+function normalizePersistedGoal(goal: AppState['goal'] | undefined): AppState['goal'] {
+  const currentWeekStartDateKey = getCurrentWeekStartDateKey();
+
+  if (!goal) {
+    return initialState.goal;
+  }
+
+  const normalizedProgressByWeek: Record<string, number> = {};
+  if (goal.progressByWeek && typeof goal.progressByWeek === 'object') {
+    for (const [weekKey, value] of Object.entries(goal.progressByWeek)) {
+      const numericValue = Number(value);
+      if (Number.isFinite(numericValue)) {
+        normalizedProgressByWeek[weekKey] = Math.max(0, Math.trunc(numericValue));
+      }
+    }
+  }
+
+  const currentWeekProgress = normalizedProgressByWeek[currentWeekStartDateKey];
+  const fallbackProgress = Number.isFinite(goal.progress) ? Math.max(0, Math.trunc(goal.progress)) : 0;
+  if (currentWeekProgress === undefined) {
+    normalizedProgressByWeek[currentWeekStartDateKey] = fallbackProgress;
+  }
+
+  const normalizedTarget = Math.max(1, Math.trunc(goal.target || 1));
+  const normalizedProgress = Math.min(normalizedTarget, normalizedProgressByWeek[currentWeekStartDateKey]);
+  normalizedProgressByWeek[currentWeekStartDateKey] = normalizedProgress;
+
+  return {
+    ...initialState.goal,
+    ...goal,
+    target: normalizedTarget,
+    progress: normalizedProgress,
+    progressByWeek: normalizedProgressByWeek,
+  };
+}
+
 export function mergePersistedAppState(persisted: Partial<AppState>): AppState {
+  const currentWeekStartDateKey = getCurrentWeekStartDateKey();
+  const persistedWeeklyPlan = persisted.weeklyPlan;
+  const normalizedWeeklyPlan = {
+    ...initialState.weeklyPlan,
+    ...(persistedWeeklyPlan ?? {}),
+    weekStartDateKey: currentWeekStartDateKey,
+    beforeYouBegin:
+      persistedWeeklyPlan && persistedWeeklyPlan.weekStartDateKey === currentWeekStartDateKey
+        ? persistedWeeklyPlan.beforeYouBegin ?? ''
+        : '',
+  };
+
   return {
     ...initialState,
     ...persisted,
@@ -164,7 +250,7 @@ export function mergePersistedAppState(persisted: Partial<AppState>): AppState {
     habits: Array.isArray(persisted.habits)
       ? persisted.habits.map((habit) => normalizePersistedHabit(habit))
       : initialState.habits,
-    goal: persisted.goal ?? initialState.goal,
+    goal: normalizePersistedGoal(persisted.goal),
     tasks: Array.isArray(persisted.tasks)
       ? persisted.tasks.map((task) => normalizePersistedTask(task))
       : initialState.tasks,
@@ -172,6 +258,7 @@ export function mergePersistedAppState(persisted: Partial<AppState>): AppState {
     reflectionHistory: Array.isArray(persisted.reflectionHistory)
       ? persisted.reflectionHistory
       : initialState.reflectionHistory,
+    weeklyPlan: normalizedWeeklyPlan,
   };
 }
 
@@ -207,6 +294,21 @@ export function appReducer(state: AppState, action: AppStateAction): AppState {
       return {
         ...state,
         habits: [action.habit, ...state.habits],
+      };
+
+    case 'UPDATE_HABIT':
+      return {
+        ...state,
+        habits: state.habits.map((habit) =>
+          habit.id === action.habitId
+            ? {
+                ...habit,
+                title: action.title.trim() || habit.title,
+                subtitle: action.subtitle.trim() || habit.subtitle,
+                icon: action.icon,
+              }
+            : habit
+        ),
       };
 
     case 'REMOVE_HABIT':
@@ -253,33 +355,69 @@ export function appReducer(state: AppState, action: AppStateAction): AppState {
         tasks: state.tasks.filter((task) => task.id !== action.taskId),
       };
 
-    case 'INCREMENT_GOAL_PROGRESS':
+    case 'MOVE_TASK_TO_DATE':
       return {
         ...state,
-        goal: {
-          ...state.goal,
-          progress: Math.min(state.goal.target, state.goal.progress + 1),
-        },
+        tasks: state.tasks.map((task) =>
+          task.id === action.taskId
+            ? {
+                ...task,
+                dateKey: action.dateKey,
+              }
+            : task
+        ),
       };
 
-    case 'DECREMENT_GOAL_PROGRESS':
+    case 'INCREMENT_GOAL_PROGRESS': {
+      const weekStartDateKey = getCurrentWeekStartDateKey();
+      const currentProgress = state.goal.progressByWeek[weekStartDateKey] ?? state.goal.progress;
+      const nextProgress = Math.min(state.goal.target, currentProgress + 1);
       return {
         ...state,
         goal: {
           ...state.goal,
-          progress: Math.max(0, state.goal.progress - 1),
+          progress: nextProgress,
+          progressByWeek: {
+            ...state.goal.progressByWeek,
+            [weekStartDateKey]: nextProgress,
+          },
         },
       };
+    }
+
+    case 'DECREMENT_GOAL_PROGRESS': {
+      const weekStartDateKey = getCurrentWeekStartDateKey();
+      const currentProgress = state.goal.progressByWeek[weekStartDateKey] ?? state.goal.progress;
+      const nextProgress = Math.max(0, currentProgress - 1);
+      return {
+        ...state,
+        goal: {
+          ...state.goal,
+          progress: nextProgress,
+          progressByWeek: {
+            ...state.goal.progressByWeek,
+            [weekStartDateKey]: nextProgress,
+          },
+        },
+      };
+    }
 
     case 'UPDATE_GOAL': {
+      const weekStartDateKey = getCurrentWeekStartDateKey();
       const normalizedTarget = Math.max(1, Math.trunc(action.target || 1));
+      const currentProgress = state.goal.progressByWeek[weekStartDateKey] ?? state.goal.progress;
+      const nextProgress = Math.min(currentProgress, normalizedTarget);
       return {
         ...state,
         goal: {
           ...state.goal,
           title: action.title.trim() || state.goal.title,
           target: normalizedTarget,
-          progress: Math.min(state.goal.progress, normalizedTarget),
+          progress: nextProgress,
+          progressByWeek: {
+            ...state.goal.progressByWeek,
+            [weekStartDateKey]: nextProgress,
+          },
         },
       };
     }
@@ -313,6 +451,36 @@ export function appReducer(state: AppState, action: AppStateAction): AppState {
               gratefulFor: '',
             }
           : state.reflectionDraft,
+      };
+
+    case 'UPDATE_REFLECTION':
+      return {
+        ...state,
+        reflectionHistory: state.reflectionHistory.map((entry) =>
+          entry.id === action.reflectionId
+            ? {
+                ...entry,
+                ...action.changes,
+              }
+            : entry
+        ),
+      };
+
+    case 'REMOVE_REFLECTION':
+      return {
+        ...state,
+        reflectionHistory: state.reflectionHistory.filter((entry) => entry.id !== action.reflectionId),
+      };
+
+    case 'SAVE_WEEKLY_PLAN':
+      return {
+        ...state,
+        weeklyPlan: {
+          weekStartDateKey: action.weekStartDateKey,
+          beforeYouBegin: action.beforeYouBegin,
+          pace: action.pace,
+          protectedHabitIds: action.protectedHabitIds,
+        },
       };
 
     case 'HYDRATE_STATE':
