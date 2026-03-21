@@ -4,6 +4,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Colors from '@/constants/Colors';
+import { Fonts } from '@/constants/Typography';
 import { SymbolView } from '@/components/dayforge/SymbolView';
 import { useAppState } from '@/store/appState';
 
@@ -165,8 +166,9 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   tabLabel: {
-    fontFamily: 'SpaceMono',
+    fontFamily: Fonts.body,
     fontSize: 11,
+    fontWeight: '600',
     marginTop: 2,
   },
   iconWrap: {

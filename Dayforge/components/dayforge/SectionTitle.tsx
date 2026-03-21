@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { DayforgePalette } from './types';
+import { Fonts } from '@/constants/Typography';
 
 export function SectionTitle({
   title,
@@ -29,7 +30,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 38,
-    fontFamily: 'SpaceMono',
+    fontFamily: Fonts.heading,
+    fontWeight: '700',
     lineHeight: 42,
   },
   sectionAction: {

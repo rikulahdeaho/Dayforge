@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { DayforgePalette } from './types';
+import { Fonts } from '@/constants/Typography';
 import { resolveSymbolName } from './resolveSymbolName';
 
 type DateHeaderProps = {
@@ -90,6 +91,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     lineHeight: 30,
     fontWeight: '700',
+    fontFamily: Fonts.heading,
   },
   titleRow: {
     flexDirection: 'row',
@@ -124,6 +126,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
+    fontFamily: Fonts.heading,
     marginBottom: 12,
   },
   notificationRow: {
