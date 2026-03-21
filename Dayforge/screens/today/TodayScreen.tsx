@@ -179,7 +179,7 @@ export default function TodayScreen() {
       <TopGradientBackground />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <DateHeader palette={palette} dateText={todayDate} title="Today" />
-        <FlowStatusRow palette={palette} />
+        <FlowStatusRow palette={palette} hideIntermediateStatus />
         <FlowCTA palette={palette} />
         {isSunday ? (
           <WeeklyPlanPromptCard
@@ -199,7 +199,7 @@ export default function TodayScreen() {
           style={({ pressed }) => [styles.heroPressable, pressed && styles.scaleDown]}>
           <GradientCard
             palette={palette}
-            colors={['#191523', '#231c31', '#2c243b']}
+            colors={[palette.heroPrimaryStart, palette.heroPrimaryMid, palette.heroPrimaryEnd]}
             style={[
               styles.heroCard,
               focusedSection === 'habits' && {
@@ -208,7 +208,7 @@ export default function TodayScreen() {
               },
             ]}>
             <View style={styles.heroTop}>
-              <View style={[styles.streakPill, { transform: [{ scale: 0.94 }] }]}>
+              <View style={[styles.streakPill, { transform: [{ scale: 0.94 }], backgroundColor: palette.overlayStrong }]}>
                 <Animated.View style={firePulseStyle}>
                   <SymbolView
                     name={resolveSymbolName({
@@ -217,33 +217,23 @@ export default function TodayScreen() {
                       web: 'local_fire_department',
                     })}
                     size={13}
-                    tintColor="#ffffff"
+                    tintColor={palette.onAccent}
                   />
                 </Animated.View>
-                <Text style={styles.streakText}>{Math.max(1, reflectionStreak)} DAY STREAK</Text>
+                <Text style={[styles.streakText, { color: palette.onAccent }]}>{Math.max(1, reflectionStreak)} DAY STREAK</Text>
               </View>
             </View>
 
-            <Text style={styles.heroTitle}>
+            <Text style={[styles.heroTitle, { color: palette.onAccent }]}>
               {completedHabits}/{totalHabits} habits done
             </Text>
-            <Text style={styles.heroKickoff}>{heroKickoffText}</Text>
-            <Text style={styles.heroBody}>{heroSupportText}</Text>
+            <Text style={[styles.heroKickoff, { color: palette.onAccent }]}>{heroKickoffText}</Text>
+            <Text style={[styles.heroBody, { color: palette.overlayText }]}>{heroSupportText}</Text>
             <ProgressTrack value={habitProgress} palette={palette} style={styles.heroProgress} />
           </GradientCard>
         </Pressable>
 
         <View>
-          <View style={styles.sectionRow}>
-            <Text style={[styles.sectionTitle, { color: palette.text }]}>Task Preview</Text>
-            <Pressable
-              onPress={() => {
-                feedbackTap();
-                router.push('/(tabs)/task');
-              }}>
-              <Text style={[styles.sectionAction, { color: palette.accent }]}>{taskActionLabel}</Text>
-            </Pressable>
-          </View>
 
           <SurfaceCard
             palette={palette}
@@ -255,6 +245,16 @@ export default function TodayScreen() {
                 borderWidth: 0.5,
               },
             ]}>
+            <View style={styles.sectionRow}>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>Task Preview</Text>
+            <Pressable
+              onPress={() => {
+                feedbackTap();
+                router.push('/(tabs)/task');
+              }}>
+              <Text style={[styles.sectionAction, { color: palette.accent }]}>OPEN</Text>
+            </Pressable>
+          </View>
             {totalTasks === 0 ? (
               <Text style={[styles.emptyTaskText, { color: palette.mutedText }]}>No tasks yet.</Text>
             ) : remainingTasks === 0 ? (
@@ -290,7 +290,7 @@ export default function TodayScreen() {
                 styles.trendPill,
                 {
                   borderColor: trendUp ? palette.accent : palette.border,
-                  backgroundColor: trendUp ? 'rgba(127,34,255,0.2)' : 'rgba(255,255,255,0.05)',
+                  backgroundColor: trendUp ? palette.surfaceMuted : palette.surfaceSubtle,
                 },
               ]}>
               <Text style={[styles.trendText, { color: trendUp ? palette.accentSoft : palette.mutedText }]}>{trendCopy}</Text>
@@ -305,7 +305,7 @@ export default function TodayScreen() {
                   styles.weeklyStatCard,
                   {
                     borderColor: palette.border,
-                    backgroundColor: 'rgba(255,255,255,0.045)',
+                    backgroundColor: palette.surfaceMuted,
                   },
                 ]}>
                 <Text style={[styles.weeklyStatTitle, { color: palette.mutedText }]}>{stat.title}</Text>
@@ -317,7 +317,7 @@ export default function TodayScreen() {
 
           <WeeklyProgressChart bars={weeklyChart} palette={palette} todayIndex={todayIndex} />
 
-          <View style={[styles.insightRow, { borderColor: palette.border, backgroundColor: 'rgba(255,255,255,0.035)' }]}>
+          <View style={[styles.insightRow, { borderColor: palette.border, backgroundColor: palette.surfaceMuted }]}>
             <SymbolView
               name={resolveSymbolName({ ios: 'sparkles', android: 'auto_awesome', web: 'auto_awesome' })}
               size={14}
@@ -371,30 +371,25 @@ const styles = StyleSheet.create({
   streakPill: {
     height: 36,
     borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.16)',
     paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
   },
   streakText: {
-    color: '#ffffff',
     fontSize: 11,
     letterSpacing: 0.5,
     fontWeight: '700',
   },
   heroTitle: {
-    color: '#ffffff',
     ...Type.heroTitle,
     marginBottom: 4,
   },
   heroKickoff: {
-    color: '#ffffff',
     ...Type.bodyStrong,
     marginBottom: 4,
   },
   heroBody: {
-    color: 'rgba(255,255,255,0.78)',
     ...Type.bodySmall,
     marginBottom: 14,
   },
@@ -418,7 +413,6 @@ const styles = StyleSheet.create({
     marginBottom: 22,
     borderRadius: 26,
     paddingVertical: 14,
-    backgroundColor: 'rgba(255,255,255,0.035)',
   },
   previewCardCompact: {
     paddingVertical: 10,
@@ -436,7 +430,6 @@ const styles = StyleSheet.create({
   weeklyStatsCard: {
     borderRadius: 30,
     marginBottom: 16,
-    backgroundColor: 'rgba(255,255,255,0.035)',
   },
   weeklyHeaderRow: {
     paddingHorizontal: 6,

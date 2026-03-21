@@ -23,7 +23,11 @@ export function TaskPreviewItem({
   return (
     <Pressable
       onPress={onToggle}
-      style={({ pressed }) => [styles.row, pressed && styles.rowPressed, highlight && styles.rowFocus]}>
+      style={({ pressed }) => [
+        styles.row,
+        pressed && [styles.rowPressed, { backgroundColor: palette.surfaceMuted }],
+        highlight && [styles.rowFocus, { borderColor: `${palette.accentSoft}52`, backgroundColor: palette.surfaceMuted }],
+      ]}>
       <View
         style={[
           styles.dot,
@@ -59,13 +63,10 @@ const styles = StyleSheet.create({
   },
   rowPressed: {
     opacity: 0.82,
-    backgroundColor: 'rgba(111,75,184,0.08)',
     transform: [{ scale: 0.97 }],
   },
   rowFocus: {
     borderWidth: 0.75,
-    borderColor: 'rgba(171,148,216,0.32)',
-    backgroundColor: 'rgba(111,75,184,0.10)',
   },
   dot: {
     width: 24,

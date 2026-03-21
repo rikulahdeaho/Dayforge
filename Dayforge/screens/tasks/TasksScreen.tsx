@@ -105,42 +105,42 @@ export default function TaskScreen() {
         <FlowStatusRow palette={palette} />
         <FlowCTA palette={palette} currentStep="tasks" />
 
-        <GradientCard palette={palette} style={styles.focusCard} colors={['#191523', '#231c31', '#2c243b']}>
+        <GradientCard palette={palette} style={styles.focusCard} colors={[palette.heroPrimaryStart, palette.heroPrimaryMid, palette.heroPrimaryEnd]}>
           <View style={styles.focusTop}>
-            <View style={styles.objectiveTag}>
-              <Text style={styles.objectiveTagText}>{state.goal.label}</Text>
+            <View style={[styles.objectiveTag, { backgroundColor: palette.overlaySoft }]}>
+              <Text style={[styles.objectiveTagText, { color: palette.onAccent }]}>{state.goal.label}</Text>
             </View>
           </View>
-          <Text style={styles.focusGoal}>{state.goal.title}</Text>
+          <Text style={[styles.focusGoal, { color: palette.onAccent }]}>{state.goal.title}</Text>
           <View style={styles.rowBetween}>
             <ProgressTrack value={goalProgress} palette={palette} style={styles.focusProgress} />
-            <Text style={styles.focusValue}>
+            <Text style={[styles.focusValue, { color: palette.onAccent }]}>
               {currentWeekGoalProgress} / {state.goal.target}
             </Text>
           </View>
           <View style={styles.ctaWrap}>
             <View style={styles.stepperGroup}>
               <Pressable
-                style={[styles.stepperButton, { opacity: currentWeekGoalProgress <= 0 ? 0.55 : 1 }]}
+                style={[styles.stepperButton, { opacity: currentWeekGoalProgress <= 0 ? 0.55 : 1, backgroundColor: palette.overlayStrong, borderColor: palette.overlayStrong }]}
                 disabled={currentWeekGoalProgress <= 0}
                 onPress={() => {
                   feedbackSelection();
                   decrementGoalProgress();
                 }}>
-                <Text style={styles.stepperText}>-</Text>
+                <Text style={[styles.stepperText, { color: palette.onAccent }]}>-</Text>
               </Pressable>
               <Pressable
-                style={[styles.stepperButton, { opacity: isGoalComplete ? 0.55 : 1 }]}
+                style={[styles.stepperButton, { opacity: isGoalComplete ? 0.55 : 1, backgroundColor: palette.overlayStrong, borderColor: palette.overlayStrong }]}
                 disabled={isGoalComplete}
                 onPress={() => {
                   feedbackSelection();
                   incrementGoalProgress();
                 }}>
-                <Text style={styles.stepperText}>+</Text>
+                <Text style={[styles.stepperText, { color: palette.onAccent }]}>+</Text>
               </Pressable>
             </View>
             <Pressable
-              style={[styles.editButton, { borderColor: palette.accentStrong }]}
+              style={[styles.editButton, { borderColor: palette.accentStrong, backgroundColor: palette.overlayStrong }]}
               onPress={() => {
                 feedbackTap();
                 router.push('/edit-weekly-focus' as never);
@@ -167,7 +167,7 @@ export default function TaskScreen() {
             <Pressable
               style={({ pressed }) => [
                 styles.addTaskChip,
-                { borderColor: palette.border, transform: [{ scale: pressed ? 0.97 : 1 }] },
+                { borderColor: palette.border, backgroundColor: palette.surfaceSubtle, transform: [{ scale: pressed ? 0.97 : 1 }] },
               ]}
               onPress={openTaskModal}>
               <View style={styles.addTaskChipInner}>
@@ -195,13 +195,13 @@ export default function TaskScreen() {
                     feedbackSelection();
                     queueTaskDeletion(task.id, task.title);
                   }}
-                  style={styles.deleteAction}>
+                  style={[styles.deleteAction, { backgroundColor: palette.danger }]}>
                   <SymbolView
                     name={resolveSymbolName({ ios: 'trash.fill', android: 'delete', web: 'delete' })}
                     size={18}
-                    tintColor="#fff"
+                    tintColor={palette.onAccent}
                   />
-                  <Text style={styles.deleteActionText}>Delete</Text>
+                  <Text style={[styles.deleteActionText, { color: palette.onAccent }]}>Delete</Text>
                 </Pressable>
               )}>
               <Pressable
@@ -342,7 +342,6 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 7,
-    backgroundColor: 'rgba(255,255,255,0.02)',
   },
   addTaskChipText: {
     ...Type.metaStrong,
@@ -372,17 +371,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   objectiveTag: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
   objectiveTagText: {
-    color: '#fff',
     ...Type.metaStrong,
   },
   focusGoal: {
-    color: '#fff',
     ...Type.heroTitle,
     marginBottom: 16,
   },
@@ -392,7 +388,6 @@ const styles = StyleSheet.create({
     height: 9,
   },
   focusValue: {
-    color: '#fff',
     ...Type.bodyStrong,
   },
   ctaWrap: {
@@ -409,15 +404,12 @@ const styles = StyleSheet.create({
   stepperButton: {
     width: 42,
     height: 42,
-    backgroundColor: 'rgba(255,255,255,0.10)',
     borderRadius: 21,
     borderWidth: 0.75,
-    borderColor: 'rgba(255,255,255,0.10)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   stepperText: {
-    color: '#fff',
     fontSize: 20,
     fontWeight: '700',
   },
@@ -428,7 +420,6 @@ const styles = StyleSheet.create({
     borderWidth: 0.75,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.10)',
   },
 
   scheduleList: {
@@ -503,13 +494,11 @@ const styles = StyleSheet.create({
     width: 94,
     marginBottom: 12,
     borderRadius: 18,
-    backgroundColor: '#d1435b',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
   },
   deleteActionText: {
-    color: '#fff',
     ...Type.metaStrong,
   },
   undoBar: {

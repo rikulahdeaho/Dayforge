@@ -30,7 +30,7 @@ export function ProgressTrack({
   }));
 
   return (
-    <View style={[styles.progressTrack, { backgroundColor: 'rgba(255,255,255,0.09)' }, style]}>
+    <View style={[styles.progressTrack, { backgroundColor: palette.progressTrack }, style]}>
       <Animated.View
         style={[
           styles.progressFill,

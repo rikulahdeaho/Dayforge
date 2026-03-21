@@ -23,7 +23,7 @@ import {
   WEEKDAY_LABELS,
 } from '@/screens/habits/utils';
 import { useAppState } from '@/store/appState';
-import { getCurrentMondayBasedDayIndex, getDateKeyForMondayBasedDayIndex } from '@/store/appState.helpers';
+import { getCurrentMondayBasedDayIndex, getCurrentWeekStartDateKey, getDateKeyForMondayBasedDayIndex, parseDateKeyToDate } from '@/store/appState.helpers';
 import { useRouter } from 'expo-router';
 
 function AnimatedProgressDot({ filled, color }: { filled: boolean; color: string }) {
@@ -68,6 +68,8 @@ export default function HabitsScreen() {
     [selectedDateKey, state.habits]
   );
   const progressValue = totalCount ? completedCount / totalCount : 0;
+  const selectedWeekStartDateKey = getCurrentWeekStartDateKey(parseDateKeyToDate(selectedDateKey));
+  const selectedWeeklyPlan = state.weeklyPlansByWeek[selectedWeekStartDateKey];
 
   const nextIncompleteHabit = useMemo(() => {
     const incompleteHabits = state.habits.filter((habit) => !habit.completionByDate[selectedDateKey]);
@@ -75,9 +77,9 @@ export default function HabitsScreen() {
       return undefined;
     }
 
-    const protectedHabitIds = new Set(state.weeklyPlan.protectedHabitIds);
+    const protectedHabitIds = new Set(selectedWeeklyPlan?.protectedHabitIds ?? []);
     return incompleteHabits.find((habit) => protectedHabitIds.has(habit.id)) ?? incompleteHabits[0];
-  }, [selectedDateKey, state.habits, state.weeklyPlan.protectedHabitIds]);
+  }, [selectedDateKey, selectedWeeklyPlan?.protectedHabitIds, state.habits]);
 
   const headerDate = new Date().toLocaleDateString(undefined, {
     weekday: 'long',
@@ -164,11 +166,11 @@ export default function HabitsScreen() {
 
         <Pressable onPress={completeNextHabit}>
           <LinearGradient
-            colors={['#251a39', '#2d2144', '#392950']}
+            colors={[palette.heroSecondaryStart, palette.heroSecondaryMid, palette.heroSecondaryEnd]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={styles.heroCard}>
-            <View style={styles.streakPill}>
+            style={[styles.heroCard, { borderColor: palette.overlaySoft }]}>
+            <View style={[styles.streakPill, { backgroundColor: palette.overlayStrong }]}>
               <SymbolView
                 name={resolveSymbolName({
                   ios: 'flame.fill',
@@ -176,14 +178,14 @@ export default function HabitsScreen() {
                   web: 'local_fire_department',
                 })}
                 size={14}
-                tintColor="#fff"
+                tintColor={palette.onAccent}
               />
-              <Text style={styles.streakText}>{resolveStreakPillText(totalCount, completedCount)}</Text>
+              <Text style={[styles.streakText, { color: palette.onAccent }]}>{resolveStreakPillText(totalCount, completedCount)}</Text>
             </View>
-            <Text style={styles.heroTitle}>
+            <Text style={[styles.heroTitle, { color: palette.onAccent }]}>
               {Math.max(0, totalCount - completedCount)} left for {WEEKDAY_FULL_LABELS[selectedHabitDayIndex]}
             </Text>
-            <Text style={styles.heroBody}>{resolveHeroBody(totalCount, completedCount, nextIncompleteHabit?.title)}</Text>
+            <Text style={[styles.heroBody, { color: palette.overlayText }]}>{resolveHeroBody(totalCount, completedCount, nextIncompleteHabit?.title)}</Text>
             <ProgressTrack value={progressValue} palette={palette} style={styles.heroProgress} />
           </LinearGradient>
         </Pressable>
@@ -205,7 +207,7 @@ export default function HabitsScreen() {
           const isCompletedForSelectedDay = Boolean(habit.completionByDate[selectedDateKey]);
           const isNextHabit = nextIncompleteHabit?.id === habit.id;
           const status = resolveHabitStatus(habit.weeklyProgress);
-          const isProtected = state.weeklyPlan.protectedHabitIds.includes(habit.id);
+          const isProtected = selectedWeeklyPlan?.protectedHabitIds.includes(habit.id) ?? false;
 
           return (
             <View key={habit.id}>
@@ -230,7 +232,7 @@ export default function HabitsScreen() {
                   style={[
                     styles.itemCard,
                     {
-                      backgroundColor: 'rgba(255,255,255,0.035)',
+                      backgroundColor: palette.surfaceMuted,
                       borderColor: isCompletedForSelectedDay ? `${palette.accentSoft}33` : `${palette.border}AA`,
                       shadowColor: isCompletedForSelectedDay ? palette.accentStrong : palette.shadow,
                     },
@@ -242,7 +244,7 @@ export default function HabitsScreen() {
                     </View>
                   ) : null}
                   <View style={styles.itemTop}>
-                    <View style={[styles.itemIcon, { backgroundColor: 'rgba(255,255,255,0.04)' }]}>
+                    <View style={[styles.itemIcon, { backgroundColor: palette.surfaceMuted }]}>
                       <SymbolView name={iconName} size={48} tintColor={palette.accent} />
                     </View>
                     <View style={styles.itemCopy}>
@@ -267,7 +269,7 @@ export default function HabitsScreen() {
                       <AnimatedProgressDot
                         key={`${habit.id}-dot-${index}`}
                         filled={isDone}
-                        color={isDone ? palette.accent : 'rgba(255,255,255,0.1)'}
+                        color={isDone ? palette.accent : palette.overlayStrong}
                       />
                     ))}
                   </View>
@@ -324,7 +326,6 @@ const styles = StyleSheet.create({
   heroCard: {
     borderRadius: 30,
     borderWidth: 0.75,
-    borderColor: 'rgba(255,255,255,0.06)',
     padding: 24,
     marginBottom: 24,
   },
@@ -336,20 +337,16 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingVertical: 6,
     paddingHorizontal: 12,
-    backgroundColor: 'rgba(255,255,255,0.09)',
     marginBottom: 12,
   },
   streakText: {
-    color: '#fff',
     ...Type.metaStrong,
   },
   heroTitle: {
-    color: '#fff',
     ...Type.heroTitle,
     marginBottom: 8,
   },
   heroBody: {
-    color: 'rgba(255,255,255,0.76)',
     ...Type.body,
     marginBottom: 20,
   },
@@ -437,7 +434,6 @@ const styles = StyleSheet.create({
     borderWidth: 0.75,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.025)',
   },
   dotRow: {
     flexDirection: 'row',

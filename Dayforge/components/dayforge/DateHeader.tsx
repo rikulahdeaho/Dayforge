@@ -50,7 +50,7 @@ export function DateHeader({ palette, dateText, title, subtitle }: DateHeaderPro
       </View>
 
       <Modal visible={isNotificationsOpen} transparent animationType="fade" onRequestClose={() => setIsNotificationsOpen(false)}>
-        <View style={styles.modalBackdrop}>
+        <View style={[styles.modalBackdrop, { backgroundColor: palette.overlayBackdrop }]}>
           <View style={[styles.modalCard, { backgroundColor: palette.cardStrong, borderColor: palette.border }]}>
             <Text style={[styles.modalTitle, { color: palette.text }]}>Notifications</Text>
             {notifications.map((item) => (
@@ -61,7 +61,7 @@ export function DateHeader({ palette, dateText, title, subtitle }: DateHeaderPro
             <Pressable
               onPress={() => setIsNotificationsOpen(false)}
               style={[styles.closeButton, { backgroundColor: palette.accent }]}>
-              <Text style={styles.closeButtonText}>Close</Text>
+              <Text style={[styles.closeButtonText, { color: palette.onAccent }]}>Close</Text>
             </Pressable>
           </View>
         </View>
@@ -105,7 +105,6 @@ const styles = StyleSheet.create({
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.55)',
     justifyContent: 'center',
     paddingHorizontal: 18,
   },
@@ -136,7 +135,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   closeButtonText: {
-    color: '#fff',
     ...Type.action,
   },
 });

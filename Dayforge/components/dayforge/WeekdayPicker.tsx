@@ -66,8 +66,8 @@ export function WeekdayPicker({ palette, selectedIndex, onSelectDay, onCalendarP
                     transform: [{ scale: pressed ? 0.96 : selected ? 1.02 : 1 }],
                   },
                 ]}>
-                <Text style={[styles.dayLabel, { color: selected ? '#fff' : palette.mutedText }]}>{label}</Text>
-                <Text style={[styles.dayDate, { color: selected ? '#fff' : palette.text }]}>{dateNum}</Text>
+                <Text style={[styles.dayLabel, { color: selected ? palette.onAccent : palette.mutedText }]}>{label}</Text>
+                <Text style={[styles.dayDate, { color: selected ? palette.onAccent : palette.text }]}>{dateNum}</Text>
               </Pressable>
               {isToday ? <View style={[styles.todayDot, { backgroundColor: palette.accentSoft }]} /> : <View style={styles.dotSpacer} />}
             </View>
@@ -84,7 +84,6 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     paddingTop: 12,
     paddingBottom: 12,
-    backgroundColor: 'rgba(255,255,255,0.035)',
   },
   calendarTitle: {
     ...Type.sectionTitle,

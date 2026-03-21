@@ -17,7 +17,13 @@ export function WeeklyPlanPromptCard({
         <Text style={[styles.badge, { color: palette.accent }]}>WEEKLY</Text>
       </View>
       <Text style={[styles.body, { color: palette.mutedText }]}>Set your focus and lock in a realistic week.</Text>
-      <Pressable onPress={onOpen} style={({ pressed }) => [styles.button, pressed && styles.pressed]}>
+      <Pressable
+        onPress={onOpen}
+        style={({ pressed }) => [
+          styles.button,
+          { borderColor: `${palette.accent}2e`, backgroundColor: palette.surfaceSubtle },
+          pressed && styles.pressed,
+        ]}>
         <Text style={[styles.buttonText, { color: palette.accentStrong }]}>Open weekly plan</Text>
       </Pressable>
     </SurfaceCard>
@@ -28,7 +34,6 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 24,
     marginBottom: 16,
-    backgroundColor: 'rgba(255,255,255,0.035)',
   },
   header: {
     flexDirection: 'row',
@@ -52,10 +57,8 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: 'rgba(124,58,237,0.18)',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: 'rgba(124,58,237,0.05)',
   },
   buttonText: {
     ...Type.metaStrong,

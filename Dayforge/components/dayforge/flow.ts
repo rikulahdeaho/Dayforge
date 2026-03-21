@@ -20,17 +20,17 @@ const FLOW_COPY: Record<FlowStep, FlowCopy> = {
   tasks: {
     label: 'Continue tasks',
     route: '/(tabs)/task',
-    nextLine: 'Next up: tasks',
+    nextLine: '',
   },
   habits: {
     label: 'Continue habits',
     route: '/(tabs)/habits',
-    nextLine: 'Next up: habits',
+    nextLine: ' ',
   },
   reflect: {
     label: 'Finish with reflection',
     route: '/(tabs)/reflect',
-    nextLine: 'Next up: reflection',
+    nextLine: ' ',
   },
   summary: {
     label: "View today's summary",

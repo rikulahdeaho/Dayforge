@@ -22,29 +22,45 @@ import { selectGoalProgress } from '@/store/appState.selectors';
 
 const weekdayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const paceOptions = ['Light and realistic', 'Balanced', 'Focused', 'High energy'];
+const EMPTY_WEEKLY_PLAN = {
+  beforeYouBegin: '',
+  pace: 'Balanced',
+  protectedHabitIds: [],
+};
 
 export default function WeeklyPlanScreen() {
   const router = useRouter();
   const { state, incrementGoalProgress, decrementGoalProgress, moveTaskToDate, saveWeeklyPlan } = useAppState();
   const palette = (state.preferences.darkMode ? Colors.dark : Colors.light) as DayforgePalette;
+  const thisWeekStartDateKey = getCurrentWeekStartDateKey();
+  const nextWeekBaseDate = new Date();
+  nextWeekBaseDate.setDate(nextWeekBaseDate.getDate() + 7);
+  const nextWeekStartDateKey = getCurrentWeekStartDateKey(nextWeekBaseDate);
+  const [selectedWeekStartDateKey, setSelectedWeekStartDateKey] = useState(thisWeekStartDateKey);
+  const isCurrentWeekSelected = selectedWeekStartDateKey === thisWeekStartDateKey;
+  const selectedWeekBaseDate = parseDateKeyToDate(selectedWeekStartDateKey);
+  const selectedWeeklyPlan = useMemo(
+    () => state.weeklyPlansByWeek[selectedWeekStartDateKey] ?? EMPTY_WEEKLY_PLAN,
+    [selectedWeekStartDateKey, state.weeklyPlansByWeek]
+  );
 
-  const [beforeYouBegin, setBeforeYouBegin] = useState(state.weeklyPlan.beforeYouBegin);
-  const [selectedPace, setSelectedPace] = useState(state.weeklyPlan.pace || 'Balanced');
-  const [selectedHabits, setSelectedHabits] = useState<string[]>(state.weeklyPlan.protectedHabitIds);
+  const [beforeYouBegin, setBeforeYouBegin] = useState(selectedWeeklyPlan.beforeYouBegin);
+  const [selectedPace, setSelectedPace] = useState(selectedWeeklyPlan.pace || 'Balanced');
+  const [selectedHabits, setSelectedHabits] = useState<string[]>(selectedWeeklyPlan.protectedHabitIds);
 
   useEffect(() => {
-    setBeforeYouBegin(state.weeklyPlan.beforeYouBegin);
-    setSelectedPace(state.weeklyPlan.pace || 'Balanced');
-    setSelectedHabits(state.weeklyPlan.protectedHabitIds);
-  }, [state.weeklyPlan.beforeYouBegin, state.weeklyPlan.pace, state.weeklyPlan.protectedHabitIds]);
+    setBeforeYouBegin(selectedWeeklyPlan.beforeYouBegin);
+    setSelectedPace(selectedWeeklyPlan.pace || 'Balanced');
+    setSelectedHabits(selectedWeeklyPlan.protectedHabitIds);
+  }, [selectedWeeklyPlan.beforeYouBegin, selectedWeeklyPlan.pace, selectedWeeklyPlan.protectedHabitIds, selectedWeekStartDateKey]);
 
   const goalProgress = selectGoalProgress(state);
-  const weekRangeLabel = getCurrentWeekRangeLabel();
-  const currentWeekStartDateKey = getCurrentWeekStartDateKey();
+  const weekRangeLabel = getCurrentWeekRangeLabel(selectedWeekBaseDate);
+  const currentWeekStartDateKey = thisWeekStartDateKey;
   const currentWeekGoalProgress = state.goal.progressByWeek[currentWeekStartDateKey] ?? state.goal.progress;
 
   const weekReview = useMemo(() => {
-    const previousWeekBaseDate = new Date();
+    const previousWeekBaseDate = new Date(selectedWeekBaseDate);
     previousWeekBaseDate.setDate(previousWeekBaseDate.getDate() - 7);
     const previousWeekStartDateKey = getCurrentWeekStartDateKey(previousWeekBaseDate);
     const lastWeekDateKeys = weekdayLabels.map((_, index) =>
@@ -69,9 +85,12 @@ export default function WeeklyPlanScreen() {
       habitsCompleted,
       reflectionDays,
     };
-  }, [state.goal.progressByWeek, state.goal.target, state.habits, state.reflectionHistory]);
+  }, [selectedWeekBaseDate, state.goal.progressByWeek, state.goal.target, state.habits, state.reflectionHistory]);
 
-  const weekDateKeys = useMemo(() => weekdayLabels.map((_, index) => getDateKeyForMondayBasedDayIndex(index)), []);
+  const weekDateKeys = useMemo(
+    () => weekdayLabels.map((_, index) => getDateKeyForMondayBasedDayIndex(index, selectedWeekBaseDate)),
+    [selectedWeekBaseDate]
+  );
 
   const priorities = useMemo(() => {
     const tasksForWeek = state.tasks.filter((task) => weekDateKeys.includes(task.dateKey));
@@ -86,18 +105,19 @@ export default function WeeklyPlanScreen() {
     () =>
       weekdayLabels.map((label, index) => {
         const dateKey = getDateKeyForMondayBasedDayIndex(index);
-        const date = getDateForMondayBasedDayIndex(index);
+        const date = getDateForMondayBasedDayIndex(index, selectedWeekBaseDate);
+        const dateKeyForWeek = getDateKeyForMondayBasedDayIndex(index, selectedWeekBaseDate);
 
         return {
-          id: `${label}-${dateKey}`,
+          id: `${label}-${dateKeyForWeek}`,
           label,
           day: date.getDate(),
           index,
-          dateKey,
-          tasks: state.tasks.filter((task) => task.dateKey === dateKey),
+          dateKey: dateKeyForWeek,
+          tasks: state.tasks.filter((task) => task.dateKey === dateKeyForWeek),
         };
       }),
-    [state.tasks]
+    [selectedWeekBaseDate, state.tasks]
   );
 
   const toggleHabit = (habitId: string) => {
@@ -120,12 +140,13 @@ export default function WeeklyPlanScreen() {
 
     moveTaskToDate({
       taskId,
-      dateKey: getDateKeyForMondayBasedDayIndex(targetDay),
+      dateKey: getDateKeyForMondayBasedDayIndex(targetDay, selectedWeekBaseDate),
     });
   };
 
   const saveAndClose = () => {
     saveWeeklyPlan({
+      weekStartDateKey: selectedWeekStartDateKey,
       beforeYouBegin,
       pace: selectedPace,
       protectedHabitIds: selectedHabits,
@@ -134,9 +155,9 @@ export default function WeeklyPlanScreen() {
   };
 
   const cancelChanges = () => {
-    setBeforeYouBegin(state.weeklyPlan.beforeYouBegin);
-    setSelectedPace(state.weeklyPlan.pace || 'Balanced');
-    setSelectedHabits(state.weeklyPlan.protectedHabitIds);
+    setBeforeYouBegin(selectedWeeklyPlan.beforeYouBegin);
+    setSelectedPace(selectedWeeklyPlan.pace || 'Balanced');
+    setSelectedHabits(selectedWeeklyPlan.protectedHabitIds);
     router.back();
   };
 
@@ -157,54 +178,83 @@ export default function WeeklyPlanScreen() {
           </Pressable>
         </View>
         <Text style={[styles.microLabel, { color: palette.mutedText }]}>{weekRangeLabel}</Text>
+        <View style={styles.weekSwitchRow}>
+          {[
+            { id: thisWeekStartDateKey, label: 'This week' },
+            { id: nextWeekStartDateKey, label: 'Next week' },
+          ].map((option) => {
+            const selected = option.id === selectedWeekStartDateKey;
+            return (
+              <Pressable
+                key={option.id}
+                onPress={() => {
+                  feedbackSelection();
+                  setSelectedWeekStartDateKey(option.id);
+                }}
+                style={[
+                  styles.weekSwitchPill,
+                  {
+                    backgroundColor: selected ? palette.accentStrong : palette.card,
+                    borderColor: selected ? palette.accentSoft : palette.border,
+                  },
+                ]}>
+                <Text style={[styles.weekSwitchText, { color: selected ? palette.onAccent : palette.text }]}>
+                  {option.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
 
-        <SurfaceCard palette={palette} style={styles.reviewCard}>
-          <Text style={[styles.cardTitle, { color: palette.text }]}>Last week</Text>
-          <View style={styles.reviewGrid}>
-            <View style={[styles.reviewStat, { borderColor: palette.border }]}>
-              <Text style={[styles.reviewLabel, { color: palette.mutedText }]}>Goal progress</Text>
-              <Text style={[styles.reviewValue, { color: palette.accentStrong }]}>{weekReview.goalProgress}</Text>
+        {isCurrentWeekSelected ? (
+          <SurfaceCard palette={palette} style={styles.reviewCard}>
+            <Text style={[styles.cardTitle, { color: palette.text }]}>Last week</Text>
+            <View style={styles.reviewGrid}>
+              <View style={[styles.reviewStat, { borderColor: palette.border }]}>
+                <Text style={[styles.reviewLabel, { color: palette.mutedText }]}>Goal progress</Text>
+                <Text style={[styles.reviewValue, { color: palette.accentStrong }]}>{weekReview.goalProgress}</Text>
+              </View>
+              <View style={[styles.reviewStat, { borderColor: palette.border }]}>
+                <Text style={[styles.reviewLabel, { color: palette.mutedText }]}>Habits completed</Text>
+                <Text style={[styles.reviewValue, { color: palette.text }]}>{weekReview.habitsCompleted}</Text>
+              </View>
+              <View style={[styles.reviewStat, { borderColor: palette.border }]}>
+                <Text style={[styles.reviewLabel, { color: palette.mutedText }]}>Reflection days</Text>
+                <Text style={[styles.reviewValue, { color: palette.text }]}>{weekReview.reflectionDays}</Text>
+              </View>
             </View>
-            <View style={[styles.reviewStat, { borderColor: palette.border }]}>
-              <Text style={[styles.reviewLabel, { color: palette.mutedText }]}>Habits completed</Text>
-              <Text style={[styles.reviewValue, { color: palette.text }]}>{weekReview.habitsCompleted}</Text>
-            </View>
-            <View style={[styles.reviewStat, { borderColor: palette.border }]}>
-              <Text style={[styles.reviewLabel, { color: palette.mutedText }]}>Reflection days</Text>
-              <Text style={[styles.reviewValue, { color: palette.text }]}>{weekReview.reflectionDays}</Text>
-            </View>
-          </View>
-          <Text style={[styles.reviewInsight, { color: palette.mutedText }]}>You stayed most consistent on midweek blocks.</Text>
-        </SurfaceCard>
+            <Text style={[styles.reviewInsight, { color: palette.mutedText }]}>You stayed most consistent on midweek blocks.</Text>
+          </SurfaceCard>
+        ) : null}
 
-        <GradientCard palette={palette} style={styles.goalCard} colors={['#1f1830', '#2b2140', '#36294d']}>
-          <Text style={styles.goalLabel}>MAIN GOAL FOR THIS WEEK</Text>
-          <Text style={styles.goalTitle}>{state.goal.title}</Text>
+        <GradientCard palette={palette} style={styles.goalCard} colors={[palette.heroPrimaryStart, palette.heroPrimaryMid, palette.heroPrimaryEnd]}>
+          <Text style={[styles.goalLabel, { color: palette.overlayText }]}>MAIN GOAL FOR THIS WEEK</Text>
+          <Text style={[styles.goalTitle, { color: palette.onAccent }]}>{state.goal.title}</Text>
           <View style={styles.goalRow}>
             <ProgressTrack value={goalProgress} palette={palette} style={styles.goalProgress} />
-            <Text style={styles.goalProgressText}>{currentWeekGoalProgress}/{state.goal.target}</Text>
+            <Text style={[styles.goalProgressText, { color: palette.onAccent }]}>{currentWeekGoalProgress}/{state.goal.target}</Text>
           </View>
           <View style={styles.goalActions}>
             <View style={styles.goalStepperGroup}>
               <Pressable
-                style={styles.goalStepButton}
+                style={[styles.goalStepButton, { backgroundColor: palette.overlayStrong, borderColor: palette.overlayStrong }]}
                 onPress={() => {
                   feedbackSelection();
                   decrementGoalProgress();
                 }}>
-                <Text style={styles.goalStepText}>-</Text>
+                <Text style={[styles.goalStepText, { color: palette.onAccent }]}>-</Text>
               </Pressable>
               <Pressable
-                style={styles.goalStepButton}
+                style={[styles.goalStepButton, { backgroundColor: palette.overlayStrong, borderColor: palette.overlayStrong }]}
                 onPress={() => {
                   feedbackSelection();
                   incrementGoalProgress();
                 }}>
-                <Text style={styles.goalStepText}>+</Text>
+                <Text style={[styles.goalStepText, { color: palette.onAccent }]}>+</Text>
               </Pressable>
             </View>
             <Pressable
-              style={styles.goalEditButton}
+              style={[styles.goalEditButton, { backgroundColor: palette.overlayStrong, borderColor: palette.overlayStrong }]}
               onPress={() => {
                 feedbackTap();
                 router.push('/edit-weekly-focus' as never);
@@ -351,7 +401,7 @@ export default function WeeklyPlanScreen() {
                     borderColor: selected ? palette.accentSoft : palette.border,
                   },
                 ]}>
-                <Text style={[styles.paceText, { color: selected ? '#fff' : palette.text }]}>{option}</Text>
+                <Text style={[styles.paceText, { color: selected ? palette.onAccent : palette.text }]}>{option}</Text>
               </Pressable>
             );
           })}
@@ -381,7 +431,7 @@ export default function WeeklyPlanScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  content: {
+          content: {
     paddingHorizontal: 10,
     paddingTop: 65,
     paddingBottom: 128,
@@ -396,9 +446,9 @@ const styles = StyleSheet.create({
     ...Type.screenTitle,
   },
   closeButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -414,11 +464,21 @@ const styles = StyleSheet.create({
     ...Type.cardTitle,
     marginBottom: 10,
   },
-  reviewCard: {
-    borderRadius: 26,
-    marginBottom: 24,
-    backgroundColor: 'rgba(255,255,255,0.03)',
+  weekSwitchRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 20,
   },
+  weekSwitchPill: {
+    borderWidth: 0.75,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  weekSwitchText: {
+    ...Type.label,
+  },
+  reviewCard: { borderRadius: 26, marginBottom: 24 },
   reviewGrid: {
     flexDirection: 'row',
     gap: 10,
@@ -430,7 +490,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 12,
     paddingHorizontal: 12,
-    backgroundColor: 'rgba(255,255,255,0.02)',
   },
   reviewLabel: {
     ...Type.meta,
@@ -448,13 +507,11 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   goalLabel: {
-    color: 'rgba(255,255,255,0.62)',
     ...Type.meta,
     letterSpacing: 0.8,
     marginBottom: 8,
   },
   goalTitle: {
-    color: '#fff',
     fontFamily: Fonts.heading,
     fontSize: 22,
     lineHeight: 28,
@@ -472,7 +529,6 @@ const styles = StyleSheet.create({
     height: 8,
   },
   goalProgressText: {
-    color: '#fff',
     ...Type.bodyStrong,
   },
   goalActions: {
@@ -489,14 +545,11 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.10)',
     borderWidth: 0.75,
-    borderColor: 'rgba(255,255,255,0.10)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   goalStepText: {
-    color: '#fff',
     fontSize: 18,
     lineHeight: 20,
     fontWeight: '700',
@@ -505,16 +558,13 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.10)',
     borderWidth: 0.75,
-    borderColor: 'rgba(255,255,255,0.10)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   promptCard: {
     borderRadius: 26,
     marginBottom: 24,
-    backgroundColor: 'rgba(255,255,255,0.03)',
   },
   promptInput: {
     borderWidth: 0.75,
@@ -534,7 +584,6 @@ const styles = StyleSheet.create({
   listCard: {
     borderRadius: 22,
     marginBottom: 10,
-    backgroundColor: 'rgba(255,255,255,0.03)',
   },
   bucketTitle: {
     ...Type.cardTitle,
@@ -551,7 +600,6 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     marginBottom: 24,
     gap: 10,
-    backgroundColor: 'rgba(255,255,255,0.03)',
   },
   rhythmRow: {
     borderWidth: 0.75,
@@ -588,7 +636,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: 'rgba(255,255,255,0.02)',
   },
   dayTaskText: {
     flex: 1,
@@ -614,7 +661,6 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     marginBottom: 24,
     gap: 8,
-    backgroundColor: 'rgba(255,255,255,0.03)',
   },
   habitRow: {
     borderWidth: 0.75,

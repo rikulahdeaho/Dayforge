@@ -53,11 +53,12 @@ export function buildCompletedOnboardingState(input: OnboardingInput): AppState 
     },
     tasks: (normalizedTasks.length ? normalizedTasks : ['First task placeholder']).map(buildTaskFromTitle),
     habits: (normalizedHabits.length ? normalizedHabits : ['First habit placeholder']).map(buildHabitFromTitle),
-    weeklyPlan: {
-      weekStartDateKey: getCurrentWeekStartDateKey(),
-      beforeYouBegin: '',
-      pace: 'Balanced',
-      protectedHabitIds: [],
+    weeklyPlansByWeek: {
+      [getCurrentWeekStartDateKey()]: {
+        beforeYouBegin: '',
+        pace: 'Balanced',
+        protectedHabitIds: [],
+      },
     },
   };
 }

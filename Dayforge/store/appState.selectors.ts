@@ -50,6 +50,11 @@ export function selectGoalProgress(state: AppState) {
   return state.goal.target > 0 ? weekProgress / state.goal.target : 0;
 }
 
+function selectWeeklyPlanForDate(state: AppState, dateKey: string) {
+  const weekStartDateKey = getCurrentWeekStartDateKey(parseDateKeyToDate(dateKey));
+  return state.weeklyPlansByWeek[weekStartDateKey];
+}
+
 export function selectTaskProgress(state: AppState, dayIndex = getCurrentMondayBasedDayIndex()) {
   const dateKey = getDateKeyForMondayBasedDayIndex(dayIndex);
   const totalForDay = state.tasks.filter((task) => task.dateKey === dateKey).length;
@@ -71,7 +76,7 @@ function areTasksDoneForDate(state: AppState, dateKey: string) {
 }
 
 function areHabitsDoneForDate(state: AppState, dateKey: string) {
-  const protectedHabitIds = new Set(state.weeklyPlan.protectedHabitIds);
+  const protectedHabitIds = new Set(selectWeeklyPlanForDate(state, dateKey)?.protectedHabitIds ?? []);
   if (protectedHabitIds.size === 0) {
     return true;
   }

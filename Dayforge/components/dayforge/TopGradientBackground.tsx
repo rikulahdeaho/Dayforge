@@ -1,17 +1,21 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, View } from 'react-native';
+import Colors from '@/constants/Colors';
+import { useAppState } from '@/store/appState';
 
 export function TopGradientBackground() {
+  const { state } = useAppState();
+  const palette = state.preferences.darkMode ? Colors.dark : Colors.light;
   return (
     <View pointerEvents="none" style={styles.backgroundLayer}>
       <LinearGradient
-        colors={['rgba(111,75,184,0.14)', 'rgba(111,75,184,0.04)', 'transparent']}
+        colors={[palette.topGlowStart, palette.topGlowMid, 'transparent']}
         start={{ x: 0.8, y: 0 }}
         end={{ x: 0.2, y: 1 }}
         style={styles.topGlow}
       />
       <LinearGradient
-        colors={['rgba(54,38,82,0.12)', 'transparent']}
+        colors={[palette.sideGlowStart, 'transparent']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.sideGlow}

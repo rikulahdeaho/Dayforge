@@ -1,4 +1,4 @@
-import { Goal, Habit, Mood, Preferences, ReflectionDraft, ReflectionHistoryItem, Task, User, WeeklyPlan } from '../types';
+import { Goal, Habit, Mood, Preferences, ReflectionDraft, ReflectionHistoryItem, Task, User, WeeklyPlan, WeeklyPlansByWeek } from '../types';
 
 export type AppState = {
   hasCompletedOnboarding: boolean;
@@ -9,7 +9,7 @@ export type AppState = {
   tasks: Task[];
   reflectionDraft: ReflectionDraft;
   reflectionHistory: ReflectionHistoryItem[];
-  weeklyPlan: WeeklyPlan;
+  weeklyPlansByWeek: WeeklyPlansByWeek;
 };
 
 export type AppStateAction =

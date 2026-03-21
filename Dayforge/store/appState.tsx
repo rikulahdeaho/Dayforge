@@ -46,7 +46,7 @@ type AppStateContextValue = {
   saveReflection: () => { ok: true; streakDays: number } | { ok: false; reason: 'mood-required' | 'entry-required' };
   updateReflection: (input: { reflectionId: string; wentWell: string; gratefulFor: string }) => void;
   removeReflection: (reflectionId: string) => void;
-  saveWeeklyPlan: (input: { beforeYouBegin: string; pace: string; protectedHabitIds: string[] }) => void;
+  saveWeeklyPlan: (input: { weekStartDateKey: string; beforeYouBegin: string; pace: string; protectedHabitIds: string[] }) => void;
   toggleDarkModeSession: () => void;
   completeOnboarding: (input: OnboardingInput) => void;
   skipOnboarding: () => void;
@@ -291,10 +291,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         dispatch({ type: 'REMOVE_REFLECTION', reflectionId });
         setSuccessMessage('Reflection deleted.');
       },
-      saveWeeklyPlan: ({ beforeYouBegin, pace, protectedHabitIds }) => {
+      saveWeeklyPlan: ({ weekStartDateKey, beforeYouBegin, pace, protectedHabitIds }) => {
         dispatch({
           type: 'SAVE_WEEKLY_PLAN',
-          weekStartDateKey: getCurrentWeekStartDateKey(),
+          weekStartDateKey,
           beforeYouBegin: beforeYouBegin.trim(),
           pace,
           protectedHabitIds,

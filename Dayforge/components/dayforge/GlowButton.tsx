@@ -27,11 +27,11 @@ export function GlowButton({
         opacity: disabled ? 0.58 : 1,
       })}>
       <LinearGradient
-        colors={[palette.accentStrong, palette.accent, '#7c60b1']}
+        colors={[palette.accentStrong, palette.accent, palette.accentSoft]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.glowButton, { shadowColor: palette.accentStrong }, style]}>
-        <Text style={[styles.glowButtonText, { color: '#fff' }, textStyle]}>{label}</Text>
+        <Text style={[styles.glowButtonText, { color: palette.onAccent }, textStyle]}>{label}</Text>
       </LinearGradient>
     </Pressable>
   );

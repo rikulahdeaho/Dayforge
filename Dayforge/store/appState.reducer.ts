@@ -6,9 +6,9 @@ import {
   DEMO_REFLECTION_HISTORY,
   DEMO_TASKS,
   DEMO_USER,
-  DEMO_WEEKLY_PLAN,
+  DEMO_WEEKLY_PLANS_BY_WEEK,
 } from '../data/mockData';
-import { Habit, PlatformIconName, Task } from '../types';
+import { Habit, PlatformIconName, Task, WeeklyPlan, WeeklyPlansByWeek } from '../types';
 
 import { AppState, AppStateAction } from './appState.types';
 import {
@@ -28,7 +28,7 @@ export function getInitialAppState(): AppState {
     tasks: DEMO_TASKS,
     reflectionDraft: DEMO_REFLECTION_DRAFT,
     reflectionHistory: DEMO_REFLECTION_HISTORY,
-    weeklyPlan: DEMO_WEEKLY_PLAN,
+    weeklyPlansByWeek: DEMO_WEEKLY_PLANS_BY_WEEK,
   };
 }
 
@@ -63,11 +63,12 @@ export function getEmptyAppState(): AppState {
       gratefulFor: '',
     },
     reflectionHistory: [],
-    weeklyPlan: {
-      weekStartDateKey: getCurrentWeekStartDateKey(),
-      beforeYouBegin: '',
-      pace: 'Balanced',
-      protectedHabitIds: [],
+    weeklyPlansByWeek: {
+      [getCurrentWeekStartDateKey()]: {
+        beforeYouBegin: '',
+        pace: 'Balanced',
+        protectedHabitIds: [],
+      },
     },
   };
 }
@@ -224,16 +225,30 @@ function normalizePersistedGoal(goal: AppState['goal'] | undefined): AppState['g
 
 export function mergePersistedAppState(persisted: Partial<AppState>): AppState {
   const currentWeekStartDateKey = getCurrentWeekStartDateKey();
-  const persistedWeeklyPlan = persisted.weeklyPlan;
-  const normalizedWeeklyPlan = {
-    ...initialState.weeklyPlan,
-    ...(persistedWeeklyPlan ?? {}),
-    weekStartDateKey: currentWeekStartDateKey,
-    beforeYouBegin:
-      persistedWeeklyPlan && persistedWeeklyPlan.weekStartDateKey === currentWeekStartDateKey
-        ? persistedWeeklyPlan.beforeYouBegin ?? ''
-        : '',
+  const normalizedWeeklyPlansByWeek: WeeklyPlansByWeek = {
+    ...initialState.weeklyPlansByWeek,
   };
+  const persistedWeeklyPlansByWeek = (persisted as Partial<AppState> & { weeklyPlansByWeek?: unknown }).weeklyPlansByWeek;
+  if (persistedWeeklyPlansByWeek && typeof persistedWeeklyPlansByWeek === 'object' && !Array.isArray(persistedWeeklyPlansByWeek)) {
+    for (const [weekKey, value] of Object.entries(persistedWeeklyPlansByWeek as Record<string, unknown>)) {
+      normalizedWeeklyPlansByWeek[weekKey] = normalizeWeeklyPlanEntry(value);
+    }
+  }
+
+  const legacyWeeklyPlan = (persisted as Partial<AppState> & {
+    weeklyPlan?: Partial<WeeklyPlan> & { weekStartDateKey?: string };
+  }).weeklyPlan;
+  if (legacyWeeklyPlan) {
+    const legacyWeekKey =
+      typeof legacyWeeklyPlan.weekStartDateKey === 'string' && legacyWeeklyPlan.weekStartDateKey
+        ? legacyWeeklyPlan.weekStartDateKey
+        : currentWeekStartDateKey;
+    normalizedWeeklyPlansByWeek[legacyWeekKey] = normalizeWeeklyPlanEntry(legacyWeeklyPlan);
+  }
+
+  if (!normalizedWeeklyPlansByWeek[currentWeekStartDateKey]) {
+    normalizedWeeklyPlansByWeek[currentWeekStartDateKey] = normalizeWeeklyPlanEntry(undefined);
+  }
 
   return {
     ...initialState,
@@ -258,7 +273,7 @@ export function mergePersistedAppState(persisted: Partial<AppState>): AppState {
     reflectionHistory: Array.isArray(persisted.reflectionHistory)
       ? persisted.reflectionHistory
       : initialState.reflectionHistory,
-    weeklyPlan: normalizedWeeklyPlan,
+    weeklyPlansByWeek: normalizedWeeklyPlansByWeek,
   };
 }
 
@@ -475,11 +490,13 @@ export function appReducer(state: AppState, action: AppStateAction): AppState {
     case 'SAVE_WEEKLY_PLAN':
       return {
         ...state,
-        weeklyPlan: {
-          weekStartDateKey: action.weekStartDateKey,
-          beforeYouBegin: action.beforeYouBegin,
-          pace: action.pace,
-          protectedHabitIds: action.protectedHabitIds,
+        weeklyPlansByWeek: {
+          ...state.weeklyPlansByWeek,
+          [action.weekStartDateKey]: {
+            beforeYouBegin: action.beforeYouBegin,
+            pace: action.pace,
+            protectedHabitIds: action.protectedHabitIds,
+          },
         },
       };
 
@@ -504,4 +521,14 @@ export function appReducer(state: AppState, action: AppStateAction): AppState {
     default:
       return state;
   }
+}
+function normalizeWeeklyPlanEntry(input: unknown): WeeklyPlan {
+  const raw = (input && typeof input === 'object' ? input : {}) as Partial<WeeklyPlan>;
+  return {
+    beforeYouBegin: typeof raw.beforeYouBegin === 'string' ? raw.beforeYouBegin : '',
+    pace: typeof raw.pace === 'string' && raw.pace.trim() ? raw.pace : 'Balanced',
+    protectedHabitIds: Array.isArray(raw.protectedHabitIds)
+      ? raw.protectedHabitIds.filter((value): value is string => typeof value === 'string')
+      : [],
+  };
 }

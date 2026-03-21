@@ -75,8 +75,8 @@ function RootNavigator() {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
-          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#0f081b' }}>
-            <ActivityIndicator size="large" color="#a44cff" />
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.dark.background }}>
+            <ActivityIndicator size="large" color={Colors.dark.accent} />
           </View>
         </SafeAreaProvider>
       </GestureHandlerRootView>

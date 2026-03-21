@@ -28,7 +28,7 @@ export function WeeklyProgressChart({ bars, palette, todayIndex }: WeeklyProgres
             style={[
               styles.weeklyChartTrack,
               {
-                backgroundColor: 'rgba(255,255,255,0.07)',
+                backgroundColor: palette.progressTrack,
                 borderColor: isToday ? `${palette.accentSoft}55` : 'transparent',
                 shadowColor: isToday ? palette.accent : 'transparent',
                 shadowOpacity: isToday ? 0.16 : 0,
