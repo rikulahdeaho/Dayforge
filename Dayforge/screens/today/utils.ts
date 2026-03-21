@@ -18,24 +18,24 @@ export function resolveHeroKickoffText(progress: number, totalHabits: number, fl
 
 export function resolveHeroSupportText(habitsLeft: number, totalHabits: number, flowStep: FlowStep) {
   if (totalHabits === 0) {
-    return 'Add your first habit to start your streak.';
+    return 'Add your first habit to begin.';
   }
   if (habitsLeft === 0) {
     if (flowStep === 'summary') {
-      return 'Your streak is alive and today is complete.';
+      return 'Your streak is alive. Today is complete.';
     }
-    return 'You completed all habits for today.';
+    return 'All habits are done today.';
   }
   if (habitsLeft === totalHabits) {
-    return 'Start with one small habit to keep your streak alive.';
+    return 'Start with one small habit.';
   }
   if (habitsLeft === 2) {
-    return 'Two more habits to keep your streak going.';
+    return 'Two more habits left.';
   }
   if (habitsLeft === 1) {
-    return 'One more habit to keep your streak going.';
+    return 'One more habit left.';
   }
-  return `${habitsLeft} more habits to keep your streak going.`;
+  return `${habitsLeft} habits left.`;
 }
 
 export function resolveTrendCopy(trendDelta: number) {

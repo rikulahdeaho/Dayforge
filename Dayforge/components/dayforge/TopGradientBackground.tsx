@@ -5,10 +5,16 @@ export function TopGradientBackground() {
   return (
     <View pointerEvents="none" style={styles.backgroundLayer}>
       <LinearGradient
-        colors={['rgba(127,34,255,0.22)', 'rgba(127,34,255,0.05)', 'transparent']}
+        colors={['rgba(111,75,184,0.14)', 'rgba(111,75,184,0.04)', 'transparent']}
         start={{ x: 0.8, y: 0 }}
         end={{ x: 0.2, y: 1 }}
         style={styles.topGlow}
+      />
+      <LinearGradient
+        colors={['rgba(54,38,82,0.12)', 'transparent']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.sideGlow}
       />
     </View>
   );
@@ -24,6 +30,14 @@ const styles = StyleSheet.create({
     right: -90,
     width: 380,
     height: 380,
+    borderRadius: 999,
+  },
+  sideGlow: {
+    position: 'absolute',
+    bottom: -120,
+    left: -120,
+    width: 320,
+    height: 320,
     borderRadius: 999,
   },
 });

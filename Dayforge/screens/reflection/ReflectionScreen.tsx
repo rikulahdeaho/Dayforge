@@ -48,6 +48,7 @@ import { TopGradientBackground } from '@/components/dayforge/TopGradientBackgrou
 import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
 import { DayforgePalette, GlowButton } from '@/components/dayforge/Primitives';
 import Colors from '@/constants/Colors';
+import { Fonts, Type } from '@/constants/Typography';
 import { moods, moodEmoji, moodSummary, moodVisuals } from '@/screens/reflection/utils';
 import { useAppState } from '@/store/appState';
 import { getDailyReflectionPrompts } from '@/store/appState.helpers';
@@ -72,8 +73,8 @@ export default function ReflectionScreen() {
   const visibleHistory = state.reflectionHistory.slice(0, 3);
   const hasReflectionText = Boolean(state.reflectionDraft.wentWell.trim() || state.reflectionDraft.gratefulFor.trim());
   const canSaveReflection = Boolean(state.reflectionDraft.mood && hasReflectionText);
-  const solidCardSurface = state.preferences.darkMode ? 'rgba(20,12,40,0.94)' : 'rgba(248,245,255,0.97)';
-  const solidInputSurface = state.preferences.darkMode ? 'rgba(18,11,36,0.98)' : 'rgba(255,255,255,0.99)';
+  const solidCardSurface = state.preferences.darkMode ? 'rgba(18,12,29,0.94)' : 'rgba(248,245,255,0.97)';
+  const solidInputSurface = state.preferences.darkMode ? 'rgba(16,11,26,0.96)' : 'rgba(255,255,255,0.99)';
 
   useEffect(() => {
     if (state.reflectionDraft.mood) {
@@ -213,11 +214,11 @@ export default function ReflectionScreen() {
         </LinearGradient>
 
         {!state.reflectionDraft.mood ? (
-          <Text style={[styles.hintText, { color: palette.mutedText }]}>Choose a mood to tune today&apos;s journaling vibe.</Text>
+          <Text style={[styles.hintText, { color: palette.mutedText }]}>Choose your mood to begin.</Text>
         ) : null}
 
         <View style={styles.entrySection}>
-          <Text style={[styles.stepBadge, { color: palette.accent }]}>STEP 2</Text>
+          <Text style={[styles.stepBadge, { color: palette.mutedText }]}>Step 2</Text>
           <Text style={[styles.entryHeading, { color: palette.text }]}>{dailyPrompts.wentWellPrompt.question}</Text>
           <View
             style={[
@@ -246,7 +247,7 @@ export default function ReflectionScreen() {
         </View>
 
         <View style={styles.entrySection}>
-          <Text style={[styles.stepBadge, { color: palette.accent }]}>STEP 3</Text>
+          <Text style={[styles.stepBadge, { color: palette.mutedText }]}>Step 3</Text>
           <Text style={[styles.entryHeading, { color: palette.text }]}>{dailyPrompts.gratefulForPrompt.question}</Text>
           <View
             style={[
@@ -275,7 +276,7 @@ export default function ReflectionScreen() {
         </View>
 
         {!hasReflectionText ? (
-          <Text style={[styles.motivationText, { color: palette.mutedText }]}>it will take 2 minutes to improve your streak. Capture one small win from today.</Text>
+          <Text style={[styles.motivationText, { color: palette.mutedText }]}>Take two minutes. Capture one small win from today.</Text>
         ) : null}
 
         <Animated.View style={{ transform: [{ scale: rewardScale }] }}>
@@ -310,9 +311,9 @@ export default function ReflectionScreen() {
               styles.historyItem,
               {
                 backgroundColor: solidCardSurface,
-                borderColor: entry === visibleHistory[0] ? palette.accent : palette.border,
+                borderColor: entry === visibleHistory[0] ? `${palette.accentSoft}55` : palette.border,
                 shadowColor: palette.shadow,
-                borderWidth: entry === visibleHistory[0] ? 1.6 : 1,
+                borderWidth: entry === visibleHistory[0] ? 0.9 : 0.75,
               },
             ]}>
             <View style={[styles.historyEmoji, { backgroundColor: 'rgba(255,255,255,0.04)' }]}>
@@ -420,10 +421,10 @@ const styles = StyleSheet.create({
   },
   progressiveGuide: {
     marginBottom: 14,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderRadius: 999,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 6,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -431,19 +432,18 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   progressiveGuideText: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.3,
+    ...Type.metaStrong,
+    opacity: 0.8,
   },
   progressiveGuideDot: {
     fontSize: 12,
   },
   moodPanel: {
     borderRadius: 24,
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 14,
-    marginBottom: 14,
+    borderWidth: 0.75,
+    paddingHorizontal: 14,
+    paddingVertical: 18,
+    marginBottom: 16,
     overflow: 'hidden',
   },
   moodOption: {
@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    borderWidth: 1,
+    borderWidth: 0.75,
     alignItems: 'center',
     justifyContent: 'center',
     shadowOpacity: 0.3,
@@ -467,48 +467,43 @@ const styles = StyleSheet.create({
   },
   moodLabel: {
     marginTop: 10,
-    fontSize: 11,
-    letterSpacing: 1.2,
+    ...Type.meta,
+    letterSpacing: 0.2,
   },
   hintText: {
     marginTop: 0,
-    marginBottom: 18,
+    marginBottom: 24,
     textAlign: 'center',
-    fontSize: 12,
-    fontWeight: '600',
+    ...Type.meta,
   },
   entrySection: {
-    marginBottom: 24,
+    marginBottom: 32,
   },
   stepBadge: {
     paddingHorizontal: 6,
     marginBottom: 6,
-    fontSize: 11,
-    letterSpacing: 0.8,
-    fontWeight: '700',
+    ...Type.meta,
   },
   entryHeading: {
     paddingHorizontal: 6,
-    fontSize: 16,
-    fontWeight: '700',
+    ...Type.promptLabel,
     marginBottom: 12,
   },
   textAreaShell: {
     borderRadius: 26,
-    borderWidth: 1,
+    borderWidth: 0.75,
     minHeight: 106,
     paddingHorizontal: 18,
-    paddingVertical: 14,
+    paddingVertical: 16,
   },
   textArea: {
     minHeight: 76,
-    fontSize: 16,
-    lineHeight: 22,
+    ...Type.body,
     textAlignVertical: 'top',
   },
   saveButton: {
     marginTop: 4,
-    marginBottom: 28,
+    marginBottom: 32,
     minHeight: 54,
   },
   motivationText: {
@@ -516,14 +511,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: 'center',
     paddingHorizontal: 8,
-    fontSize: 13,
-    fontWeight: '700',
+    ...Type.bodySmall,
   },
   saveButtonText: {
-    fontFamily: Platform.select({ ios: 'System', android: 'sans-serif-medium', default: undefined }),
+    fontFamily: Fonts.body,
     fontSize: 18,
     lineHeight: 22,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   successText: {
     marginTop: -18,
@@ -534,28 +528,25 @@ const styles = StyleSheet.create({
   },
   historyHeader: {
     paddingHorizontal: 6,
-    marginBottom: 12,
+    marginBottom: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   historyHeading: {
-    fontSize: 16,
-    fontWeight: '700',
+    ...Type.sectionTitle,
   },
   historyAction: {
-    fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 0.6,
+    ...Type.action,
   },
   historyItem: {
     marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 26,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderWidth: 0.75,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     ...(Platform.OS === 'ios'
       ? {
           shadowOpacity: 0.22,
@@ -580,16 +571,13 @@ const styles = StyleSheet.create({
   },
   historyDate: {
     marginBottom: 3,
-    fontSize: 15,
-    fontWeight: '700',
+    ...Type.cardTitle,
   },
   historyPreview: {
-    fontSize: 13,
-    lineHeight: 18,
+    ...Type.bodySmall,
   },
   historyMoodSummary: {
     marginTop: 2,
-    fontSize: 12,
-    fontWeight: '700',
+    ...Type.metaStrong,
   },
 });

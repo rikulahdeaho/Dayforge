@@ -8,6 +8,7 @@ import { feedbackTap } from '@/components/dayforge/feedback';
 import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
 import { DayforgePalette, GlowButton, GradientCard, SurfaceCard } from '@/components/dayforge/Primitives';
 import { TopGradientBackground } from '@/components/dayforge/TopGradientBackground';
+import { Fonts, Type } from '@/constants/Typography';
 import { getCurrentMondayBasedDayIndex, getDateKeyForMondayBasedDayIndex, toDateKey } from '@/store/appState.helpers';
 import { useAppState } from '@/store/appState';
 import {
@@ -92,7 +93,7 @@ export default function DaySummaryScreen() {
           </SurfaceCard>
         ) : (
           <>
-            <GradientCard palette={palette} style={styles.heroCard} colors={['#1f183f', '#25214a', '#2c2458']}>
+            <GradientCard palette={palette} style={styles.heroCard} colors={['#181421', '#211a30', '#2a2239']}>
               <View style={styles.heroPill}>
                 <SymbolView
                   name={resolveSymbolName({ ios: 'sparkles', android: 'auto_awesome', web: 'auto_awesome' })}
@@ -141,7 +142,7 @@ export default function DaySummaryScreen() {
             <SurfaceCard palette={palette} style={styles.streakCard}>
               <View style={styles.streakHeader}>
                 <Text style={[styles.streakTitle, { color: palette.text }]}>{dayClosureStreak} day streak</Text>
-                <Text style={[styles.streakMeta, { color: palette.accent }]}>{todayClosed ? 'Momentum kept' : 'Keep the chain alive'}</Text>
+                <Text style={[styles.streakMeta, { color: palette.mutedText }]}>{todayClosed ? 'Momentum kept' : 'Keep the chain alive'}</Text>
               </View>
               <View style={styles.streakDots}>
                 {streakDays.map((day) => {
@@ -186,7 +187,7 @@ export default function DaySummaryScreen() {
                 feedbackTap();
                 router.replace('/weekly-plan' as never);
               }}>
-              <Text style={[styles.secondaryLink, { color: palette.accentStrong, paddingTop: 5 }]}>Weekly plan</Text>
+              <Text style={[styles.secondaryLink, { color: palette.accentSoft, paddingTop: 6 }]}>Open weekly plan</Text>
             </Pressable>
           </>
         )}
@@ -209,8 +210,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
+    ...Type.screenTitle,
   },
   closeButton: {
     width: 42,
@@ -223,9 +223,8 @@ const styles = StyleSheet.create({
   microLabel: {
     marginBottom: 12,
     paddingHorizontal: 4,
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.8,
+    ...Type.dateMeta,
+    letterSpacing: 0.4,
     textTransform: 'uppercase',
   },
   lockedCard: {
@@ -233,14 +232,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.03)',
   },
   lockedTitle: {
-    fontSize: 20,
-    lineHeight: 26,
-    fontWeight: '700',
+    ...Type.sectionTitle,
     marginBottom: 8,
   },
   lockedBody: {
-    fontSize: 14,
-    lineHeight: 20,
+    ...Type.bodySmall,
     marginBottom: 12,
   },
   lockedButton: {
@@ -248,7 +244,7 @@ const styles = StyleSheet.create({
   },
   heroCard: {
     borderRadius: 30,
-    marginBottom: 12,
+    marginBottom: 16,
   },
   heroPill: {
     alignSelf: 'flex-start',
@@ -256,51 +252,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     paddingHorizontal: 12,
-    paddingVertical: 7,
+    paddingVertical: 6,
     borderRadius: 999,
-    backgroundColor: 'rgba(124,58,237,0.35)',
-    marginBottom: 10,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    marginBottom: 14,
   },
   heroPillText: {
     color: '#fff',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.4,
+    ...Type.metaStrong,
   },
   heroTitle: {
     color: '#fff',
-    fontSize: 40,
-    lineHeight: 42,
+    fontFamily: Fonts.heading,
+    fontSize: 24,
+    lineHeight: 29,
     fontWeight: '700',
     marginBottom: 8,
   },
   heroBody: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 15,
-    lineHeight: 22,
-    marginBottom: 14,
+    color: 'rgba(255,255,255,0.74)',
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 20,
   },
   heroStatsRow: {
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.18)',
-    paddingTop: 12,
+    borderTopWidth: 0.75,
+    borderTopColor: 'rgba(255,255,255,0.10)',
+    paddingTop: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   heroStat: { flex: 1, alignItems: 'center' },
   heroStatLabel: {
     color: 'rgba(255,255,255,0.65)',
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    ...Type.meta,
     textTransform: 'uppercase',
   },
   heroStatValue: {
     color: '#fff',
     marginTop: 2,
-    fontSize: 26,
-    lineHeight: 30,
-    fontWeight: '700',
+    ...Type.value,
   },
   metricsRow: {
     flexDirection: 'row',
@@ -347,23 +338,20 @@ const styles = StyleSheet.create({
   },
   streakCard: {
     borderRadius: 24,
-    marginBottom: 12,
+    marginBottom: 16,
     backgroundColor: 'rgba(255,255,255,0.03)',
   },
   streakHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   streakTitle: {
-    fontSize: 30,
-    lineHeight: 34,
-    fontWeight: '700',
+    ...Type.heroTitle,
   },
   streakMeta: {
-    fontSize: 13,
-    fontWeight: '700',
+    ...Type.metaStrong,
   },
   streakDots: {
     flexDirection: 'row',
@@ -371,32 +359,28 @@ const styles = StyleSheet.create({
   },
   streakDotCol: {
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
   streakDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: 1,
+    width: 12,
+    height: 12,
+    borderRadius: 999,
+    borderWidth: 0.75,
   },
   streakDay: {
-    fontSize: 11,
-    fontWeight: '600',
+    ...Type.meta,
   },
   tomorrowCard: {
     borderRadius: 24,
-    marginBottom: 16,
+    marginBottom: 24,
     backgroundColor: 'rgba(255,255,255,0.03)',
   },
   tomorrowTitle: {
-    fontSize: 24,
-    lineHeight: 30,
-    fontWeight: '700',
+    ...Type.sectionTitle,
     marginBottom: 8,
   },
   tomorrowLine: {
-    fontSize: 16,
-    lineHeight: 22,
+    ...Type.body,
     marginBottom: 6,
   },
   primaryButton: {
@@ -404,7 +388,7 @@ const styles = StyleSheet.create({
   },
   secondaryLink: {
     textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '600',
+    ...Type.bodyStrong,
+    opacity: 0.96,
   },
 });

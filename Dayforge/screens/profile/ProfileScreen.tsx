@@ -15,7 +15,7 @@ import { DayforgePalette, SurfaceCard } from '@/components/dayforge/Primitives';
 import { TopGradientBackground } from '@/components/dayforge/TopGradientBackground';
 import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
 import Colors from '@/constants/Colors';
-import { Fonts } from '@/constants/Typography';
+import { Fonts, Type } from '@/constants/Typography';
 import { useAppState } from '@/store/appState';
 
 const supportRows = [
@@ -256,16 +256,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: {
-    fontSize: 22,
-    lineHeight: 30,
-    fontWeight: '700',
-    fontFamily: Fonts.heading,
+    ...Type.screenTitle,
   },
   sectionKicker: {
     marginBottom: 10,
     paddingHorizontal: 6,
-    fontSize: 13,
-    fontWeight: '700',
+    ...Type.meta,
     letterSpacing: 0.8,
   },
   groupCard: {
@@ -291,12 +287,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   settingTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    ...Type.cardTitle,
   },
   settingSubtitle: {
-    fontSize: 13,
-    lineHeight: 18,
+    ...Type.bodySmall,
     marginTop: 2,
   },
   settingDivider: {
@@ -308,14 +302,12 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     textAlign: 'center',
     color: '#ff4d83',
-    fontSize: 18,
-    lineHeight: 22,
-    fontWeight: '700',
-    fontFamily: Fonts.heading,
+    ...Type.cardTitle,
+    fontFamily: Fonts.body,
   },
   version: {
     textAlign: 'center',
-    fontSize: 13,
+    ...Type.meta,
   },
   footerLogo: {
     width: 56,

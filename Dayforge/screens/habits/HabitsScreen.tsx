@@ -13,6 +13,7 @@ import { TopGradientBackground } from '@/components/dayforge/TopGradientBackgrou
 import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
 import { WeekdayPicker } from '@/components/dayforge/WeekdayPicker';
 import Colors from '@/constants/Colors';
+import { Type } from '@/constants/Typography';
 import {
   HABIT_ICON_ID_BY_IOS_NAME,
   resolveHabitStatus,
@@ -162,7 +163,7 @@ export default function HabitsScreen() {
 
         <Pressable onPress={completeNextHabit}>
           <LinearGradient
-            colors={[palette.accentStrong, palette.accent, '#7f22ff']}
+            colors={['#251a39', '#2d2144', '#392950']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.heroCard}>
@@ -229,13 +230,13 @@ export default function HabitsScreen() {
                     styles.itemCard,
                     {
                       backgroundColor: 'rgba(255,255,255,0.035)',
-                      borderColor: isCompletedForSelectedDay ? `${palette.accentSoft}88` : palette.border,
+                      borderColor: isCompletedForSelectedDay ? `${palette.accentSoft}33` : `${palette.border}AA`,
                       shadowColor: isCompletedForSelectedDay ? palette.accentStrong : palette.shadow,
                     },
                     isNextHabit ? styles.nextHabitCard : null,
                   ]}>
                   {isNextHabit ? (
-                    <View style={[styles.nextTag, { backgroundColor: `${palette.accent}22`, borderColor: `${palette.accent}77` }]}>
+                    <View style={[styles.nextTag, { backgroundColor: `${palette.accent}12`, borderColor: `${palette.accent}22` }]}>
                       <Text style={[styles.nextTagText, { color: palette.accent }]}>NEXT UP</Text>
                     </View>
                   ) : null}
@@ -246,7 +247,7 @@ export default function HabitsScreen() {
                     <View style={styles.itemCopy}>
                       <Text style={[styles.itemTitle, { color: palette.text }]}>{habit.title}</Text>
                       <Text style={[styles.itemSub, { color: palette.mutedText }]}>{habit.subtitle}</Text>
-                      <Text style={[styles.tapHint, { color: palette.mutedText }]}>Tap to complete, hold to edit</Text>
+                      <Text style={[styles.tapHint, { color: palette.mutedText }]}>Tap to complete.</Text>
                     </View>
                     <View
                       style={[
@@ -280,6 +281,7 @@ export default function HabitsScreen() {
                         style={[
                           styles.protectedStatusTag,
                           { backgroundColor: `${palette.success}22`, borderColor: `${palette.success}77` },
+                          
                         ]}>
                         <Text style={[styles.protectedStatusTagText, { color: palette.success }]}>PROTECTED</Text>
                       </View>
@@ -320,10 +322,10 @@ const styles = StyleSheet.create({
   },
   heroCard: {
     borderRadius: 30,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
-    padding: 18,
-    marginBottom: 20,
+    borderWidth: 0.75,
+    borderColor: 'rgba(255,255,255,0.06)',
+    padding: 24,
+    marginBottom: 24,
   },
   streakPill: {
     alignSelf: 'flex-start',
@@ -333,47 +335,41 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingVertical: 6,
     paddingHorizontal: 12,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    marginBottom: 10,
+    backgroundColor: 'rgba(255,255,255,0.09)',
+    marginBottom: 12,
   },
   streakText: {
     color: '#fff',
-    fontWeight: '700',
-    fontSize: 12,
+    ...Type.metaStrong,
   },
   heroTitle: {
     color: '#fff',
-    fontSize: 24,
-    lineHeight: 30,
-    fontWeight: '700',
-    marginBottom: 6,
+    ...Type.heroTitle,
+    marginBottom: 8,
   },
   heroBody: {
-    color: 'rgba(255,255,255,0.88)',
-    fontSize: 15,
-    lineHeight: 22,
-    marginBottom: 12,
+    color: 'rgba(255,255,255,0.76)',
+    ...Type.body,
+    marginBottom: 20,
   },
   heroProgress: {
-    height: 10,
+    height: 12,
   },
   dayContext: {
-    marginTop: 2,
-    marginBottom: 10,
+    marginTop: 0,
+    marginBottom: 16,
     paddingHorizontal: 6,
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 0.4,
+    ...Type.meta,
   },
   itemCard: {
-    marginBottom: 10,
+    marginBottom: 12,
     borderRadius: 24,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    borderWidth: 0.75,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     ...(Platform.OS === 'ios'
       ? {
-          shadowOpacity: 0.1,
+          shadowOpacity: 0.06,
           shadowRadius: 8,
           shadowOffset: { width: 0, height: 4 },
         }
@@ -382,37 +378,33 @@ const styles = StyleSheet.create({
         }),
   },
   nextHabitCard: {
-    borderWidth: 1.2,
+    borderWidth: 0.9,
   },
   nextTag: {
     alignSelf: 'flex-start',
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderRadius: 999,
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    marginBottom: 8,
+    paddingVertical: 3,
+    marginBottom: 12,
   },
   nextTagText: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    ...Type.metaStrong,
   },
   protectedStatusTag: {
     marginLeft: 6,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderRadius: 999,
     paddingHorizontal: 7,
     paddingVertical: 3,
   },
   protectedStatusTagText: {
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 0.4,
+    ...Type.meta,
   },
   itemTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   itemIcon: {
     width: 48,
@@ -423,50 +415,48 @@ const styles = StyleSheet.create({
   },
   itemCopy: {
     flex: 1,
-    marginHorizontal: 10,
+    marginHorizontal: 12,
   },
   itemTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    ...Type.cardTitle,
   },
   itemSub: {
     marginTop: 2,
-    fontSize: 13,
+    ...Type.meta,
   },
   tapHint: {
-    marginTop: 6,
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 0.4,
+    marginTop: 8,
+    ...Type.meta,
+    opacity: 0.72,
   },
   itemBadge: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    borderWidth: 1,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 0.75,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.025)',
   },
   dotRow: {
     flexDirection: 'row',
-    gap: 7,
-    marginBottom: 8,
+    gap: 8,
+    marginBottom: 12,
   },
   dot: {
     flex: 1,
-    height: 8,
-    borderRadius: 4,
+    height: 7,
+    borderRadius: 999,
   },
   statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 6,
+    gap: 8,
   },
   statusLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.6,
+    ...Type.metaStrong,
+    opacity: 0.9,
   },
   dashed: {
     marginTop: 8,

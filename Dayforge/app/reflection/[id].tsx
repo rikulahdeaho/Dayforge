@@ -8,6 +8,7 @@ import { scrollFocusedInputIntoView } from '@/components/dayforge/scrollFocusedI
 import { TopGradientBackground } from '@/components/dayforge/TopGradientBackground';
 import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
 import Colors from '@/constants/Colors';
+import { Type } from '@/constants/Typography';
 import { useAppState } from '@/store/appState';
 import { type Mood } from '@/types';
 
@@ -200,8 +201,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
+    ...Type.screenTitle,
   },
   closeButton: {
     width: 42,
@@ -220,20 +220,17 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   dateText: {
-    fontSize: 16,
-    fontWeight: '700',
+    ...Type.cardTitle,
     marginBottom: 16,
   },
   sectionLabel: {
-    fontSize: 13,
-    fontWeight: '700',
+    ...Type.promptLabel,
     marginBottom: 6,
-    marginTop: 6,
-    letterSpacing: 0.5,
+    marginTop: 14,
   },
   sectionBody: {
-    fontSize: 15,
-    lineHeight: 22,
+    ...Type.body,
+    lineHeight: 24,
   },
   actionsRow: {
     flexDirection: 'row',
@@ -249,8 +246,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   secondaryActionText: {
-    fontSize: 13,
-    fontWeight: '700',
+    ...Type.meta,
   },
   deleteAction: {
     borderRadius: 12,
@@ -261,8 +257,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   deleteActionText: {
-    fontSize: 13,
-    fontWeight: '700',
+    ...Type.meta,
     color: '#ef4444',
   },
   textArea: {
@@ -272,8 +267,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     minHeight: 84,
     textAlignVertical: 'top',
-    fontSize: 14,
-    lineHeight: 20,
+    ...Type.body,
   },
   saveAction: {
     marginTop: 14,
@@ -284,8 +278,7 @@ const styles = StyleSheet.create({
   },
   saveActionText: {
     color: '#fff',
-    fontSize: 14,
-    fontWeight: '700',
+    ...Type.label,
   },
   center: {
     flex: 1,
@@ -294,7 +287,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
   },
   missingText: {
-    fontSize: 16,
+    ...Type.body,
     marginBottom: 12,
   },
   backButton: {
@@ -307,7 +300,6 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     color: '#fff',
-    fontSize: 14,
-    fontWeight: '700',
+    ...Type.label,
   },
 });

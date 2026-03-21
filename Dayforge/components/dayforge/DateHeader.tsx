@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { DayforgePalette } from './types';
-import { Fonts } from '@/constants/Typography';
+import { Type } from '@/constants/Typography';
 import { resolveSymbolName } from './resolveSymbolName';
 
 type DateHeaderProps = {
@@ -78,31 +78,22 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   dateRow: {
-    marginBottom: 10,
+    marginBottom: 8,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
   dateText: {
-    fontSize: 16,
-    fontWeight: '600',
+    ...Type.dateMeta,
   },
   title: {
-    fontSize: 22,
-    lineHeight: 30,
-    fontWeight: '700',
-    fontFamily: Fonts.heading,
+    ...Type.screenTitle,
   },
   titleRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 8,
-    flexWrap: 'wrap',
+    gap: 4,
   },
   subtitle: {
-    fontSize: 16,
-    lineHeight: 22,
-    fontWeight: '500',
+    ...Type.bodySmall,
   },
   bellWrap: {
     width: 46,
@@ -124,9 +115,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    fontFamily: Fonts.heading,
+    ...Type.sectionTitle,
     marginBottom: 12,
   },
   notificationRow: {
@@ -137,9 +126,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   notificationText: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '500',
+    ...Type.bodySmall,
   },
   closeButton: {
     marginTop: 8,
@@ -150,7 +137,6 @@ const styles = StyleSheet.create({
   },
   closeButtonText: {
     color: '#fff',
-    fontSize: 15,
-    fontWeight: '700',
+    ...Type.action,
   },
 });

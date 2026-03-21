@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import Colors from '@/constants/Colors';
+import { Fonts, Type } from '@/constants/Typography';
 import { feedbackSelection, feedbackTap } from '@/components/dayforge/feedback';
 import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
 import { DayforgePalette, GlowButton, GradientCard, ProgressTrack, SurfaceCard } from '@/components/dayforge/Primitives';
@@ -176,7 +177,7 @@ export default function WeeklyPlanScreen() {
           <Text style={[styles.reviewInsight, { color: palette.mutedText }]}>You stayed most consistent on midweek blocks.</Text>
         </SurfaceCard>
 
-        <GradientCard palette={palette} style={styles.goalCard} colors={['#5b21b6', '#6d28d9', '#7c3aed']}>
+        <GradientCard palette={palette} style={styles.goalCard} colors={['#1f1830', '#2b2140', '#36294d']}>
           <Text style={styles.goalLabel}>MAIN GOAL FOR THIS WEEK</Text>
           <Text style={styles.goalTitle}>{state.goal.title}</Text>
           <View style={styles.goalRow}>
@@ -210,8 +211,8 @@ export default function WeeklyPlanScreen() {
               }}>
               <SymbolView
                 name={resolveSymbolName({ ios: 'square.and.pencil', android: 'edit', web: 'edit' })}
-                size={18}
-                tintColor="#5b21b6"
+                size={16}
+                tintColor={palette.accentSoft}
               />
             </Pressable>
           </View>
@@ -236,7 +237,7 @@ export default function WeeklyPlanScreen() {
           />
         </SurfaceCard>
 
-        <Text style={[styles.sectionHeading, { color: palette.text }]}>Priorities (from tasks)</Text>
+        <Text style={[styles.sectionHeading, { color: palette.text }]}>Priorities</Text>
         <SurfaceCard palette={palette} style={styles.listCard}>
           <Text style={[styles.bucketTitle, { color: palette.accentStrong }]}>Must do</Text>
           {priorities.mustDo.length ? (
@@ -392,8 +393,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
+    ...Type.screenTitle,
   },
   closeButton: {
     width: 42,
@@ -404,73 +404,68 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   microLabel: {
-    marginBottom: 12,
+    marginBottom: 16,
     paddingHorizontal: 4,
-    fontSize: 12,
-    fontWeight: '700',
+    ...Type.meta,
     letterSpacing: 0.8,
     textTransform: 'uppercase',
   },
   cardTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    ...Type.cardTitle,
     marginBottom: 10,
   },
   reviewCard: {
     borderRadius: 26,
-    marginBottom: 14,
+    marginBottom: 24,
     backgroundColor: 'rgba(255,255,255,0.03)',
   },
   reviewGrid: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 10,
+    gap: 10,
+    marginBottom: 12,
   },
   reviewStat: {
     flex: 1,
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderRadius: 14,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(255,255,255,0.02)',
   },
   reviewLabel: {
-    fontSize: 11,
-    fontWeight: '600',
+    ...Type.meta,
     marginBottom: 4,
   },
   reviewValue: {
-    fontSize: 24,
-    lineHeight: 28,
-    fontWeight: '700',
+    ...Type.value,
   },
   reviewInsight: {
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: '500',
+    ...Type.bodySmall,
   },
   goalCard: {
     borderRadius: 26,
-    marginBottom: 14,
+    marginBottom: 24,
+    padding: 24,
   },
   goalLabel: {
-    color: 'rgba(255,255,255,0.75)',
-    fontSize: 11,
-    fontWeight: '700',
+    color: 'rgba(255,255,255,0.62)',
+    ...Type.meta,
     letterSpacing: 0.8,
     marginBottom: 8,
   },
   goalTitle: {
     color: '#fff',
-    fontSize: 30,
-    lineHeight: 36,
+    fontFamily: Fonts.heading,
+    fontSize: 22,
+    lineHeight: 28,
     fontWeight: '700',
-    marginBottom: 10,
+    marginBottom: 16,
   },
   goalRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginBottom: 10,
+    marginBottom: 18,
   },
   goalProgress: {
     flex: 1,
@@ -478,8 +473,7 @@ const styles = StyleSheet.create({
   },
   goalProgressText: {
     color: '#fff',
-    fontSize: 14,
-    fontWeight: '700',
+    ...Type.bodyStrong,
   },
   goalActions: {
     flexDirection: 'row',
@@ -489,85 +483,84 @@ const styles = StyleSheet.create({
   goalStepperGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
   goalStepButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    borderWidth: 0.75,
+    borderColor: 'rgba(255,255,255,0.10)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   goalStepText: {
     color: '#fff',
-    fontSize: 20,
-    lineHeight: 22,
+    fontSize: 18,
+    lineHeight: 20,
     fontWeight: '700',
   },
   goalEditButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#fff',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    borderWidth: 0.75,
+    borderColor: 'rgba(255,255,255,0.10)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   promptCard: {
     borderRadius: 26,
-    marginBottom: 14,
+    marginBottom: 24,
     backgroundColor: 'rgba(255,255,255,0.03)',
   },
   promptInput: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderWidth: 0.75,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
     minHeight: 84,
     textAlignVertical: 'top',
-    fontSize: 14,
-    lineHeight: 20,
+    ...Type.body,
   },
   sectionHeading: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 8,
+    ...Type.sectionTitle,
+    marginBottom: 12,
     paddingHorizontal: 4,
+    opacity: 0.94,
   },
   listCard: {
     borderRadius: 22,
-    marginBottom: 8,
+    marginBottom: 10,
     backgroundColor: 'rgba(255,255,255,0.03)',
   },
   bucketTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    marginBottom: 8,
+    ...Type.cardTitle,
+    marginBottom: 12,
   },
   bucketItem: {
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 4,
+    ...Type.bodySmall,
+    marginBottom: 8,
   },
   emptyText: {
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: '500',
+    ...Type.bodySmall,
   },
   rhythmCard: {
     borderRadius: 24,
-    marginBottom: 14,
-    gap: 8,
+    marginBottom: 24,
+    gap: 10,
     backgroundColor: 'rgba(255,255,255,0.03)',
   },
   rhythmRow: {
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderRadius: 14,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 10,
+    gap: 12,
   },
   dayBadge: {
     width: 56,
@@ -577,32 +570,29 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   dayBadgeLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.3,
+    ...Type.meta,
   },
   dayBadgeDate: {
     marginTop: 2,
-    fontSize: 16,
-    fontWeight: '700',
+    ...Type.cardTitle,
   },
   dayTaskStack: {
     flex: 1,
     gap: 6,
   },
   dayTaskRow: {
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderRadius: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    backgroundColor: 'rgba(255,255,255,0.02)',
   },
   dayTaskText: {
     flex: 1,
-    fontSize: 13,
-    fontWeight: '600',
+    ...Type.bodySmall,
   },
   dayTaskActions: {
     flexDirection: 'row',
@@ -612,7 +602,7 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 13,
-    borderWidth: 1,
+    borderWidth: 0.75,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -622,15 +612,15 @@ const styles = StyleSheet.create({
   },
   habitsCard: {
     borderRadius: 24,
-    marginBottom: 14,
+    marginBottom: 24,
     gap: 8,
     backgroundColor: 'rgba(255,255,255,0.03)',
   },
   habitRow: {
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
@@ -643,32 +633,28 @@ const styles = StyleSheet.create({
   },
   habitTitle: {
     flex: 1,
-    fontSize: 14,
-    lineHeight: 19,
-    fontWeight: '500',
+    ...Type.bodySmall,
   },
   paceWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 14,
+    gap: 10,
+    marginBottom: 24,
   },
   pacePill: {
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
   paceText: {
-    fontSize: 13,
-    fontWeight: '600',
+    ...Type.label,
   },
   primaryButton: {
-    marginBottom: 12,
+    marginBottom: 16,
   },
   secondaryAction: {
     textAlign: 'center',
-    fontSize: 15,
-    fontWeight: '600',
+    ...Type.bodyStrong,
   },
 });

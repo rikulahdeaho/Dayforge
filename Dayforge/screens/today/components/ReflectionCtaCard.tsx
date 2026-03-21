@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SurfaceCard, DayforgePalette } from '@/components/dayforge/Primitives';
 import { SymbolView } from '@/components/dayforge/SymbolView';
 import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
-import { Fonts } from '@/constants/Typography';
+import { Fonts, Type } from '@/constants/Typography';
 
 export function ReflectionCtaCard({
   palette,
@@ -27,16 +27,16 @@ export function ReflectionCtaCard({
         style={[
           styles.card,
           highlight && {
-            borderColor: `${palette.accentSoft}CC`,
+            borderColor: `${palette.accentSoft}66`,
             borderWidth: 1,
           },
         ]}>
         <View style={styles.topRow}>
-          <View style={[styles.badge, { backgroundColor: palette.accentStrong }]}>
+          <View style={[styles.badge, { backgroundColor: `${palette.accentStrong}33`, borderColor: `${palette.accentSoft}44` }]}>
             <SymbolView
               name={resolveSymbolName({ ios: 'book.pages.fill', android: 'menu_book', web: 'menu_book' })}
               size={18}
-              tintColor="#fff"
+              tintColor={palette.accentSoft}
             />
           </View>
           <View style={styles.copy}>
@@ -47,7 +47,7 @@ export function ReflectionCtaCard({
 
         <View style={[styles.statusRow, { borderColor: palette.border }]}>
           <Text style={[styles.statusText, { color: palette.text }]}>{status}</Text>
-          <Text style={[styles.statusMeta, { color: palette.accent }]}>{meta}</Text>
+          <Text style={[styles.statusMeta, { color: palette.mutedText }]}>{meta}</Text>
         </View>
       </SurfaceCard>
     </Pressable>
@@ -71,6 +71,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -78,15 +79,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '700',
+    ...Type.cardTitle,
     fontFamily: Fonts.heading,
     marginBottom: 2,
   },
   body: {
-    fontSize: 13,
-    lineHeight: 18,
+    ...Type.bodySmall,
   },
   statusRow: {
     marginTop: 12,
@@ -99,12 +97,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   statusText: {
-    fontSize: 12,
-    fontWeight: '600',
+    ...Type.metaStrong,
   },
   statusMeta: {
-    fontSize: 12,
-    fontWeight: '700',
+    ...Type.meta,
   },
   pressed: {
     transform: [{ scale: 0.985 }],

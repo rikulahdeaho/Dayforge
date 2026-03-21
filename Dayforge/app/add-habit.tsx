@@ -8,6 +8,7 @@ import { scrollFocusedInputIntoView } from '@/components/dayforge/scrollFocusedI
 import { TopGradientBackground } from '@/components/dayforge/TopGradientBackground';
 import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
 import Colors from '@/constants/Colors';
+import { Type } from '@/constants/Typography';
 import { useAppState } from '@/store/appState';
 import { PlatformIconName } from '@/types';
 
@@ -185,21 +186,18 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   title: {
-    fontSize: 30,
-    fontWeight: '700',
+    ...Type.screenTitleCompact,
   },
   subtitle: {
     marginTop: 4,
-    fontSize: 14,
-    fontWeight: '500',
+    ...Type.bodySmall,
   },
   formCard: {
     borderRadius: 28,
     backgroundColor: 'rgba(255,255,255,0.04)',
   },
   label: {
-    fontSize: 16,
-    fontWeight: '700',
+    ...Type.label,
     marginBottom: 8,
     marginTop: 2,
   },
@@ -208,7 +206,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 14,
-    fontSize: 16,
+    ...Type.body,
     marginBottom: 10,
   },
   iconGrid: {
@@ -228,8 +226,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   iconLabel: {
-    fontSize: 13,
-    fontWeight: '600',
+    ...Type.metaStrong,
   },
   actionRow: {
     flexDirection: 'row',
@@ -245,8 +242,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   secondaryBtnText: {
-    fontSize: 16,
-    fontWeight: '700',
+    ...Type.label,
   },
   primaryBtn: {
     flex: 1,
@@ -257,7 +253,6 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
+    ...Type.label,
   },
 });

@@ -43,6 +43,7 @@ import {
 } from '@/components/dayforge/Primitives';
 import { WeekdayPicker } from '@/components/dayforge/WeekdayPicker';
 import Colors from '@/constants/Colors';
+import { Type } from '@/constants/Typography';
 import { useAppState } from '@/store/appState';
 import {
   getCurrentMondayBasedDayIndex,
@@ -104,7 +105,7 @@ export default function TaskScreen() {
         <FlowStatusRow palette={palette} />
         <FlowCTA palette={palette} currentStep="tasks" />
 
-        <GradientCard palette={palette} style={styles.focusCard}>
+        <GradientCard palette={palette} style={styles.focusCard} colors={['#191523', '#231c31', '#2c243b']}>
           <View style={styles.focusTop}>
             <View style={styles.objectiveTag}>
               <Text style={styles.objectiveTagText}>{state.goal.label}</Text>
@@ -179,9 +180,8 @@ export default function TaskScreen() {
               </View>
             </Pressable>
           </View>
-          <Text style={[styles.sectionAction, { color: palette.accent }]}>{remainingTasks} REMAINING</Text>
+          <Text style={[styles.sectionAction, { color: palette.mutedText }]}>{remainingTasks} remaining</Text>
         </View>
-        <Text style={[styles.swipeHint, { color: palette.mutedText }]}>Swipe left on a task to delete it.</Text>
         {state.tasks
           .filter((task) => task.dateKey === selectedDateKey)
           .filter((task) => task.id !== pendingTaskDeletion?.id)
@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
   },
   sectionRow: {
     paddingHorizontal: 6,
-    marginBottom: 12,
+    marginBottom: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -335,19 +335,17 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    ...Type.cardTitle,
   },
   addTaskChip: {
-    borderWidth: 1,
+    borderWidth: 0.75,
     borderRadius: 999,
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 7,
+    backgroundColor: 'rgba(255,255,255,0.02)',
   },
   addTaskChipText: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.4,
+    ...Type.metaStrong,
   },
   addTaskChipInner: {
     flexDirection: 'row',
@@ -355,44 +353,38 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   sectionAction: {
-    fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 0.6,
+    ...Type.metaStrong,
   },
   swipeHint: {
     paddingHorizontal: 6,
     marginTop: -2,
     marginBottom: 10,
-    fontSize: 12,
-    fontWeight: '500',
+    ...Type.meta,
   },
   focusCard: {
-    marginBottom: 24,
+    marginBottom: 20,
     borderRadius: 30,
+    padding: 24,
   },
   focusTop: {
-    marginBottom: 10,
+    marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
   },
   objectiveTag: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 999,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 6,
   },
   objectiveTagText: {
     color: '#fff',
-    fontSize: 13,
-    letterSpacing: 0.8,
-    fontWeight: '700',
+    ...Type.metaStrong,
   },
   focusGoal: {
     color: '#fff',
-    fontSize: 24,
-    lineHeight: 30,
-    fontWeight: '700',
-    marginBottom: 12,
+    ...Type.heroTitle,
+    marginBottom: 16,
   },
   focusProgress: {
     flex: 1,
@@ -401,11 +393,10 @@ const styles = StyleSheet.create({
   },
   focusValue: {
     color: '#fff',
-    fontSize: 15,
-    fontWeight: '700',
+    ...Type.bodyStrong,
   },
   ctaWrap: {
-    marginTop: 18,
+    marginTop: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -413,29 +404,31 @@ const styles = StyleSheet.create({
   stepperGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
   stepperButton: {
-    width: 56,
-    height: 56,
-    backgroundColor: '#fff',
-    borderRadius: 28,
+    width: 42,
+    height: 42,
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    borderRadius: 21,
+    borderWidth: 0.75,
+    borderColor: 'rgba(255,255,255,0.10)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   stepperText: {
-    color: '#5b21b6',
-    fontSize: 26,
+    color: '#fff',
+    fontSize: 20,
     fontWeight: '700',
   },
   editButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 2,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 0.75,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgb(255, 255, 255)',
+    backgroundColor: 'rgba(255,255,255,0.10)',
   },
 
   scheduleList: {
@@ -472,7 +465,7 @@ const styles = StyleSheet.create({
   taskCard: {
     marginBottom: 12,
     borderRadius: 26,
-    paddingVertical: 14,
+    paddingVertical: 16,
     backgroundColor: 'rgba(255,255,255,0.035)',
   },
   taskRow: {
@@ -483,27 +476,24 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    borderWidth: 2,
+    borderWidth: 1.25,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   taskText: {
     flex: 1,
-    fontSize: 15,
-    lineHeight: 20,
+    ...Type.body,
     marginRight: 8,
   },
   categoryBadge: {
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 0.75,
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 3,
   },
   categoryBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.3,
+    ...Type.meta,
   },
   addTask: {
     marginTop: 2,
@@ -520,9 +510,7 @@ const styles = StyleSheet.create({
   },
   deleteActionText: {
     color: '#fff',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.4,
+    ...Type.metaStrong,
   },
   undoBar: {
     position: 'absolute',
@@ -540,13 +528,10 @@ const styles = StyleSheet.create({
   },
   undoText: {
     flex: 1,
-    fontSize: 13,
-    fontWeight: '600',
+    ...Type.label,
   },
   undoAction: {
-    fontSize: 13,
-    fontWeight: '800',
-    letterSpacing: 0.4,
+    ...Type.action,
   },
   reflectionCard: {
     alignItems: 'center',

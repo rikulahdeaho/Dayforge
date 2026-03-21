@@ -12,7 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import Colors from '@/constants/Colors';
-import { Fonts } from '@/constants/Typography';
+import { Fonts, Type } from '@/constants/Typography';
 import { DateHeader } from '@/components/dayforge/DateHeader';
 import { FlowCTA, FlowStatusRow } from '@/components/dayforge/FlowCTA';
 import { TopGradientBackground } from '@/components/dayforge/TopGradientBackground';
@@ -171,11 +171,11 @@ export default function TodayScreen() {
   const isSunday = new Date().getDay() === 0;
 
   const taskActionLabel =
-    totalTasks === 0 ? 'OPEN TASKS' : remainingTasks > 0 ? `${remainingTasks} REMAINING` : 'VIEW ALL';
+    totalTasks === 0 ? 'Open tasks' : remainingTasks > 0 ? `${remainingTasks} left` : 'View all';
 
-  const reflectionStatus = reflectionDoneToday ? 'Done today' : reflectionStreak > 0 ? 'Streak at risk' : 'Not done yet';
+  const reflectionStatus = reflectionDoneToday ? 'Saved today' : reflectionStreak > 0 ? 'Do it today' : 'Not started';
   const reflectionMotivation = reflectionDoneToday
-    ? 'Nice close-out. You can update it in Reflect.'
+    ? 'Nice close-out. Update it anytime.'
     : 'Capture today before it slips away.';
   const reflectionTimeMeta = reflectionDoneToday ? 'Saved' : getTimeUntilDayEndsLabel(now);
   return (
@@ -203,6 +203,7 @@ export default function TodayScreen() {
           style={({ pressed }) => [styles.heroPressable, pressed && styles.scaleDown]}>
           <GradientCard
             palette={palette}
+            colors={['#191523', '#231c31', '#2c243b']}
             style={[
               styles.heroCard,
               focusedSection === 'habits' && {
@@ -259,9 +260,9 @@ export default function TodayScreen() {
               },
             ]}>
             {totalTasks === 0 ? (
-              <Text style={[styles.emptyTaskText, { color: palette.mutedText }]}>No tasks for today yet.</Text>
+              <Text style={[styles.emptyTaskText, { color: palette.mutedText }]}>No tasks yet.</Text>
             ) : remainingTasks === 0 ? (
-              <Text style={[styles.emptyTaskText, { color: palette.success }]}>All tasks done for today.</Text>
+              <Text style={[styles.emptyTaskText, { color: palette.success }]}>All tasks are done.</Text>
             ) : previewTasks.length ? (
               previewTasks.map((task) => (
                 <TaskPreviewItem
@@ -274,12 +275,12 @@ export default function TodayScreen() {
                 />
               ))
             ) : (
-              <Text style={[styles.emptyTaskText, { color: palette.mutedText }]}>No tasks for today yet.</Text>
+              <Text style={[styles.emptyTaskText, { color: palette.mutedText }]}>No tasks yet.</Text>
             )}
 
             {totalTasks === 1 ? (
               <Text style={[styles.singleTaskHint, { color: palette.mutedText }]}>
-                {remainingTasks === 0 ? 'All set. Tap to open tasks.' : '1 remaining. Tap to open tasks.'}
+                {remainingTasks === 0 ? 'All set. Open tasks anytime.' : '1 left. Open tasks.'}
               </Text>
             ) : null}
           </SurfaceCard>
@@ -388,23 +389,17 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     color: '#ffffff',
-    fontSize: 24,
-    lineHeight: 30,
-    fontWeight: '700',
-    fontFamily: Fonts.heading,
+    ...Type.heroTitle,
     marginBottom: 4,
   },
   heroKickoff: {
     color: '#ffffff',
-    fontSize: 15,
-    lineHeight: 20,
-    fontWeight: '600',
+    ...Type.bodyStrong,
     marginBottom: 4,
   },
   heroBody: {
     color: 'rgba(255,255,255,0.78)',
-    fontSize: 14,
-    lineHeight: 20,
+    ...Type.bodySmall,
     marginBottom: 14,
   },
   heroProgress: {
@@ -418,14 +413,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    fontFamily: Fonts.heading,
+    ...Type.sectionTitle,
   },
   sectionAction: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.45,
+    ...Type.metaStrong,
   },
   previewCard: {
     marginBottom: 22,
@@ -438,16 +429,13 @@ const styles = StyleSheet.create({
   },
   emptyTaskText: {
     textAlign: 'center',
-    fontSize: 14,
-    lineHeight: 20,
+    ...Type.bodySmall,
     paddingVertical: 6,
   },
   singleTaskHint: {
     marginTop: 2,
     textAlign: 'center',
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '500',
+    ...Type.meta,
   },
   weeklyStatsCard: {
     borderRadius: 30,
@@ -456,21 +444,18 @@ const styles = StyleSheet.create({
   },
   weeklyHeaderRow: {
     paddingHorizontal: 6,
-    marginBottom: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    marginBottom: 12,
+    gap: 10,
   },
   trendPill: {
+    alignSelf: 'flex-start',
     borderWidth: 1,
     borderRadius: 999,
     paddingVertical: 4,
     paddingHorizontal: 10,
   },
   trendText: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.3,
+    ...Type.metaStrong,
   },
   weeklyStatGrid: {
     flexDirection: 'row',
@@ -485,15 +470,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   weeklyStatTitle: {
-    fontSize: 11,
-    fontWeight: '600',
+    ...Type.metaStrong,
     marginBottom: 3,
   },
   weeklyStatSub: {
     marginTop: 2,
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.3,
+    ...Type.meta,
   },
   weeklyStatValue: {
     fontSize: 18,
@@ -511,7 +493,6 @@ const styles = StyleSheet.create({
   },
   insightText: {
     flex: 1,
-    fontSize: 12,
-    fontWeight: '600',
+    ...Type.metaStrong,
   },
 });

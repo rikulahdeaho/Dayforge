@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { SurfaceCard, DayforgePalette } from '@/components/dayforge/Primitives';
-import { Fonts } from '@/constants/Typography';
+import { Fonts, Type } from '@/constants/Typography';
 
 export function WeeklyPlanPromptCard({
   palette,
@@ -37,33 +37,28 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   title: {
-    fontSize: 17,
-    lineHeight: 22,
-    fontWeight: '700',
+    ...Type.cardTitle,
     fontFamily: Fonts.heading,
   },
   badge: {
-    fontSize: 11,
-    fontWeight: '700',
+    ...Type.meta,
     letterSpacing: 0.6,
   },
   body: {
-    fontSize: 14,
-    lineHeight: 20,
+    ...Type.bodySmall,
     marginBottom: 10,
   },
   button: {
     alignSelf: 'flex-start',
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: 'rgba(124,58,237,0.28)',
+    borderColor: 'rgba(124,58,237,0.18)',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: 'rgba(124,58,237,0.08)',
+    backgroundColor: 'rgba(124,58,237,0.05)',
   },
   buttonText: {
-    fontSize: 13,
-    fontWeight: '700',
+    ...Type.metaStrong,
     letterSpacing: 0.3,
   },
   pressed: {

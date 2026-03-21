@@ -6,6 +6,7 @@ import { DayforgePalette, SurfaceCard } from '@/components/dayforge/Primitives';
 import { TopGradientBackground } from '@/components/dayforge/TopGradientBackground';
 import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
 import Colors from '@/constants/Colors';
+import { Type } from '@/constants/Typography';
 import { useAppState } from '@/store/appState';
 import { formatFullDateLabel, parseDateKeyToDate } from '@/store/appState.helpers';
 
@@ -97,8 +98,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
+    ...Type.heroTitle,
   },
   closeButton: {
     width: 42,
@@ -109,8 +109,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dateText: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...Type.dateMeta,
     marginBottom: 12,
   },
   kpiCard: {
@@ -123,8 +122,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.035)',
   },
   cardTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    ...Type.cardTitle,
     marginBottom: 8,
   },
   kpiRow: {
@@ -141,15 +139,12 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   kpiLabel: {
-    fontSize: 13,
-    fontWeight: '600',
+    ...Type.metaStrong,
   },
   kpiValue: {
-    fontSize: 14,
-    fontWeight: '700',
+    ...Type.cardTitle,
   },
   snippetText: {
-    fontSize: 14,
-    lineHeight: 20,
+    ...Type.body,
   },
 });

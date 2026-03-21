@@ -27,7 +27,7 @@ export function GlowButton({
         opacity: disabled ? 0.58 : 1,
       })}>
       <LinearGradient
-        colors={[palette.accentStrong, palette.accent, '#9f4dff']}
+        colors={[palette.accentStrong, palette.accent, '#7c60b1']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.glowButton, { shadowColor: palette.accentStrong }, style]}>
@@ -43,10 +43,10 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowOpacity: 0.45,
-    shadowRadius: 20,
+    shadowOpacity: 0.22,
+    shadowRadius: 14,
     shadowOffset: { width: 0, height: 10 },
-    elevation: 10,
+    elevation: 6,
   },
   glowButtonText: {
     fontSize: 18,

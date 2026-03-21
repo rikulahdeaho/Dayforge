@@ -6,6 +6,7 @@ import { DayforgePalette, SurfaceCard } from '@/components/dayforge/Primitives';
 import { TopGradientBackground } from '@/components/dayforge/TopGradientBackground';
 import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
 import Colors from '@/constants/Colors';
+import { Type } from '@/constants/Typography';
 import { useAppState } from '@/store/appState';
 import { type Mood } from '@/types';
 
@@ -123,8 +124,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
+    ...Type.screenTitle,
   },
   closeButton: {
     width: 42,
@@ -151,21 +151,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   entryDate: {
-    fontSize: 15,
-    fontWeight: '700',
+    ...Type.cardTitle,
     marginBottom: 4,
   },
   entryPreview: {
-    fontSize: 13,
-    lineHeight: 18,
+    ...Type.bodySmall,
   },
   entryMoodSummary: {
     marginTop: 3,
-    fontSize: 12,
-    fontWeight: '700',
+    ...Type.metaStrong,
   },
   emptyText: {
-    fontSize: 15,
+    ...Type.body,
     textAlign: 'center',
   },
 });

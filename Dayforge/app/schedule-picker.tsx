@@ -6,6 +6,7 @@ import { DayforgePalette, SurfaceCard } from '@/components/dayforge/Primitives';
 import { TopGradientBackground } from '@/components/dayforge/TopGradientBackground';
 import { resolveSymbolName } from '@/components/dayforge/resolveSymbolName';
 import Colors from '@/constants/Colors';
+import { Type } from '@/constants/Typography';
 import { useAppState } from '@/store/appState';
 import { formatFullDateLabel, toDateKey } from '@/store/appState.helpers';
 
@@ -87,8 +88,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
+    ...Type.screenTitle,
   },
   closeButton: {
     width: 42,
@@ -110,12 +110,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   dateText: {
-    fontSize: 14,
-    fontWeight: '700',
+    ...Type.cardTitle,
     marginBottom: 2,
   },
   metaText: {
-    fontSize: 12,
-    fontWeight: '500',
+    ...Type.meta,
   },
 });

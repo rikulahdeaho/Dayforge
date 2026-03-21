@@ -31,18 +31,18 @@ export function resolveHeroBody(totalCount: number, completedCount: number, next
   const habitsLeft = Math.max(0, totalCount - completedCount);
 
   if (!totalCount) {
-    return 'Add your first habit and build a repeatable daily rhythm.';
+    return 'Add your first habit. Build a steady rhythm.';
   }
 
   if (habitsLeft === 0) {
-    return 'Everything is done for this day. Keep the consistency tomorrow.';
+    return 'Everything is done. Keep it steady tomorrow.';
   }
 
   if (habitsLeft === 1 && nextHabitTitle) {
     return `Only one left: ${nextHabitTitle}. Finish strong.`;
   }
 
-  return `${habitsLeft} habits left. Stack small wins and keep the chain alive.`;
+  return `${habitsLeft} habits left. Keep the rhythm going.`;
 }
 
 export function resolveHabitStatus(weeklyProgress: boolean[]) {
