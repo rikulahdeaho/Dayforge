@@ -65,6 +65,27 @@ export function getFlowStep(state: AppState): FlowStep {
 
 export function getFlowCTA(state: AppState) {
   const step = getFlowStep(state);
+  const remainingTasks = selectRemainingTasksCount(state);
+  const totalHabits = selectTotalHabitsCount(state);
+  const completedHabits = selectCompletedHabitsCount(state);
+  const habitsLeft = Math.max(0, totalHabits - completedHabits);
+
+  if (step === 'tasks') {
+    return {
+      step,
+      ...FLOW_COPY[step],
+      label: remainingTasks === 1 ? 'Finish tasks' : 'Continue tasks',
+    };
+  }
+
+  if (step === 'habits') {
+    return {
+      step,
+      ...FLOW_COPY[step],
+      label: habitsLeft === 1 ? 'Finish habits' : 'Continue habits',
+    };
+  }
+
   return {
     step,
     ...FLOW_COPY[step],
@@ -79,6 +100,34 @@ export function getFlowStatus(state: AppState) {
   const remainingTasks = selectRemainingTasksCount(state);
   const habitsLeft = Math.max(0, totalHabits - completedHabits);
   const action = getFlowCTA(state);
+
+  if (action.step === 'tasks') {
+    if (remainingTasks === 0) {
+      return {
+        primary: 'All done for today',
+        secondary: '',
+      };
+    }
+
+    return {
+      primary: `${completedTasks} of ${totalTasks} done · ${remainingTasks} left`,
+      secondary: '',
+    };
+  }
+
+  if (action.step === 'habits') {
+    if (habitsLeft === 0) {
+      return {
+        primary: 'All done for today',
+        secondary: '',
+      };
+    }
+
+    return {
+      primary: `${completedHabits} of ${totalHabits} done · ${habitsLeft} left`,
+      secondary: '',
+    };
+  }
 
   const done = completedTasks + completedHabits;
   const total = totalTasks + totalHabits;

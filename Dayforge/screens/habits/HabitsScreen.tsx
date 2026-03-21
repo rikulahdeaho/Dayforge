@@ -19,6 +19,7 @@ import {
   resolveHabitStatus,
   resolveHeroBody,
   resolveStreakPillText,
+  WEEKDAY_FULL_LABELS,
   WEEKDAY_LABELS,
 } from '@/screens/habits/utils';
 import { useAppState } from '@/store/appState';
@@ -180,7 +181,7 @@ export default function HabitsScreen() {
               <Text style={styles.streakText}>{resolveStreakPillText(totalCount, completedCount)}</Text>
             </View>
             <Text style={styles.heroTitle}>
-              {Math.max(0, totalCount - completedCount)} left for {WEEKDAY_LABELS[selectedHabitDayIndex]}
+              {Math.max(0, totalCount - completedCount)} left for {WEEKDAY_FULL_LABELS[selectedHabitDayIndex]}
             </Text>
             <Text style={styles.heroBody}>{resolveHeroBody(totalCount, completedCount, nextIncompleteHabit?.title)}</Text>
             <ProgressTrack value={progressValue} palette={palette} style={styles.heroProgress} />

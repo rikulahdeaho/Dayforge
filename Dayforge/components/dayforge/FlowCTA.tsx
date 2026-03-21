@@ -11,7 +11,7 @@ import { DayforgePalette } from './types';
 export function FlowStatusRow({ palette }: { palette: DayforgePalette }) {
   const { state } = useAppState();
   const status = getFlowStatus(state);
-  const inlineStatus = `${status.primary} · ${status.secondary}`;
+  const inlineStatus = status.secondary ? `${status.primary} · ${status.secondary}` : status.primary;
 
   return (
     <View style={styles.statusWrap}>

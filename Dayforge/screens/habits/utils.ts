@@ -1,6 +1,7 @@
 import { PlatformIconName } from '@/types';
 
 export const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+export const WEEKDAY_FULL_LABELS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 export const HABIT_ICON_ID_BY_IOS_NAME: Record<string, string> = {
   'figure.mind.and.body': 'figure.mind.and.body',

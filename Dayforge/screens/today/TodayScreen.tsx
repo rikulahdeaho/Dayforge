@@ -26,7 +26,6 @@ import { useAppState } from '@/store/appState';
 import {
   selectCompletedHabitsCount,
   selectCompletedTasksCount,
-  selectFirstName,
   selectHabitProgress,
   selectMostProductiveDay,
   selectReflectionStreak,
@@ -67,8 +66,6 @@ export default function TodayScreen() {
 
   const reflectionStreak = selectReflectionStreak(state);
   const reflectionDoneToday = state.reflectionHistory.some((entry) => entry.fullDate === todayFullDate);
-  const firstName = selectFirstName(state).trim();
-
   const todayTasks = useMemo(
     () => state.tasks.filter((task) => task.dateKey === todayDateKey),
     [state.tasks, todayDateKey]
@@ -138,7 +135,6 @@ export default function TodayScreen() {
 
   const heroKickoffText = resolveHeroKickoffText(habitProgress, totalHabits, flow.step);
   const heroSupportText = resolveHeroSupportText(habitsLeft, totalHabits, flow.step);
-  const greeting = firstName ? `Welcome back, ${firstName}` : 'Welcome back';
 
   const weeklyStats = [
     { id: 'habits', title: 'Habits', value: `${completedHabits}/${totalHabits}`, sub: 'done today' },
@@ -182,7 +178,7 @@ export default function TodayScreen() {
     <View style={[styles.safe, { backgroundColor: palette.background }]}>
       <TopGradientBackground />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <DateHeader palette={palette} dateText={todayDate} title="Today" subtitle={greeting} />
+        <DateHeader palette={palette} dateText={todayDate} title="Today" />
         <FlowStatusRow palette={palette} />
         <FlowCTA palette={palette} />
         {isSunday ? (
