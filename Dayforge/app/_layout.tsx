@@ -90,15 +90,15 @@ function RootNavigator() {
           <Stack>
             <Stack.Screen name="onboarding" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="add-task" options={{ presentation: 'modal', title: 'Add Task', headerShown: false }} />
-            <Stack.Screen name="add-habit" options={{ presentation: 'modal', title: 'Add Habit', headerShown: false }} />
-            <Stack.Screen name="edit-weekly-focus" options={{ presentation: 'modal', title: 'Edit Weekly Focus', headerShown: false }} />
-            <Stack.Screen name="day-summary" options={{ presentation: 'modal', title: 'Day Summary', headerShown: false }} />
-            <Stack.Screen name="schedule-picker" options={{ presentation: 'modal', title: 'Schedule', headerShown: false }} />
-            <Stack.Screen name="schedule-day" options={{ presentation: 'modal', title: 'Schedule Day', headerShown: false }} />
-            <Stack.Screen name="weekly-plan" options={{ presentation: 'modal', title: 'Weekly Plan', headerShown: false }} />
-            <Stack.Screen name="reflections" options={{ presentation: 'modal', title: 'Past Reflections', headerShown: false }} />
-            <Stack.Screen name="reflection/[id]" options={{ presentation: 'modal', title: 'Reflection Detail', headerShown: false }} />
+            <Stack.Screen name="add-task" options={{ presentation: 'modal', title: 'Add Task', headerShown: false, animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="add-habit" options={{ presentation: 'modal', title: 'Add Habit', headerShown: false, animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="edit-weekly-focus" options={{ presentation: 'modal', title: 'Edit Weekly Focus', headerShown: false, animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="day-summary" options={{ presentation: 'modal', title: 'Day Summary', headerShown: false, animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="schedule-picker" options={{ presentation: 'modal', title: 'Schedule', headerShown: false, animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="schedule-day" options={{ presentation: 'modal', title: 'Schedule Day', headerShown: false, animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="weekly-plan" options={{ presentation: 'modal', title: 'Weekly Plan', headerShown: false, animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="reflections" options={{ presentation: 'modal', title: 'Past Reflections', headerShown: false, animation: 'slide_from_bottom' }} />
+            <Stack.Screen name="reflection/[id]" options={{ presentation: 'modal', title: 'Reflection Detail', headerShown: false, animation: 'slide_from_bottom' }} />
           </Stack>
           <Snackbar
             message={successMessage}

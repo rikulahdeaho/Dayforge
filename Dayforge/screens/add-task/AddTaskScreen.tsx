@@ -8,7 +8,7 @@ import { TopGradientBackground } from '@/components/dayforge/TopGradientBackgrou
 import Colors from '@/constants/Colors';
 import { Type } from '@/constants/Typography';
 import { useAppState } from '@/store/appState';
-import { getCurrentMondayBasedDayIndex, getDateForMondayBasedDayIndex } from '@/store/appState.helpers';
+import { getCurrentMondayBasedDayIndex, getDateKeyForMondayBasedDayIndex, parseDateKeyToDate, toDateKey } from '@/store/appState.helpers';
 import { TaskCategory } from '@/types';
 
 const categories: { id: TaskCategory; label: string }[] = [
@@ -19,7 +19,7 @@ const categories: { id: TaskCategory; label: string }[] = [
 
 export default function AddTaskScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ dayIndex?: string }>();
+  const params = useLocalSearchParams<{ dayIndex?: string; dateKey?: string }>();
   const { addTask, state } = useAppState();
   const palette = (state.preferences.darkMode ? Colors.dark : Colors.light) as DayforgePalette;
   const [taskTitle, setTaskTitle] = useState('');
@@ -32,7 +32,18 @@ export default function AddTaskScreen() {
     return getCurrentMondayBasedDayIndex();
   }, [params.dayIndex]);
 
-  const selectedDayLabel = getDateForMondayBasedDayIndex(selectedDayIndex).toLocaleDateString(undefined, {
+  const selectedDateKey = useMemo(() => {
+    if (typeof params.dateKey === 'string') {
+      const parsedDate = parseDateKeyToDate(params.dateKey);
+      if (toDateKey(parsedDate) === params.dateKey) {
+        return params.dateKey;
+      }
+    }
+
+    return getDateKeyForMondayBasedDayIndex(selectedDayIndex);
+  }, [params.dateKey, selectedDayIndex]);
+
+  const selectedDayLabel = parseDateKeyToDate(selectedDateKey).toLocaleDateString(undefined, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -44,7 +55,7 @@ export default function AddTaskScreen() {
       return;
     }
 
-    addTask({ title: taskTitle, dayIndex: selectedDayIndex, category });
+    addTask({ title: taskTitle, dayIndex: selectedDayIndex, dateKey: selectedDateKey, category });
     router.back();
   };
 

@@ -104,7 +104,6 @@ export default function WeeklyPlanScreen() {
   const weekRhythm = useMemo(
     () =>
       weekdayLabels.map((label, index) => {
-        const dateKey = getDateKeyForMondayBasedDayIndex(index);
         const date = getDateForMondayBasedDayIndex(index, selectedWeekBaseDate);
         const dateKeyForWeek = getDateKeyForMondayBasedDayIndex(index, selectedWeekBaseDate);
 
@@ -142,6 +141,14 @@ export default function WeeklyPlanScreen() {
       taskId,
       dateKey: getDateKeyForMondayBasedDayIndex(targetDay, selectedWeekBaseDate),
     });
+  };
+
+  const openAddTask = (dayIndex: number, dateKey: string) => {
+    feedbackTap();
+    router.push({
+      pathname: '/add-task',
+      params: { dayIndex: String(dayIndex), dateKey },
+    } as never);
   };
 
   const saveAndClose = () => {
@@ -351,6 +358,23 @@ export default function WeeklyPlanScreen() {
                 ) : (
                   <Text style={[styles.emptyText, { color: palette.mutedText }]}>No tasks</Text>
                 )}
+                <Pressable
+                  onPress={() => openAddTask(day.index, day.dateKey)}
+                  style={({ pressed }) => [
+                    styles.dayAddTaskButton,
+                    {
+                      borderColor: palette.border,
+                      backgroundColor: palette.cardStrong,
+                      transform: [{ scale: pressed ? 0.98 : 1 }],
+                    },
+                  ]}>
+                  <SymbolView
+                    name={resolveSymbolName({ ios: 'plus', android: 'add', web: 'add' })}
+                    size={13}
+                    tintColor={palette.accentStrong}
+                  />
+                  <Text style={[styles.dayAddTaskText, { color: palette.accentStrong }]}>Add task</Text>
+                </Pressable>
               </View>
             </View>
           ))}
@@ -433,7 +457,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
           content: {
     paddingHorizontal: 10,
-    paddingTop: 65,
+    paddingTop: 40,
     paddingBottom: 128,
   },
   headerRow: {
@@ -656,6 +680,20 @@ const styles = StyleSheet.create({
   moveButtonText: {
     fontSize: 14,
     fontWeight: '700',
+  },
+  dayAddTaskButton: {
+    minHeight: 34,
+    borderWidth: 0.75,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  dayAddTaskText: {
+    ...Type.metaStrong,
   },
   habitsCard: {
     borderRadius: 24,

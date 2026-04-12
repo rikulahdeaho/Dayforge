@@ -1,6 +1,6 @@
 import { Task, TaskCategory } from '@/types';
 
-import { getCurrentMondayBasedDayIndex, getDateForMondayBasedDayIndex, getDateKeyForMondayBasedDayIndex } from '../appState.helpers';
+import { getCurrentMondayBasedDayIndex, getDateForMondayBasedDayIndex, getDateKeyForMondayBasedDayIndex, parseDateKeyToDate } from '../appState.helpers';
 import { createEntityId } from '../utils/id';
 
 export function buildTaskFromTitle(title: string): Task {
@@ -15,15 +15,15 @@ export function buildTaskFromTitle(title: string): Task {
   };
 }
 
-export function createTask(input: { title: string; dayIndex?: number; category: TaskCategory }): Task {
-  const { title, dayIndex = getCurrentMondayBasedDayIndex(), category } = input;
+export function createTask(input: { title: string; dayIndex?: number; dateKey?: string; category: TaskCategory }): Task {
+  const { title, dayIndex = getCurrentMondayBasedDayIndex(), dateKey, category } = input;
   const normalizedTitle = title.trim();
 
   return {
     id: createEntityId('task'),
     title: normalizedTitle || 'New task',
     category,
-    dateKey: getDateKeyForMondayBasedDayIndex(dayIndex),
+    dateKey: dateKey ?? getDateKeyForMondayBasedDayIndex(dayIndex),
     completedToday: false,
     weeklyProgress: [false, false, false, false, false, false, false],
     completionByDate: {},
@@ -48,4 +48,20 @@ export function formatTaskDayLabel(dayIndex: number) {
     return `tomorrow (${compactDate})`;
   }
   return compactDate;
+}
+
+export function formatTaskDateLabel(dateKey: string) {
+  const date = parseDateKeyToDate(dateKey);
+  const dateDayIndex = getCurrentMondayBasedDayIndex(date);
+  const currentWeekDateKey = getDateKeyForMondayBasedDayIndex(dateDayIndex);
+
+  if (dateKey === currentWeekDateKey) {
+    return formatTaskDayLabel(dateDayIndex);
+  }
+
+  return date.toLocaleDateString(undefined, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  });
 }

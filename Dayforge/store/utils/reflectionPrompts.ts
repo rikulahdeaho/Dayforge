@@ -49,6 +49,30 @@ const WENT_WELL_PROMPTS: ReflectionPrompt[] = [
     question: 'What would make tomorrow better?',
     placeholder: 'Write one practical tweak for tomorrow...',
   },
+  {
+    question: 'What felt easier today than it used to?',
+    placeholder: 'Notice a skill, habit, or mindset that is improving...',
+  },
+  {
+    question: 'What did you stay consistent with today?',
+    placeholder: 'Write down the small thing you kept showing up for...',
+  },
+  {
+    question: 'What part of today are you most proud of?',
+    placeholder: 'Capture the effort or choice that mattered most...',
+  },
+  {
+    question: 'What helped you stay calm under pressure today?',
+    placeholder: 'Describe the situation and what kept you steady...',
+  },
+  {
+    question: 'What did you learn about yourself today?',
+    placeholder: 'Note one insight you want to carry forward...',
+  },
+  {
+    question: 'What moment today felt most meaningful?',
+    placeholder: 'Write about the moment and why it stood out...',
+  },
 ];
 
 const GRATEFUL_PROMPTS: ReflectionPrompt[] = [
@@ -87,6 +111,30 @@ const GRATEFUL_PROMPTS: ReflectionPrompt[] = [
   {
     question: 'What part of your life feels meaningful today?',
     placeholder: 'Reflect on what felt most meaningful...',
+  },
+  {
+    question: 'What felt safe or steady today?',
+    placeholder: 'Notice the person, place, or routine that grounded you...',
+  },
+  {
+    question: 'What simple thing made today lighter?',
+    placeholder: 'Capture the small detail that improved your day...',
+  },
+  {
+    question: 'What are you glad you did not take for granted today?',
+    placeholder: 'Write down one thing you usually overlook...',
+  },
+  {
+    question: 'What gave you a sense of peace today?',
+    placeholder: 'Describe the moment, environment, or person...',
+  },
+  {
+    question: 'What in your life feels supportive right now?',
+    placeholder: 'Name the support system, tool, or habit you appreciate...',
+  },
+  {
+    question: 'What are you quietly thankful for tonight?',
+    placeholder: 'Write one thing that matters even if it seems ordinary...',
   },
 ];
 

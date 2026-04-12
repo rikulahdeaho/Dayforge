@@ -14,7 +14,7 @@ import { Mood, PlatformIconName, TaskCategory } from '../types';
 import { createHabit } from './actions/habitActions';
 import { buildCompletedOnboardingState, buildSkippedOnboardingState } from './actions/onboardingActions';
 import { saveReflectionDraft } from './actions/reflectionActions';
-import { createTask, formatTaskDayLabel } from './actions/taskActions';
+import { createTask, formatTaskDateLabel, formatTaskDayLabel } from './actions/taskActions';
 import { getGoalTargetSuccessMessage } from './actions/weeklyPlanActions';
 import { loadPersistedAppState, persistAppState } from './appState.persistence';
 import {
@@ -35,7 +35,7 @@ type AppStateContextValue = {
   updateHabit: (habitInput: { habitId: string; title: string; subtitle: string; icon: PlatformIconName }) => void;
   removeHabit: (habitId: string) => void;
   toggleTask: (taskId: string, dayIndex?: number) => void;
-  addTask: (input: { title: string; dayIndex?: number; category: TaskCategory }) => void;
+  addTask: (input: { title: string; dayIndex?: number; dateKey?: string; category: TaskCategory }) => void;
   removeTask: (taskId: string) => void;
   moveTaskToDate: (input: { taskId: string; dateKey: string }) => void;
   incrementGoalProgress: () => void;
@@ -216,12 +216,12 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           setSuccessMessage(`All tasks done for ${formatTaskDayLabel(dayIndex)}.`);
         }
       },
-      addTask: ({ title, dayIndex = getCurrentMondayBasedDayIndex(), category }) => {
+      addTask: ({ title, dayIndex = getCurrentMondayBasedDayIndex(), dateKey, category }) => {
         dispatch({
           type: 'ADD_TASK',
-          task: createTask({ title, dayIndex, category }),
+          task: createTask({ title, dayIndex, dateKey, category }),
         });
-        setSuccessMessage(`Task added for ${formatTaskDayLabel(dayIndex)}.`);
+        setSuccessMessage(`Task added for ${dateKey ? formatTaskDateLabel(dateKey) : formatTaskDayLabel(dayIndex)}.`);
       },
       removeTask: (taskId) => {
         dispatch({ type: 'REMOVE_TASK', taskId });

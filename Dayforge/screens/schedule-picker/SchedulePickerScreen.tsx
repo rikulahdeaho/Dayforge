@@ -117,7 +117,7 @@ export default function SchedulePickerScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
-  content: { paddingHorizontal: 12, paddingTop: 68, paddingBottom: 40 },
+  content: { paddingHorizontal: 12, paddingTop: 35, paddingBottom: 40 },
   headerRow: { marginBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   title: { ...Type.screenTitle },
   closeButton: { width: 48, height: 48, borderRadius: 24, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },

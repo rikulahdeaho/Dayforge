@@ -37,6 +37,15 @@ yarn-error.*
 *.tsbuildinfo
 .tmp-tests/
 
+# Android local configuration
+local.properties
+.gradle/
+.idea/
+
+# Build artifacts
+*.apk
+*.aab
+
 # generated native folders
 /ios
 /android
