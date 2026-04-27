@@ -17,9 +17,9 @@ This is not designed for large-scale backend-driven architecture. It is designed
 
 ## Store Structure
 
-The store code lives in [`store/`](C:/Users/rikul/Documents/Projects/Dayforge/Dayforge/store).
+The store code lives in `store/`.
 
-### [`store/appState.tsx`](C:/Users/rikul/Documents/Projects/Dayforge/Dayforge/store/appState.tsx)
+### `store/appState.tsx`
 
 Provider wiring and public app actions.
 
@@ -33,7 +33,7 @@ Responsibilities:
 
 This file should stay thin. If business logic starts growing here, move it into reducer, selectors, or helper modules.
 
-### [`store/appState.types.ts`](C:/Users/rikul/Documents/Projects/Dayforge/Dayforge/store/appState.types.ts)
+### `store/appState.types.ts`
 
 Central source for:
 
@@ -42,7 +42,7 @@ Central source for:
 
 Keep state shape definitions here so the rest of the store stays easy to scan.
 
-### [`store/appState.reducer.ts`](C:/Users/rikul/Documents/Projects/Dayforge/Dayforge/store/appState.reducer.ts)
+### `store/appState.reducer.ts`
 
 Pure state logic.
 
@@ -61,7 +61,7 @@ Rules:
 
 If a function can be pure, it should live here.
 
-### [`store/appState.persistence.ts`](C:/Users/rikul/Documents/Projects/Dayforge/Dayforge/store/appState.persistence.ts)
+### `store/appState.persistence.ts`
 
 Local persistence layer.
 
@@ -74,7 +74,7 @@ Responsibilities:
 
 The version field exists so future migrations can be added without rewriting the store.
 
-### [`store/appState.selectors.ts`](C:/Users/rikul/Documents/Projects/Dayforge/Dayforge/store/appState.selectors.ts)
+### `store/appState.selectors.ts`
 
 Derived read helpers.
 
