@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dayforge — Build better days.</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0D0A18;
+    --bg2: #110E1F;
+    --surface: #1A1630;
+    --surface2: #211D38;
+    --surface3: #2A2545;
+    --text: #F0EEFF;
+    --text-muted: #9B94C4;
+    --text-faint: #4E4870;
+    --accent: #7C5CFC;
+    --accent-light: #A78BFA;
+    --accent-glow: rgba(124,92,252,0.25);
+    --line: rgba(255,255,255,0.07);
+    --line2: rgba(255,255,255,0.04);
+    --r: 18px;
+    --r-lg: 24px;
+    --shadow: 0 2px 20px rgba(0,0,0,0.5);
+    --shadow-lg: 0 12px 48px rgba(0,0,0,0.6), 0 4px 16px rgba(0,0,0,0.4);
+    --section-space: 100px;
+    --nav-offset: 104px;
+  }
+
+  html { scroll-behavior: smooth; scroll-padding-top: var(--nav-offset); }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ambient blobs */
+  .blob {
+    position: fixed; pointer-events: none; z-index: 0;
+    border-radius: 50%;
+    filter: blur(80px);
+  }
+  .blob-1 { width: 600px; height: 600px; top: -200px; left: -200px; background: rgba(124,92,252,0.07); }
+  .blob-2 { width: 500px; height: 500px; bottom: -150px; right: -150px; background: rgba(124,92,252,0.05); }
+  .blob-3 { width: 300px; height: 300px; top: 50%; left: 50%; transform: translate(-50%,-50%); background: rgba(124,92,252,0.04); }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: 18px 48px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(13,10,24,0.75);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.3s;
+  }
+  nav.scrolled { border-bottom-color: var(--line); }
+  .nav-logo {
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.3rem;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    text-decoration: none;
+  }
+  .nav-logo span { color: var(--accent-light); }
+  .nav-links { display: flex; gap: 32px; align-items: center; }
+  .nav-links a {
+    text-decoration: none; color: var(--text-muted);
+    font-size: 0.875rem; font-weight: 400;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+  .nav-cta {
+    background: var(--accent) !important; color: white !important;
+    padding: 8px 20px; border-radius: 100px;
+    font-weight: 500 !important; font-size: 0.875rem !important;
+    box-shadow: 0 0 20px rgba(124,92,252,0.35);
+    transition: transform 0.15s, box-shadow 0.2s !important;
+  }
+  .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 0 30px rgba(124,92,252,0.5) !important; }
+
+  /* BUTTONS */
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--accent); color: white;
+    padding: 14px 28px; border-radius: 100px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.9375rem; font-weight: 500;
+    text-decoration: none; border: none; cursor: pointer;
+    box-shadow: 0 0 28px rgba(124,92,252,0.4), 0 4px 16px rgba(0,0,0,0.3);
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  }
+  .btn-primary:hover { background: var(--accent-light); transform: translateY(-2px); box-shadow: 0 0 40px rgba(124,92,252,0.55), 0 6px 24px rgba(0,0,0,0.4); }
+
+  .btn-secondary {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: transparent; color: var(--text-muted);
+    padding: 14px 24px; border-radius: 100px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.9375rem; font-weight: 400;
+    text-decoration: none; border: 1.5px solid var(--line); cursor: pointer;
+    transition: border-color 0.2s, color 0.2s, transform 0.15s;
+  }
+  .btn-secondary:hover { border-color: rgba(124,92,252,0.4); color: var(--text); transform: translateY(-1px); }
+
+  /* SECTIONS */
+  section { padding: var(--section-space) 48px; max-width: 1140px; margin: 0 auto; position: relative; z-index: 1; }
+  .section-label {
+    font-size: 0.75rem; font-weight: 500; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--accent-light); margin-bottom: 16px;
+  }
+  h2 {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 400; line-height: 1.15; letter-spacing: -0.02em; color: var(--text);
+  }
+
+  /* ─── HERO ─── */
+  #hero {
+    min-height: 100vh;
+    display: grid; grid-template-columns: 1fr 1fr;
+    align-items: center; gap: 64px;
+    padding-top: 140px; padding-bottom: var(--section-space);
+    max-width: 1140px; margin: 0 auto; position: relative; z-index: 1;
+  }
+
+  .hero-text { display: flex; flex-direction: column; gap: 24px; }
+
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(124,92,252,0.1); border: 1px solid rgba(124,92,252,0.2);
+    color: var(--accent-light); padding: 6px 14px; border-radius: 100px;
+    font-size: 0.8125rem; font-weight: 500; width: fit-content;
+  }
+  .hero-eyebrow-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    animation: dot-pulse 2.5s ease-in-out infinite;
+  }
+  @keyframes dot-pulse {
+    0%, 100% { box-shadow: 0 0 8px var(--accent); }
+    50% { box-shadow: 0 0 3px var(--accent); opacity: 0.6; }
+  }
+
+  h1 {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(3rem, 6vw, 5.5rem);
+    font-weight: 400; line-height: 1.0; letter-spacing: -0.03em; color: var(--text);
+  }
+  h1 em { font-style: italic; color: var(--accent-light); }
+
+  .hero-sub {
+    font-size: 1.125rem; color: var(--text-muted);
+    font-weight: 300; max-width: 440px; line-height: 1.65;
+  }
+
+  .hero-ctas { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .hero-trust {
+    font-size: 0.8125rem; color: var(--text-faint);
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .trust-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--text-faint); }
+
+  .icon-stroke {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* PHONE */
+  .hero-visual { display: flex; justify-content: center; align-items: center; position: relative; }
+  .phone-wrap { position: relative; animation: float 4s ease-in-out infinite; }
+  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+  .phone-bg-glow {
+    position: absolute; inset: -60px;
+    background: radial-gradient(ellipse at center, rgba(124,92,252,0.22) 0%, transparent 65%);
+    border-radius: 50%; z-index: 0;
+  }
+
+  .phone-frame {
+    position: relative; z-index: 1; width: 284px;
+    background: #07050F;
+    border-radius: 44px; padding: 13px;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.06), inset 0 0 0 1px rgba(255,255,255,0.04);
+  }
+  .phone-notch { width: 78px; height: 6px; background: #0E0B1C; border-radius: 100px; margin: 0 auto 12px; }
+  .phone-screen { background: #0E0B1C; border-radius: 34px; padding: 18px 16px; overflow: hidden; }
+
+  /* screen content */
+  .ps-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+  .ps-date { font-size: 0.58rem; color: var(--accent-light); font-weight: 500; margin-bottom: 2px; }
+  .ps-title-sm { font-family: 'Instrument Serif', serif; font-size: 1.15rem; line-height: 1.1; color: #F0EEFF; }
+  .ps-bell {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(124,92,252,0.15); border: 1px solid rgba(124,92,252,0.2);
+    display: flex; align-items: center; justify-content: center; color: var(--accent-light);
+  }
+
+  .ps-sub { font-size: 0.58rem; color: rgba(240,238,255,0.78); margin-bottom: 10px; font-weight: 500; }
+
+  .ps-streak-card {
+    background: rgba(124,92,252,0.1);
+    border: 1px solid rgba(124,92,252,0.18);
+    border-radius: 14px; padding: 12px 13px; margin-bottom: 8px;
+  }
+  .ps-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: rgba(255,255,255,0.06); border-radius: 100px;
+    padding: 3px 7px; font-size: 0.48rem; font-weight: 700;
+    letter-spacing: 0.07em; color: rgba(240,238,255,0.6);
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+  .ps-badge .icon-stroke { width: 10px; height: 10px; }
+  .ps-card-title { font-size: 0.72rem; font-weight: 600; color: #F0EEFF; margin-bottom: 2px; }
+  .ps-card-sub { font-size: 0.52rem; color: rgba(155,148,196,0.7); margin-bottom: 8px; }
+  .ps-bar-bg { height: 3px; background: rgba(255,255,255,0.08); border-radius: 2px; }
+  .ps-bar-fill { height: 3px; background: var(--accent); border-radius: 2px; width: 75%; box-shadow: 0 0 6px var(--accent); }
+
+  .ps-next {
+    background: rgba(124,92,252,0.08);
+    border: 1px solid rgba(124,92,252,0.2);
+    border-radius: 10px;
+    padding: 7px 10px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .ps-next-label {
+    font-size: 0.5rem;
+    color: rgba(167,139,250,0.72);
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .ps-next-text { font-size: 0.6rem; color: #F0EEFF; font-weight: 500; }
+
+  .ps-schedule {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px; padding: 10px 12px; margin-bottom: 8px;
+  }
+  .ps-sched-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .ps-sched-title { font-size: 0.65rem; font-weight: 600; color: #F0EEFF; }
+  .ps-sched-icon {
+    width: 16px; height: 16px; background: rgba(255,255,255,0.06); border-radius: 4px;
+    display: flex; align-items: center; justify-content: center; color: rgba(240,238,255,0.7);
+  }
+  .ps-days { display: flex; justify-content: space-between; }
+  .ps-day { text-align: center; }
+  .ps-day-name { font-size: 0.42rem; color: rgba(155,148,196,0.6); margin-bottom: 4px; }
+  .ps-day-num { font-size: 0.6rem; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin: 0 auto; color: rgba(155,148,196,0.6); }
+  .ps-day-num.active { background: var(--accent); color: white; box-shadow: 0 0 10px rgba(124,92,252,0.6); font-weight: 600; }
+
+  .ps-section-label { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(78,72,112,0.8); margin: 8px 0 5px; }
+
+  .ps-habit-row {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 10px; padding: 8px 10px; margin-bottom: 5px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .ps-hi {
+    width: 22px; height: 22px; border-radius: 50%; background: rgba(124,92,252,0.12);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--accent-light);
+  }
+  .ps-hinfo { flex: 1; }
+  .ps-hname { font-size: 0.6rem; color: #F0EEFF; font-weight: 500; }
+  .ps-hsub { font-size: 0.48rem; color: rgba(155,148,196,0.5); }
+  .ps-check { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid rgba(124,92,252,0.35); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .ps-check.done { border-color: #4ade80; }
+  .ps-check.done::after { content: '✓'; font-size: 0.52rem; color: #4ade80; }
+
+  /* ─── FEATURES ─── */
+  .features-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .feature-card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--r); padding: 32px 24px;
+    transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+  }
+  .feature-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg), 0 0 30px rgba(124,92,252,0.07); border-color: rgba(124,92,252,0.22); }
+  .feature-icon {
+    width: 40px; height: 40px;
+    background: rgba(124,92,252,0.1); border-radius: 10px;
+    border: 1px solid rgba(124,92,252,0.12);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--accent-light); margin-bottom: 16px;
+  }
+  .feature-card h3 { font-size: 1rem; font-weight: 500; margin-bottom: 8px; }
+  .feature-card p { font-size: 0.8125rem; color: var(--text-muted); line-height: 1.6; }
+
+  /* ─── HOW IT WORKS ─── */
+  .how-wrap {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 28px; padding: 72px 64px;
+    max-width: 1044px; margin: 0 auto;
+    position: relative; z-index: 1; overflow: hidden;
+  }
+  .how-wrap::before {
+    content: ''; position: absolute; top: -80px; left: 50%; transform: translateX(-50%);
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(124,92,252,0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .how-header { text-align: center; margin-bottom: 56px; position: relative; z-index: 1; }
+  .how-header p { color: var(--text-muted); margin-top: 12px; }
+
+  .steps { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; position: relative; z-index: 1; }
+  .step { text-align: center; }
+  .step-num {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: rgba(124,92,252,0.08); border: 1.5px solid rgba(124,92,252,0.25);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Instrument Serif', serif; font-size: 1.25rem; color: var(--accent-light);
+    margin: 0 auto 16px;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  }
+  .step:hover .step-num { border-color: var(--accent); background: rgba(124,92,252,0.15); box-shadow: 0 0 20px rgba(124,92,252,0.25); }
+  .step h3 { font-size: 1rem; font-weight: 500; margin-bottom: 8px; }
+  .step p { font-size: 0.8125rem; color: var(--text-muted); line-height: 1.55; max-width: 180px; margin: 0 auto; }
+  .step-arrow { color: rgba(124,92,252,0.25); font-size: 1.5rem; padding: 0 16px; margin-bottom: 40px; }
+
+  /* ─── VALUE PROP ─── */
+  #value { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+  .value-text { display: flex; flex-direction: column; gap: 20px; }
+  .value-text .section-label { margin-bottom: 4px; }
+  .value-text h2 { margin-bottom: 8px; }
+  .value-text > p { color: var(--text-muted); font-size: 1rem; line-height: 1.7; }
+  .value-points { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+  .value-point { display: flex; align-items: flex-start; gap: 12px; }
+  .vp-icon {
+    width: 20px; height: 20px; background: rgba(124,92,252,0.1); border: 1px solid rgba(124,92,252,0.18);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 2px; font-size: 0.6rem; color: var(--accent-light);
+  }
+  .value-point span { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; }
+  .value-point strong { color: var(--text); }
+  .value-visual { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 32px; }
+  .compare-row { display: flex; gap: 12px; }
+  .compare-col { flex: 1; }
+  .compare-col-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px; }
+  .compare-col-label.other { color: var(--text-faint); }
+  .compare-col-label.df { color: var(--accent-light); }
+  .compare-item { font-size: 0.8rem; padding: 8px 10px; border-radius: 8px; margin-bottom: 6px; line-height: 1.4; }
+  .compare-item.other-item { background: rgba(255,255,255,0.03); color: var(--text-faint); }
+  .compare-item.df-item { background: rgba(124,92,252,0.1); color: var(--text); border: 1px solid rgba(124,92,252,0.15); }
+
+  /* ─── PRIVACY ─── */
+  .privacy-wrap {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 28px; padding: 72px 64px;
+    max-width: 1044px; margin: 0 auto;
+    text-align: center; position: relative; z-index: 1; overflow: hidden;
+  }
+  .privacy-wrap::before {
+    content: ''; position: absolute; bottom: -80px; left: 50%; transform: translateX(-50%);
+    width: 500px; height: 300px;
+    background: radial-gradient(ellipse, rgba(124,92,252,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .privacy-wrap h2, .privacy-wrap > .section-label { position: relative; z-index: 1; }
+  .privacy-wrap > p { color: var(--text-muted); margin-top: 12px; margin-bottom: 48px; font-size: 1rem; position: relative; z-index: 1; }
+  .privacy-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; position: relative; z-index: 1; }
+  .privacy-card {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px; padding: 24px; text-align: left;
+    transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  }
+  .privacy-card:hover { background: rgba(124,92,252,0.07); border-color: rgba(124,92,252,0.18); transform: translateY(-2px); }
+  .privacy-card-icon {
+    width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 12px;
+    border-radius: 10px;
+    background: rgba(124,92,252,0.08);
+    border: 1px solid rgba(124,92,252,0.14);
+    color: var(--accent-light);
+  }
+  .privacy-card h4 { font-size: 0.9375rem; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+  .privacy-card p { font-size: 0.8125rem; color: var(--text-muted); line-height: 1.55; margin: 0; }
+
+  /* ─── FAQ ─── */
+  #faq { max-width: 680px; margin: 0 auto; }
+  .faq-header { text-align: center; margin-bottom: 48px; }
+  .faq-item { border-bottom: 1px solid var(--line); padding: 20px 0; cursor: pointer; }
+  .faq-q { font-size: 0.9375rem; font-weight: 500; color: var(--text); display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+  .faq-chevron { width: 20px; height: 20px; flex-shrink: 0; transition: transform 0.25s; color: var(--text-faint); }
+  .faq-item.open .faq-chevron { transform: rotate(180deg); color: var(--accent-light); }
+  .faq-item.open .faq-q { color: var(--accent-light); }
+  .faq-a { font-size: 0.875rem; color: var(--text-muted); line-height: 1.65; max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s; }
+  .faq-item.open .faq-a { max-height: 200px; padding-top: 12px; }
+
+  /* ─── FINAL CTA ─── */
+  #cta { text-align: center; padding: 80px 48px 120px; max-width: 680px; margin: 0 auto; position: relative; z-index: 1; }
+  #cta h2 { font-size: clamp(2.5rem, 5vw, 4rem); margin-bottom: 16px; }
+  #cta > p { color: var(--text-muted); font-size: 1rem; margin-bottom: 36px; line-height: 1.65; }
+  .cta-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .cta-trust { margin-top: 20px; font-size: 0.8125rem; color: var(--text-faint); }
+
+  /* ─── FOOTER ─── */
+  footer {
+    border-top: 1px solid var(--line); padding: 28px 48px;
+    display: flex; justify-content: space-between; align-items: center;
+    color: var(--text-faint); font-size: 0.8125rem; position: relative; z-index: 1;
+  }
+  .footer-logo { font-family: 'Instrument Serif', serif; font-size: 1rem; color: var(--text-muted); }
+  .footer-logo span { color: var(--accent-light); }
+
+  /* SCROLL FADE */
+  .fade-up { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
+  .fade-up.visible { opacity: 1; transform: translateY(0); }
+
+  .section-wrapper { padding: var(--section-space) 48px; position: relative; z-index: 1; }
+  .section-max { max-width: 1140px; margin: 0 auto; }
+  .pad-wrap { padding: 0 48px var(--section-space); max-width: 1140px; margin: 0 auto; position: relative; z-index: 1; }
+  .section-header-lg { margin-bottom: 72px !important; }
+  .section-header-lg .section-label { margin-bottom: 20px; }
+  .section-header-lg p { margin-top: 16px !important; }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 900px) {
+    nav { padding: 16px 24px; }
+    .nav-links { display: none; }
+    #hero { grid-template-columns: 1fr; gap: 48px; padding: 120px 24px 80px; min-height: auto; }
+    .hero-visual { order: -1; }
+    section { padding: 72px 24px; }
+    .features-grid { grid-template-columns: 1fr 1fr; }
+    .how-wrap { padding: 48px 32px; }
+    .steps { grid-template-columns: 1fr; }
+    .step-arrow { display: none; }
+    #value { grid-template-columns: 1fr; gap: 40px; }
+    .privacy-wrap { padding: 48px 32px; }
+    .privacy-grid { grid-template-columns: 1fr; }
+    footer { flex-direction: column; gap: 12px; padding: 24px; }
+    .section-wrapper { padding: 72px 24px; }
+    .pad-wrap { padding: 0 24px 72px; }
+  }
+  @media (max-width: 600px) {
+    .features-grid { grid-template-columns: 1fr; }
+    #faq { padding: 72px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="top"></div>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+
+<!-- NAV -->
+<nav id="nav">
+  <a href="#top" class="nav-logo">Day<span>forge</span></a>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#how">How it works</a>
+    <a href="#value">Why Dayforge</a>
+    <a href="#privacy">Privacy</a>
+    <a href="#faq">FAQ</a>
+    <a href="#cta" class="nav-cta">Get started</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div style="max-width:1140px;margin:0 auto;padding:0 48px;position:relative;z-index:1;">
+<section id="hero">
+  <div class="hero-text fade-up">
+    <div class="hero-eyebrow">
+      <div class="hero-eyebrow-dot"></div>
+      Your daily system
+    </div>
+    <h1>Build<br><em>better</em><br>days.</h1>
+    <p class="hero-sub">Plan your day. Stay consistent. Improve daily.</p>
+    <div class="hero-ctas">
+      <a href="#cta" class="btn-primary">
+        Start your first day
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <a href="#how" class="btn-secondary">See how it works</a>
+    </div>
+    <div class="hero-trust">
+      <span>No account required to get started</span>
+      <div class="trust-dot"></div>
+      <span>Private by design</span>
+      <div class="trust-dot"></div>
+      <span>Free to use</span>
+    </div>
+  </div>
+
+  <div class="hero-visual fade-up" style="transition-delay:0.15s">
+    <div class="phone-wrap">
+      <div class="phone-bg-glow"></div>
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+
+          <div class="ps-header">
+            <div>
+              <div class="ps-date">Saturday 21. March</div>
+              <div class="ps-title-sm">Today's Habits</div>
+            </div>
+            <div class="ps-bell">
+              <svg class="icon-stroke" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M15 17h5l-1.4-1.4a2 2 0 0 1-.6-1.4V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5"></path>
+                <path d="M10 17a2 2 0 0 0 4 0"></path>
+              </svg>
+            </div>
+          </div>
+
+          <div class="ps-sub">2 of 4 done · 2 left</div>
+
+          <div class="ps-streak-card">
+            <div class="ps-badge">
+              <svg class="icon-stroke" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 3c1.8 2 2.8 3.8 2.8 5.6 0 1.7-1 2.8-2.1 3.8 2.7-.4 5.3 1.7 5.3 5 0 3.1-2.5 5.6-6 5.6s-6-2.5-6-5.6c0-2.6 1.4-4.2 3.3-5.7.9-.8 1.8-1.7 2.1-3.1.2-.8.3-1.7.6-2.6Z"></path>
+              </svg>
+              STREAK ACTIVE
+            </div>
+            <div class="ps-card-title">1 left for Saturday</div>
+            <div class="ps-card-sub">Only one left: 10-minute walk. Finish strong.</div>
+            <div class="ps-bar-bg"><div class="ps-bar-fill"></div></div>
+          </div>
+
+          <div class="ps-next">
+            <span class="ps-next-label">Guidance</span>
+            <span class="ps-next-text">Next up: 10-minute walk</span>
+          </div>
+
+          <div class="ps-schedule">
+            <div class="ps-sched-row">
+              <div class="ps-sched-title">Schedule</div>
+              <div class="ps-sched-icon">
+                <svg class="icon-stroke" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M8 3v3"></path>
+                  <path d="M16 3v3"></path>
+                  <rect x="4" y="6" width="16" height="14" rx="2"></rect>
+                  <path d="M4 10h16"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="ps-days">
+              <div class="ps-day"><div class="ps-day-name">Mon</div><div class="ps-day-num">16</div></div>
+              <div class="ps-day"><div class="ps-day-name">Tue</div><div class="ps-day-num">17</div></div>
+              <div class="ps-day"><div class="ps-day-name">Wed</div><div class="ps-day-num">18</div></div>
+              <div class="ps-day"><div class="ps-day-name">Thu</div><div class="ps-day-num">19</div></div>
+              <div class="ps-day"><div class="ps-day-name">Fri</div><div class="ps-day-num">20</div></div>
+              <div class="ps-day"><div class="ps-day-name">Sat</div><div class="ps-day-num active">21</div></div>
+              <div class="ps-day"><div class="ps-day-name">Sun</div><div class="ps-day-num">22</div></div>
+            </div>
+          </div>
+
+          <div class="ps-section-label">Sat habits · 1 left</div>
+
+          <div class="ps-habit-row">
+            <div class="ps-hi">
+              <svg class="icon-stroke" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="5" r="2"></circle>
+                <path d="M8.5 11.5 12 9l3.5 2.5"></path>
+                <path d="M7 18c1.2-2.8 2.9-4.2 5-4.2S15.8 15.2 17 18"></path>
+                <path d="M9 13.5 6.5 16"></path>
+                <path d="M15 13.5 17.5 16"></path>
+              </svg>
+            </div>
+            <div class="ps-hinfo">
+              <div class="ps-hname">Drink water</div>
+              <div class="ps-hsub">Daily routine</div>
+            </div>
+            <div class="ps-check done"></div>
+          </div>
+          <div class="ps-habit-row">
+            <div class="ps-hi">
+              <svg class="icon-stroke" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="14" cy="5" r="2"></circle>
+                <path d="m12 22 1.5-6 3 2 2 4"></path>
+                <path d="m15 10-2.5 3.5L9 15"></path>
+                <path d="m12.5 13.5 3 2.5"></path>
+                <path d="M11 8h4l1.5 2"></path>
+              </svg>
+            </div>
+            <div class="ps-hinfo">
+              <div class="ps-hname">10-minute walk</div>
+              <div class="ps-hsub">Tap to complete</div>
+            </div>
+            <div class="ps-check"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- FEATURES -->
+<div class="section-wrapper">
+  <div class="section-max">
+    <section id="features" style="padding:0">
+      <div class="fade-up section-header-lg" style="text-align:center;max-width:500px;margin:0 auto 56px;">
+        <div class="section-label">Core features</div>
+        <h2>A simple system for better days.</h2>
+        <p style="color:var(--text-muted);margin-top:12px;">Plan your week, execute your day, and improve over time — in one focused loop.</p>
+      </div>
+      <div class="features-grid fade-up" style="transition-delay:0.1s">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg class="icon-stroke" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="6" y="4" width="12" height="16" rx="2"></rect>
+              <path d="M9 4.5h6"></path>
+              <path d="M9 10h6"></path>
+              <path d="M9 14h6"></path>
+            </svg>
+          </div>
+          <h3>Start with clarity</h3>
+          <p>Know exactly what matters before your day begins.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg class="icon-stroke" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M17 3h4v4"></path>
+              <path d="M3 11a8 8 0 0 1 14-5l4 1"></path>
+              <path d="M7 21H3v-4"></path>
+              <path d="M21 13a8 8 0 0 1-14 5l-4-1"></path>
+            </svg>
+          </div>
+          <h3>Build habits that stick</h3>
+          <p>Stay consistent without relying on motivation.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg class="icon-stroke" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 20h9"></path>
+              <path d="m16.5 3.5 4 4L8 20l-5 1 1-5Z"></path>
+            </svg>
+          </div>
+          <h3>Learn from every day</h3>
+          <p>Small reflections that turn into real progress.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg class="icon-stroke" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 3v4"></path>
+              <path d="M17 3v4"></path>
+              <rect x="4" y="5.5" width="16" height="14.5" rx="2"></rect>
+              <path d="M4 10h16"></path>
+              <path d="M8 14h3"></path>
+              <path d="M13 14h3"></path>
+            </svg>
+          </div>
+          <h3>Plan your week ahead</h3>
+          <p>Set direction before your days begin.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="pad-wrap">
+  <div class="how-wrap fade-up" id="how">
+    <div class="how-header">
+      <div class="section-label">How it works</div>
+      <h2>A simple rhythm that actually sticks.</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Plan</h3>
+        <p>Plan your week and start each day with clarity.</p>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>Track</h3>
+        <p>Stay on track without overthinking.</p>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>Reflect</h3>
+        <p>Review your day and improve tomorrow.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VALUE PROP -->
+<div class="section-wrapper" style="padding-top:140px;padding-bottom:180px;">
+  <div class="section-max">
+    <section id="value" style="padding:0">
+      <div class="value-text fade-up">
+        <div class="section-label">Why Dayforge</div>
+        <h2>Most apps track habits.<br>Dayforge builds better days.</h2>
+        <p>Plan your week. Execute your day. Improve continuously.</p>
+        <div class="value-points">
+          <div class="value-point">
+            <div class="vp-icon">→</div>
+            <span><strong>Intent before action.</strong> Plan first, then execute.</span>
+          </div>
+          <div class="value-point">
+            <div class="vp-icon">→</div>
+            <span><strong>Reflection closes the loop.</strong> Notice, adjust, improve.</span>
+          </div>
+          <div class="value-point">
+            <div class="vp-icon">→</div>
+            <span><strong>Lightweight by design.</strong> No setup friction. Just the system.</span>
+          </div>
+        </div>
+      </div>
+      <div class="value-visual fade-up" style="transition-delay:0.15s">
+        <div class="section-label" style="margin-bottom:20px">The difference</div>
+        <div class="compare-row">
+          <div class="compare-col">
+            <div class="compare-col-label other">Habit apps</div>
+            <div class="compare-item other-item">Track streaks</div>
+            <div class="compare-item other-item">Daily checkboxes</div>
+            <div class="compare-item other-item">No planning layer</div>
+            <div class="compare-item other-item">No reflection</div>
+          </div>
+          <div class="compare-col">
+            <div class="compare-col-label df">Dayforge</div>
+            <div class="compare-item df-item">Intentional days</div>
+            <div class="compare-item df-item">Plan + track + reflect</div>
+            <div class="compare-item df-item">Daily system</div>
+            <div class="compare-item df-item">Weekly clarity</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- PRIVACY -->
+<div class="pad-wrap">
+  <section id="privacy" style="padding:0">
+    <div class="privacy-wrap fade-up">
+      <div class="section-label">Privacy first</div>
+      <h2>Your data is yours. Full stop.</h2>
+      <p>Your daily data stays on your device. Optional account is only used for preferences.</p>
+      <div class="privacy-grid">
+        <div class="privacy-card">
+          <div class="privacy-card-icon">
+            <svg class="icon-stroke" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="5" y="11" width="14" height="10" rx="2"></rect>
+              <path d="M8 11V8a4 4 0 1 1 8 0v3"></path>
+            </svg>
+          </div>
+          <h4>No account required</h4>
+          <p>Start immediately. Create an account only if you want to save preferences.</p>
+        </div>
+        <div class="privacy-card">
+          <div class="privacy-card-icon">
+            <svg class="icon-stroke" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 4 20 20"></path>
+              <path d="M9 5h6a2 2 0 0 1 2 2v6"></path>
+              <path d="M15 19H9a2 2 0 0 1-2-2V9"></path>
+            </svg>
+          </div>
+          <h4>No tracking</h4>
+          <p>No analytics. No personal tracking. Your usage stays private.</p>
+        </div>
+        <div class="privacy-card">
+          <div class="privacy-card-icon">
+            <svg class="icon-stroke" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="7" y="2.5" width="10" height="19" rx="2.5"></rect>
+              <path d="M11 18.5h2"></path>
+            </svg>
+          </div>
+          <h4>Local-first data</h4>
+          <p>Your habits, plans, and reflections stay on your device.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- FAQ -->
+<div class="section-wrapper" style="padding-top:0">
+  <section id="faq" style="padding:0">
+    <div class="faq-header fade-up section-header-lg">
+      <div class="section-label">FAQ</div>
+      <h2>Common questions.</h2>
+    </div>
+    <div class="fade-up" style="transition-delay:0.1s">
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">Is Dayforge really free?
+          <svg class="faq-chevron" viewBox="0 0 20 20" fill="none"><path d="M5 7.5l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="faq-a">Yes. Dayforge is completely free to use. No paywalls, no hidden tiers — just the full product.</div>
+      </div>
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">How is this different from Notion or Todoist?
+          <svg class="faq-chevron" viewBox="0 0 20 20" fill="none"><path d="M5 7.5l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="faq-a">Notion and Todoist are flexible tools. Dayforge is built specifically for the daily rhythm of planning, tracking, and reflecting — without setup or complexity.</div>
+      </div>
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">What if I miss a day?
+          <svg class="faq-chevron" viewBox="0 0 20 20" fill="none"><path d="M5 7.5l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="faq-a">That's fine. Dayforge is designed to help you restart easily. Missing a day doesn't break the system.</div>
+      </div>
+      <div class="faq-item" onclick="toggleFaq(this)">
+        <div class="faq-q">Does it sync across devices?
+          <svg class="faq-chevron" viewBox="0 0 20 20" fill="none"><path d="M5 7.5l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="faq-a">Your daily data stays on your device. Optional account is used only for preferences. Sync is planned as an optional feature.</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- FINAL CTA -->
+<section id="cta" class="fade-up">
+  <div class="section-label">Ready?</div>
+  <h2>Start your first day<br>in <em>10 seconds.</em></h2>
+  <p>No setup required. Just open and begin.</p>
+  <div class="cta-btns">
+    <a href="#" class="btn-primary">
+      Start your first day
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+  </div>
+  <p class="cta-trust">No account required to get started · Private by design · Free to use</p>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Day<span>forge</span></div>
+  <div>© 2026 Dayforge. Built for clarity.</div>
+</footer>
+
+<script>
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 20);
+  });
+
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
+
+  function toggleFaq(item) {
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+  }
+</script>
+</body>
+</html>
